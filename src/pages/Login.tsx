@@ -14,9 +14,8 @@ const Login: React.FC = () => {
     setError('');
     
     try {
-      // Backend-i mund të presë form data (OAuth2PasswordRequestForm)
       const formData = new URLSearchParams();
-      formData.append('username', email); // Në OAuth2 "username" është shpesh fusha për email
+      formData.append('username', email);
       formData.append('password', password);
 
       const response = await api.post('/api/v1/auth/login', formData, {
@@ -28,7 +27,6 @@ const Login: React.FC = () => {
       const { access_token } = response.data;
       localStorage.setItem('token', access_token);
       
-      // Pas logimit te suksesshem, kthehu në faqen e Feed (që do ta ndërtojmë më vonë)
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë logimit. Ju lutem provoni përsëri.');

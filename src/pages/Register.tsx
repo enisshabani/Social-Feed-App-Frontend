@@ -21,7 +21,6 @@ const Register: React.FC = () => {
         password
       });
       
-      // Pas regjistrimit, dërgoje përdoruesin tek Login
       navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit. Keni provuar një email/username ekzistues?');
