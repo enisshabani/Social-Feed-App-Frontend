@@ -37,44 +37,41 @@ const Login: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
-      <div className="glass-panel" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-        <h1 style={{ marginBottom: '0.5rem', fontSize: '1.75rem', fontWeight: 'bold' }}>Mirësevini përsëri</h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Hyni në llogarinë tuaj në KaPak</p>
+      <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
+        <div className="mastodon-logo">KaPak</div>
         
         <form onSubmit={handleLogin}>
           <div className="input-group">
-            <label htmlFor="email">Email</label>
             <input 
               type="email" 
               id="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="emri@email.com" 
+              placeholder="Adresa e email-it" 
               required 
             />
           </div>
           
           <div className="input-group">
-            <label htmlFor="password">Fjalëkalimi</label>
             <input 
               type="password" 
               id="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••" 
+              placeholder="Fjalëkalimi" 
               required 
             />
           </div>
           
-          {error && <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
+          {error && <div className="error-message">{error}</div>}
           
-          <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>
+          <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
             Hyr
           </button>
         </form>
         
-        <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          Nuk keni llogari? <Link to="/register" style={{ fontWeight: '600' }}>Regjistrohuni</Link>
+        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>
+          <Link to="/register" style={{ color: 'var(--text-muted)' }}>Nuk keni llogari? Regjistrohuni.</Link>
         </div>
       </div>
     </div>

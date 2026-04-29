@@ -30,56 +30,52 @@ const Register: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
-      <div className="glass-panel" style={{ padding: '2.5rem', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-        <h1 style={{ marginBottom: '0.5rem', fontSize: '1.75rem', fontWeight: 'bold' }}>Krijoni Llogari</h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Bashkohuni me KaPak sot!</p>
+      <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
+        <div className="mastodon-logo">KaPak</div>
         
         <form onSubmit={handleRegister}>
           <div className="input-group">
-            <label htmlFor="username">Username</label>
             <input 
               type="text" 
               id="username" 
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="p.sh. albani123" 
+              placeholder="Username" 
               required 
             />
           </div>
 
           <div className="input-group">
-            <label htmlFor="email">Email</label>
             <input 
               type="email" 
               id="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="emri@email.com" 
+              placeholder="Adresa e email-it" 
               required 
             />
           </div>
           
           <div className="input-group">
-            <label htmlFor="password">Fjalëkalimi</label>
             <input 
               type="password" 
               id="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Të paktën 6 karaktere" 
+              placeholder="Fjalëkalimi" 
               required 
             />
           </div>
           
-          {error && <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
+          {error && <div className="error-message">{error}</div>}
           
-          <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>
+          <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
             Regjistrohu
           </button>
         </form>
         
-        <div style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          Keni tashmë llogari? <Link to="/login" style={{ fontWeight: '600' }}>Hyni këtu</Link>
+        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>
+          <Link to="/login" style={{ color: 'var(--text-muted)' }}>Keni tashmë llogari? Hyni këtu.</Link>
         </div>
       </div>
     </div>
