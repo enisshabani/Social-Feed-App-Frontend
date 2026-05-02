@@ -68,7 +68,8 @@ const Login: React.FC = () => {
           </button>
         </form>
         
-        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>
+        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <Link to="/forgot-password" style={{ color: '#6364ff' }}>Harruat fjalëkalimin?</Link>
           <Link to="/register" style={{ color: 'var(--text-muted)' }}>Nuk keni llogari? Regjistrohuni.</Link>
         </div>
       </div>
