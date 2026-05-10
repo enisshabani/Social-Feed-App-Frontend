@@ -10,6 +10,42 @@ const Register: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Funksioni për të llogaritur fuqinë e fjalëkalimit (0 deri 4)
+  const calculatePasswordStrength = (pass: string) => {
+    let score = 0;
+    if (!pass) return score;
+    if (pass.length >= 8) score += 1;
+    if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score += 1;
+    if (/\d/.test(pass)) score += 1;
+    if (/[^a-zA-Z\d]/.test(pass)) score += 1;
+    return score;
+  };
+
+  const getStrengthColor = (score: number) => {
+    switch (score) {
+      case 0: return '#d32f2f'; // E Kuqe (Shumë i dobët)
+      case 1: return '#f57c00'; // Portokalli (I dobët)
+      case 2: return '#fbc02d'; // E verdhë (Mesatar)
+      case 3: return '#7cb342'; // E gjelbër hapur (I fortë)
+      case 4: return '#388e3c'; // E gjelbër e mbyllur (Shumë i fortë)
+      default: return '#e0e0e0';
+    }
+  };
+
+  const getStrengthText = (score: number) => {
+    if (password.length === 0) return '';
+    switch (score) {
+      case 0: return 'Shumë i dobët (vendosni të paktën 8 karaktere)';
+      case 1: return 'I dobët (shtoni shkronja të mëdha/vogla)';
+      case 2: return 'Mesatar (shtoni numra)';
+      case 3: return 'I fortë (shtoni simbole)';
+      case 4: return 'Shumë i fortë!';
+      default: return '';
+    }
+  };
+
+  const strengthScore = calculatePasswordStrength(password);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -64,6 +100,27 @@ const Register: React.FC = () => {
               placeholder="Fjalëkalimi" 
               required 
             />
+            {/* Treguesi i fuqisë së fjalëkalimit */}
+            {password && (
+              <div style={{ marginTop: '8px', fontSize: '0.8rem' }}>
+                <div style={{ display: 'flex', gap: '4px', height: '6px', marginBottom: '4px' }}>
+                  {[1, 2, 3, 4].map((level) => (
+                    <div 
+                      key={level} 
+                      style={{ 
+                        flex: 1, 
+                        backgroundColor: strengthScore >= level ? getStrengthColor(strengthScore) : 'var(--border-color, #e0e0e0)',
+                        borderRadius: '3px',
+                        transition: 'background-color 0.3s ease'
+                      }} 
+                    />
+                  ))}
+                </div>
+                <span style={{ color: getStrengthColor(strengthScore), transition: 'color 0.3s ease' }}>
+                  {getStrengthText(strengthScore)}
+                </span>
+              </div>
+            )}
           </div>
           
           {error && <div className="error-message">{error}</div>}
