@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../services/firebase';
 import api from '../services/api';
 import '../styles/globals.css';
 
@@ -23,11 +25,11 @@ const Register: React.FC = () => {
 
   const getStrengthColor = (score: number) => {
     switch (score) {
-      case 0: return '#d32f2f'; // E Kuqe (Shumë i dobët)
-      case 1: return '#f57c00'; // Portokalli (I dobët)
-      case 2: return '#fbc02d'; // E verdhë (Mesatar)
-      case 3: return '#7cb342'; // E gjelbër hapur (I fortë)
-      case 4: return '#388e3c'; // E gjelbër e mbyllur (Shumë i fortë)
+      case 0: return '#d32f2f'; 
+      case 1: return '#f57c00'; 
+      case 2: return '#fbc02d'; 
+      case 3: return '#7cb342'; 
+      case 4: return '#388e3c'; 
       default: return '#e0e0e0';
     }
   };
@@ -60,6 +62,22 @@ const Register: React.FC = () => {
       navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit. Keni provuar një email/username ekzistues?');
+    }
+  };
+
+  const handleGoogleRegister = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      
+      // Njëjtë si në Login: ia kalojmë token-in backend-it
+      const response = await api.post('/api/v1/auth/google', { token: idToken });
+      
+      const { access_token } = response.data;
+      localStorage.setItem('token', access_token);
+      navigate('/');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit me Google.');
     }
   };
 
@@ -129,6 +147,25 @@ const Register: React.FC = () => {
             Regjistrohu
           </button>
         </form>
+
+        <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', textAlign: 'center', color: 'var(--border-color)' }}>
+          <hr style={{ flex: 1, border: 'none', borderTop: '1px solid var(--border-color)' }} />
+          <span style={{ padding: '0 10px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>OSE</span>
+          <hr style={{ flex: 1, border: 'none', borderTop: '1px solid var(--border-color)' }} />
+        </div>
+
+        <button 
+          onClick={handleGoogleRegister} 
+          type="button" 
+          style={{ 
+            width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #777777', 
+            backgroundColor: 'transparent', color: 'var(--text-color)', cursor: 'pointer', display: 'flex', 
+            justifyContent: 'center', alignItems: 'center', gap: '10px', fontWeight: 'bold' 
+          }}
+        >
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+          Vazhdo me Google
+        </button>
         
         <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>
           <Link to="/login" style={{ color: 'var(--text-muted)' }}>Keni tashmë llogari? Hyni këtu.</Link>
