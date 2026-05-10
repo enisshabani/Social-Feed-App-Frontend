@@ -41,11 +41,11 @@ const Login: React.FC = () => {
         <form onSubmit={handleLogin}>
           <div className="input-group">
             <input 
-              type="email" 
+              type="text" 
               id="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Adresa e email-it" 
+              placeholder="Email ose Username" 
               required 
             />
           </div>
