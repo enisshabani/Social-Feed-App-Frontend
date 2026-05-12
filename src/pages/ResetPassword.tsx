@@ -12,7 +12,6 @@ const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Kapim token-in direkt nga URL gjatë renderimit (pa useEffect)
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get('token');
 
@@ -32,14 +31,12 @@ const ResetPassword: React.FC = () => {
     }
 
     try {
-      // Ky endpoint duhet të krijohet në backend (POST /api/v1/auth/reset-password)
       await api.post('/api/v1/auth/reset-password', {
         token: token,
         new_password: password
       });
 
       setMessage('Fjalëkalimi u ndryshua me sukses! Tani mund të logoheni.');
-      // Ose e qojme automatikisht tek '/' pas 3 sekondave:
       setTimeout(() => navigate('/login'), 3000);
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
