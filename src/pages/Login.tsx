@@ -9,8 +9,17 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const saveToken = (token: string) => {
+    if (rememberMe) {
+      localStorage.setItem('token', token);
+    } else {
+      sessionStorage.setItem('token', token);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -20,7 +29,7 @@ const Login: React.FC = () => {
       const response = await api.post('/api/v1/auth/google', { token: idToken });
       
       const { access_token } = response.data;
-      localStorage.setItem('token', access_token);
+      saveToken(access_token);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me Google.');
@@ -35,7 +44,7 @@ const Login: React.FC = () => {
       const response = await api.post('/api/v1/auth/github', { token: idToken });
       
       const { access_token } = response.data;
-      localStorage.setItem('token', access_token);
+      saveToken(access_token);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me GitHub.');
@@ -58,7 +67,7 @@ const Login: React.FC = () => {
       });
       
       const { access_token } = response.data;
-      localStorage.setItem('token', access_token);
+      saveToken(access_token);
       
       navigate('/');
     } catch (err: any) {
@@ -122,6 +131,19 @@ const Login: React.FC = () => {
               )}
             </button>
           </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem', marginTop: '-0.5rem' }}>
+            <input 
+              type="checkbox" 
+              id="rememberMe" 
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={{ marginRight: '8px', cursor: 'pointer', accentColor: 'var(--primary)', width: '16px', height: '16px' }}
+            />
+            <label htmlFor="rememberMe" style={{ color: 'var(--text-main)', fontSize: '0.9rem', cursor: 'pointer' }}>
+              Më mbaj mend
+            </label>
+          </div>
           
           {error && <div className="error-message">{error}</div>}
           
@@ -141,7 +163,7 @@ const Login: React.FC = () => {
           type="button" 
           style={{ 
             width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #777777', 
-            backgroundColor: 'transparent', color: 'var(--text-color)', cursor: 'pointer', display: 'flex', 
+            backgroundColor: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', 
             justifyContent: 'center', alignItems: 'center', gap: '10px', fontWeight: 'bold' 
           }}
         >
@@ -154,7 +176,7 @@ const Login: React.FC = () => {
           type="button" 
           style={{ 
             width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #777777', 
-            backgroundColor: 'transparent', color: 'var(--text-color)', cursor: 'pointer', display: 'flex', 
+            backgroundColor: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex', 
             justifyContent: 'center', alignItems: 'center', gap: '10px', fontWeight: 'bold', marginTop: '0.75rem'
           }}
         >
