@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000', // Porti ku po ekzekutohet backend-i
+  baseURL: '',
 });
 
 // Interceptor për të dërguar tokenin në çdo kërkesë
