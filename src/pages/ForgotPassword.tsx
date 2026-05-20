@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import '../styles/globals.css';
 
@@ -8,6 +8,7 @@ const ForgotPassword: React.FC = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,8 +17,13 @@ const ForgotPassword: React.FC = () => {
     setIsLoading(true);
     
     try {
-      await api.post('/api/v1/auth/forgot-password', { email });
-      setMessage('Nëse ky email ekziston në sistem, një link për rishkrimin e fjalëkalimit është dërguar.');
+      const res = await api.post('/api/v1/auth/forgot-password', { email });
+      if (res.data.code) {
+        window.alert(`Kodi juaj i sigurisë është: ${res.data.code}`);
+        navigate(`/reset-password?token=${res.data.code}`);
+      } else {
+        setMessage('Nëse ky email ekziston në sistem, një link për rishkrimin e fjalëkalimit është dërguar.');
+      }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ndodhi një gabim gjatë dërgimit të kërkesës. Ju lutem provoni përsëri.');
     } finally {
