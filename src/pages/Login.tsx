@@ -30,7 +30,7 @@ const Login: React.FC = () => {
       
       const { access_token } = response.data;
       saveToken(access_token);
-      navigate('/');
+      navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me Google.');
     }
@@ -45,7 +45,7 @@ const Login: React.FC = () => {
       
       const { access_token } = response.data;
       saveToken(access_token);
-      navigate('/');
+      navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me GitHub.');
     }
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
       const { access_token } = response.data;
       saveToken(access_token);
       
-      navigate('/');
+      navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë logimit. Ju lutem provoni përsëri.');
     }
