@@ -28,7 +28,7 @@ const ForgotPassword: React.FC = () => {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
       <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
-        <div className="mastodon-logo">KaPak</div>
+        <div className="mastodon-logo">kaPak</div>
         <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Rikthe Fjalëkalimin</h2>
         
         <form onSubmit={handleSubmit}>

@@ -158,17 +158,18 @@ const Profile: React.FC = () => {
             )}
           </div>
 
+          {/* Fshehja e input-it në mënyrë të sigurt për t'u klikuar nga ref */}
+          <input 
+            type="file" 
+            accept="image/*" 
+            ref={fileInputRef} 
+            style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }} 
+            onChange={handleFileChange}
+          />
+
           {isEditing ? (
             <div style={{ marginTop: '1rem', padding: '1.5rem', backgroundColor: 'var(--bg-dark)', borderRadius: '8px', border: '1px solid var(--border-input)' }}>
               
-              <input 
-                type="file" 
-                accept="image/*" 
-                ref={fileInputRef} 
-                style={{ display: 'none' }} 
-                onChange={handleFileChange}
-              />
-
               <div className="input-group" style={{ marginBottom: '1.5rem' }}>
                 <label>Emri i Profilit (Display Name)</label>
                 <input 

@@ -99,7 +99,7 @@ const Register: React.FC = () => {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
       <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
-        <div className="mastodon-logo">KaPak</div>
+        <div className="mastodon-logo">kaPak</div>
         
         <form onSubmit={handleRegister}>
           <div className="input-group">

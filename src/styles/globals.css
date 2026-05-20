@@ -2,13 +2,13 @@
 
 :root {
   /* Mastodon Palette */
-  --bg-dark: #282c37;
-  --bg-form: #313543;
+  --bg-dark: #001219;
+  --bg-form: #001219;
   --primary: #6364ff;
   --primary-hover: #563acc;
   --text-main: #ffffff;
   --text-muted: #9baec8;
-  --bg-input: #191b22;
+  --bg-input: #000000;
   --border-input: #282c37;
   --error: #df405a;
 }
@@ -43,7 +43,7 @@ a:hover {
 .mastodon-panel {
   background: var(--bg-form);
   border-radius: 4px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.366);
 }
 
 .mastodon-logo {
@@ -139,7 +139,8 @@ a:hover {
 
 .profile-cover {
   height: 160px;
-  background: linear-gradient(to bottom, #4a4e69, #22223b); /* Dummy cover */
+  background: linear-gradient(to bottom, #4a4e69, #22223b);
+  /* Dummy cover */
   position: relative;
 }
 
@@ -205,6 +206,7 @@ a:hover {
   margin-top: 60px;
   transition: background-color 0.2s;
 }
+
 .btn-edit-profile:hover {
   background: rgba(255, 255, 255, 0.05);
 }
