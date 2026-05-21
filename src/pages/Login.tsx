@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import '../styles/globals.css';
 
 const Login: React.FC = () => {
@@ -12,14 +13,7 @@ const Login: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  const saveToken = (token: string) => {
-    if (rememberMe) {
-      localStorage.setItem('token', token);
-    } else {
-      sessionStorage.setItem('token', token);
-    }
-  };
+  const { login } = useAuth();
 
   const handleGoogleLogin = async () => {
     try {
@@ -29,7 +23,7 @@ const Login: React.FC = () => {
       const response = await api.post('/api/v1/auth/google', { token: idToken });
       
       const { access_token } = response.data;
-      saveToken(access_token);
+      login(access_token, rememberMe);
       navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me Google.');
@@ -44,7 +38,7 @@ const Login: React.FC = () => {
       const response = await api.post('/api/v1/auth/github', { token: idToken });
       
       const { access_token } = response.data;
-      saveToken(access_token);
+      login(access_token, rememberMe);
       navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me GitHub.');
@@ -67,7 +61,7 @@ const Login: React.FC = () => {
       });
       
       const { access_token } = response.data;
-      saveToken(access_token);
+      login(access_token, rememberMe);
       
       navigate('/profile');
     } catch (err: any) {
