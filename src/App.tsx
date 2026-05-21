@@ -5,6 +5,8 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyCode from './pages/VerifyCode';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -15,7 +17,22 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
