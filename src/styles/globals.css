@@ -43,7 +43,8 @@ a:hover {
 .mastodon-panel {
   background: var(--bg-form);
   border-radius: 4px;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.366);
+  /* box-shadow: 0 0 15px rgba(255, 255, 255, 0.366); */
+  border: 2px solid var(--border-input);
 }
 
 .mastodon-logo {
@@ -131,7 +132,7 @@ a:hover {
   width: 100%;
   max-width: 600px;
   border-radius: 4px;
-  border: 1px solid var(--border-input);
+  border: 2px solid var(--border-input);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -248,7 +249,7 @@ a:hover {
 
 .profile-tabs {
   display: flex;
-  border-bottom: 1px solid var(--border-input);
+  border-bottom: 2px solid var(--border-input);
   margin-top: 1.5rem;
 }
 
