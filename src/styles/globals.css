@@ -682,3 +682,160 @@ a:hover {
 :root.light-mode .btn-edit-profile:hover {
   background: rgba(0, 0, 0, 0.05);
 }
+
+/* Edit Profile Modal */
+.edit-profile-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-dark);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+.edit-profile-modal {
+  width: 100%;
+  max-width: 600px;
+  background: var(--bg-form);
+  min-height: 100vh;
+  border-left: 1px solid var(--border-input);
+  border-right: 1px solid var(--border-input);
+}
+
+.edit-profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-input);
+  position: sticky;
+  top: 0;
+  background: var(--bg-form);
+  z-index: 10;
+}
+
+.edit-profile-title {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.edit-profile-back {
+  background: none;
+  border: none;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.edit-profile-cover {
+  height: 200px;
+  background: #282c37;
+  position: relative;
+}
+
+.edit-profile-camera-btn {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.edit-profile-camera-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.edit-profile-avatar-container {
+  padding: 0 1rem;
+  position: relative;
+  height: 60px;
+}
+
+.edit-profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  border: 4px solid var(--bg-form);
+  background-color: var(--bg-dark);
+  position: absolute;
+  top: -60px;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-profile-section {
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid var(--border-input);
+}
+
+.edit-profile-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.edit-profile-section-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-input);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+:root.light-mode .btn-outline:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.edit-profile-section-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.edit-profile-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  color: var(--text-main);
+  padding: 0.75rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+.edit-profile-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
