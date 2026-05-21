@@ -20,7 +20,7 @@ const ForgotPassword: React.FC = () => {
       const res = await api.post('/api/v1/auth/forgot-password', { email });
       if (res.data.code) {
         window.alert(`Kodi juaj i sigurisë është: ${res.data.code}`);
-        navigate(`/reset-password?token=${res.data.code}`);
+        navigate(`/verify-code`);
       } else {
         setMessage('Nëse ky email ekziston në sistem, një link për rishkrimin e fjalëkalimit është dërguar.');
       }
