@@ -7,6 +7,10 @@ export interface UserProfile {
   email: string;
   display_name?: string;
   avatar_url?: string;
+  role: string;
+  is_active: boolean;
+  is_verified: boolean;
+  two_factor_enabled: boolean;
   tenant_id: string;
   created_at: string;
 }

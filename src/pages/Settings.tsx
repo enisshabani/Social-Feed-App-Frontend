@@ -9,7 +9,7 @@ type Tab = 'account-settings' | 'appearance' | 'posting-defaults' | 'two-factor-
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { theme, setTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState<Tab>('account-settings');
@@ -23,6 +23,16 @@ const Settings: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // 2FA state
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [twoFactorSecret, setTwoFactorSecret] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [showDisableModal, setShowDisableModal] = useState(false);
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [showRecoveryGenModal, setShowRecoveryGenModal] = useState(false);
 
   const handleDeleteAccount = async () => {
     if (window.confirm('Jeni të sigurt që dëshironi të fshini llogarinë tuaj plotësisht? Ky veprim nuk mund të anulohet!')) {
@@ -70,7 +80,63 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleSetup2FA = async () => {
+    setErrorMsg('');
+    try {
+      const response = await api.post('/api/v1/auth/2fa/setup');
+      setQrCodeUrl(response.data.qr_code_url);
+      setTwoFactorSecret(response.data.secret);
+      setShowSetupModal(true);
+      setTwoFactorCode('');
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.detail || 'Gabim gjatë inicializimit të 2FA.');
+    }
+  };
 
+  const handleEnable2FA = async () => {
+    setErrorMsg('');
+    try {
+      const response = await api.post('/api/v1/auth/2fa/enable', { code: twoFactorCode });
+      setBackupCodes(response.data.backup_codes);
+      setShowSetupModal(false);
+      setShowBackupModal(true);
+      if (user) updateUser({ ...user, two_factor_enabled: true });
+      setSuccessMsg('2FA u aktivizua me sukses!');
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.detail || 'Kodi i pasaktë.');
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    setErrorMsg('');
+    try {
+      await api.post('/api/v1/auth/2fa/disable', { code: twoFactorCode });
+      setShowDisableModal(false);
+      if (user) updateUser({ ...user, two_factor_enabled: false });
+      setSuccessMsg('2FA u çaktivizua me sukses!');
+      setTwoFactorCode('');
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.detail || 'Kodi i pasaktë.');
+    }
+  };
+
+  const handleGenerateRecovery = async () => {
+    setErrorMsg('');
+    try {
+      const response = await api.post('/api/v1/auth/2fa/recovery-codes', { code: twoFactorCode });
+      setBackupCodes(response.data.backup_codes);
+      setShowRecoveryGenModal(false);
+      setShowBackupModal(true);
+      setSuccessMsg('Kodet e reja u gjeneruan me sukses!');
+      setTwoFactorCode('');
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.detail || 'Kodi i pasaktë.');
+    }
+  };
+
+  const handleThemeToggle = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
 
   const renderSidebar = () => (
     <div className="settings-sidebar">
@@ -118,7 +184,6 @@ const Settings: React.FC = () => {
               Posting defaults
             </div>
             <div className="settings-nav-item">Email notifications</div>
-            <div className="settings-nav-item">Other</div>
           </div>
         )}
       </div>
@@ -404,37 +469,126 @@ const Settings: React.FC = () => {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div className="settings-content-header" style={{ marginBottom: 0 }}>Two-factor Auth</div>
-        <button className="settings-btn-save" style={{ width: 'auto', marginTop: 0 }}>Disable 2FA</button>
+        {user?.two_factor_enabled ? (
+          <button className="settings-btn-save" style={{ width: 'auto', marginTop: 0, backgroundColor: '#d32f2f' }} onClick={() => setShowDisableModal(true)}>Disable 2FA</button>
+        ) : (
+          <button className="settings-btn-save" style={{ width: 'auto', marginTop: 0 }} onClick={handleSetup2FA}>Enable 2FA</button>
+        )}
       </div>
 
-      <div className="settings-status-text" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        Two-factor authentication is enabled
-      </div>
+      {user?.two_factor_enabled ? (
+        <>
+          <div className="settings-status-text" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4caf50' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Two-factor authentication is enabled
+          </div>
 
-      <div className="settings-section-title" style={{ marginTop: '2rem', fontSize: '1rem', borderBottom: '1px solid #282c37', paddingBottom: '0.5rem' }}>Two-factor methods</div>
+          <div className="settings-section-title" style={{ marginTop: '2rem', fontSize: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Two-factor methods</div>
 
-      <div className="settings-2fa-box">
-        <div>Authenticator app</div>
-        <div className="settings-2fa-action">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-          Edit
+          <div className="settings-2fa-box">
+            <div>Authenticator app</div>
+            <div className="settings-2fa-action">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              Enabled
+            </div>
+          </div>
+
+          <div className="settings-section-title" style={{ marginTop: '3rem', fontSize: '1rem' }}>Backup recovery codes</div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+            Recovery codes allow you to regain access to your account if you lose your phone. If you've lost your recovery codes, you can regenerate them here. Your old recovery codes will be invalidated.
+          </p>
+
+          <button className="settings-btn-save" style={{ marginTop: 0 }} onClick={() => setShowRecoveryGenModal(true)}>Generate recovery codes</button>
+        </>
+      ) : (
+        <div className="settings-status-text" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+          Two-factor authentication is disabled. Enable it to add an extra layer of security to your account.
         </div>
-      </div>
-      <div className="settings-2fa-box">
-        <div>Security keys</div>
-        <div className="settings-2fa-action">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-          Add
+      )}
+
+      {/* MODALS */}
+      
+      {/* 1. Setup Modal */}
+      {showSetupModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="mastodon-panel" style={{ padding: '2rem', maxWidth: '400px', width: '100%', borderRadius: '8px' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-main)', marginBottom: '1rem' }}>Setup 2FA</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+              Scan the QR code with your authenticator app (e.g. Google Authenticator, Authy):
+            </p>
+            <div style={{ textAlign: 'center', marginBottom: '1rem', padding: '1rem', backgroundColor: 'white', borderRadius: '4px' }}>
+              <img src={qrCodeUrl} alt="QR Code" style={{ width: '200px', height: '200px' }} />
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem', wordBreak: 'break-all' }}>
+              Manual Key: <strong>{twoFactorSecret}</strong>
+            </p>
+            <div className="settings-input-group">
+              <label>Enter 6-digit code</label>
+              <input type="text" value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="123456" />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+              <button className="settings-btn-save" style={{ flex: 1, backgroundColor: 'var(--border-color)', color: 'var(--text-main)' }} onClick={() => setShowSetupModal(false)}>Cancel</button>
+              <button className="settings-btn-save" style={{ flex: 1 }} onClick={handleEnable2FA}>Verify & Enable</button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="settings-section-title" style={{ marginTop: '3rem', fontSize: '1rem' }}>Backup recovery codes</div>
-      <p style={{ color: '#9baec8', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
-        Recovery codes allow you to regain access to your account if you lose your phone. If you've lost your recovery codes, you can regenerate them here. Your old recovery codes will be invalidated.
-      </p>
+      {/* 2. Backup Codes Modal */}
+      {showBackupModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="mastodon-panel" style={{ padding: '2rem', maxWidth: '400px', width: '100%', borderRadius: '8px' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-main)', marginBottom: '1rem' }}>Recovery Codes</h3>
+            <p style={{ color: '#d32f2f', fontSize: '0.9rem', marginBottom: '1rem', fontWeight: 'bold' }}>
+              Please save these codes in a safe place. You will not be able to see them again!
+            </p>
+            <div style={{ backgroundColor: 'var(--bg-body)', padding: '1rem', borderRadius: '4px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontFamily: 'monospace' }}>
+              {backupCodes.map((code, idx) => (
+                <div key={idx} style={{ color: 'var(--text-main)', textAlign: 'center' }}>{code}</div>
+              ))}
+            </div>
+            <button className="settings-btn-save" style={{ width: '100%', marginTop: '1.5rem' }} onClick={() => setShowBackupModal(false)}>I have saved them</button>
+          </div>
+        </div>
+      )}
 
-      <button className="settings-btn-save" style={{ marginTop: 0 }}>Generate recovery codes</button>
+      {/* 3. Disable Modal */}
+      {showDisableModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="mastodon-panel" style={{ padding: '2rem', maxWidth: '400px', width: '100%', borderRadius: '8px' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-main)', marginBottom: '1rem' }}>Disable 2FA</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+              Enter your authenticator code or a recovery code to disable 2FA.
+            </p>
+            <div className="settings-input-group">
+              <input type="text" value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="Code" />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+              <button className="settings-btn-save" style={{ flex: 1, backgroundColor: 'var(--border-color)', color: 'var(--text-main)' }} onClick={() => setShowDisableModal(false)}>Cancel</button>
+              <button className="settings-btn-save" style={{ flex: 1, backgroundColor: '#d32f2f' }} onClick={handleDisable2FA}>Disable</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Regenerate Recovery Codes Modal */}
+      {showRecoveryGenModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="mastodon-panel" style={{ padding: '2rem', maxWidth: '400px', width: '100%', borderRadius: '8px' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-main)', marginBottom: '1rem' }}>Regenerate Recovery Codes</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+              Enter your current authenticator code to generate new recovery codes. Old ones will stop working.
+            </p>
+            <div className="settings-input-group">
+              <input type="text" value={twoFactorCode} onChange={(e) => setTwoFactorCode(e.target.value)} placeholder="Code" />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+              <button className="settings-btn-save" style={{ flex: 1, backgroundColor: 'var(--border-color)', color: 'var(--text-main)' }} onClick={() => setShowRecoveryGenModal(false)}>Cancel</button>
+              <button className="settings-btn-save" style={{ flex: 1 }} onClick={handleGenerateRecovery}>Generate</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 

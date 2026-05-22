@@ -12,6 +12,11 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
+  
+  // 2FA states
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [tempToken, setTempToken] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -21,6 +26,12 @@ const Login: React.FC = () => {
       const idToken = await result.user.getIdToken();
       
       const response = await api.post('/api/v1/auth/google', { token: idToken });
+      
+      if (response.data.requires_2fa) {
+        setRequires2FA(true);
+        setTempToken(response.data.temp_token);
+        return;
+      }
       
       const { access_token, refresh_token } = response.data;
       login(access_token, refresh_token, rememberMe);
@@ -37,11 +48,35 @@ const Login: React.FC = () => {
       
       const response = await api.post('/api/v1/auth/github', { token: idToken });
       
+      if (response.data.requires_2fa) {
+        setRequires2FA(true);
+        setTempToken(response.data.temp_token);
+        return;
+      }
+      
       const { access_token, refresh_token } = response.data;
       login(access_token, refresh_token, rememberMe);
       navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me GitHub.');
+    }
+  };
+
+  const handle2FASubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    try {
+      const response = await api.post('/api/v1/auth/login/2fa', {
+        temp_token: tempToken,
+        code: twoFactorCode
+      });
+      
+      const { access_token, refresh_token } = response.data;
+      login(access_token, refresh_token, rememberMe);
+      navigate('/profile');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Kodi nuk është i saktë.');
     }
   };
 
@@ -60,6 +95,12 @@ const Login: React.FC = () => {
         }
       });
       
+      if (response.data.requires_2fa) {
+        setRequires2FA(true);
+        setTempToken(response.data.temp_token);
+        return;
+      }
+      
       const { access_token, refresh_token } = response.data;
       login(access_token, refresh_token, rememberMe);
       
@@ -74,7 +115,48 @@ const Login: React.FC = () => {
       <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
         <div className="mastodon-logo">kaPak</div>
         
-        <form onSubmit={handleLogin}>
+        {requires2FA ? (
+          <form onSubmit={handle2FASubmit}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--text-main)' }}>
+              <h3 style={{ marginBottom: '0.5rem' }}>Verifikimi me dy Hapa</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                Ju lutem vendosni kodin 6-shifror nga aplikacioni juaj i autentikimit ose një kod emergjence.
+              </p>
+            </div>
+            
+            <div className="input-group">
+              <input 
+                type="text" 
+                id="twoFactorCode" 
+                value={twoFactorCode}
+                onChange={(e) => setTwoFactorCode(e.target.value)}
+                placeholder="Kodi (psh. 123456)" 
+                required 
+                autoFocus
+                style={{ textAlign: 'center', letterSpacing: '2px', fontSize: '1.2rem' }}
+              />
+            </div>
+            
+            {error && <div className="error-message">{error}</div>}
+            
+            <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
+              Verifiko
+            </button>
+            <button 
+              type="button" 
+              onClick={() => {
+                setRequires2FA(false);
+                setTempToken('');
+                setTwoFactorCode('');
+              }} 
+              style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+            >
+              Kthehu pas
+            </button>
+          </form>
+        ) : (
+          <>
+            <form onSubmit={handleLogin}>
           <div className="input-group">
             <input 
               type="text" 
@@ -184,6 +266,8 @@ const Login: React.FC = () => {
           <Link to="/forgot-password" style={{ color: '#6364ff' }}>Harruat fjalëkalimin?</Link>
           <Link to="/register" style={{ color: 'var(--text-muted)' }}>Nuk keni llogari? Regjistrohuni.</Link>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
