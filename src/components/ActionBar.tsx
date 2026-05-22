@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Heart, Repeat2, MessageSquare, Bookmark } from 'lucide-react';
 
 interface ActionBarProps {
-  postId: number;
   likeCount: number;
   repostCount: number;
   replyCount: number;
@@ -16,7 +15,6 @@ interface ActionBarProps {
 }
 
 const ActionBar: React.FC<ActionBarProps> = ({
-  postId,
   likeCount,
   repostCount,
   replyCount,
