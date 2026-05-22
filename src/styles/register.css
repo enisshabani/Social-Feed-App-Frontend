@@ -1,0 +1,229 @@
+/* Register Wizard Styles */
+
+.register-wizard-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Stepper */
+.wizard-stepper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+}
+
+.wizard-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  width: 33.33%;
+}
+
+.wizard-step-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--bg-dark);
+  border: 2px solid var(--border-input); /* default unselected */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.wizard-step.active .wizard-step-circle {
+  border-color: var(--primary);
+  background-color: var(--bg-dark);
+}
+
+.wizard-step.active .wizard-step-circle::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background-color: var(--primary);
+  border-radius: 50%;
+}
+
+.wizard-step.completed .wizard-step-circle {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.wizard-step-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--text-main);
+  text-align: center;
+}
+
+.wizard-step:not(.active):not(.completed) .wizard-step-label {
+  color: var(--text-muted);
+}
+
+.wizard-line {
+  position: absolute;
+  top: 12px;
+  left: 16.66%;
+  right: 16.66%;
+  height: 2px;
+  background-color: var(--border-input);
+  z-index: 1;
+}
+
+.wizard-line-progress {
+  position: absolute;
+  top: 12px;
+  left: 16.66%;
+  height: 2px;
+  background-color: var(--primary);
+  z-index: 1;
+  transition: width 0.3s ease;
+}
+
+/* Step 1: Rules */
+.rules-container {
+  margin-top: 1rem;
+}
+
+.rules-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: var(--text-main);
+}
+
+.rules-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+  line-height: 1.4;
+}
+
+.rule-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-input);
+}
+
+.rule-item:last-child {
+  border-bottom: none;
+}
+
+.rule-number {
+  background-color: var(--primary);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.rule-content {
+  flex-grow: 1;
+}
+
+.rule-title {
+  font-weight: bold;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.rule-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.wizard-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--text-muted);
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+}
+
+/* Step 2: Form Details */
+.date-inputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.date-inputs input {
+  flex: 1;
+  text-align: center;
+}
+
+.privacy-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.privacy-checkbox input[type="checkbox"] {
+  margin-top: 0.2rem;
+  accent-color: var(--primary);
+}
+
+/* Step 3: Inbox */
+.inbox-container {
+  margin-top: 2rem;
+}
+
+.inbox-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.inbox-desc {
+  font-size: 1rem;
+  color: var(--text-main);
+  line-height: 1.5;
+  margin-bottom: 2rem;
+}
+
+.inbox-link {
+  font-weight: bold;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
