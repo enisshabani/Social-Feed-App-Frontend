@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/globals.css';
 
 const ForgotPassword: React.FC = () => {
@@ -9,6 +10,7 @@ const ForgotPassword: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,12 +22,12 @@ const ForgotPassword: React.FC = () => {
       const res = await api.post('/api/v1/auth/forgot-password', { email });
       if (res.data.code) {
         window.alert(`Kodi juaj i sigurisë është: ${res.data.code}`);
-        navigate(`/reset-password?token=${res.data.code}`);
+        navigate(`/verify-code`);
       } else {
-        setMessage('Nëse ky email ekziston në sistem, një link për rishkrimin e fjalëkalimit është dërguar.');
+        setMessage(t('forgot_success_msg'));
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Ndodhi një gabim gjatë dërgimit të kërkesës. Ju lutem provoni përsëri.');
+      setError(err.response?.data?.detail || t('forgot_error_generic'));
     } finally {
       setIsLoading(false);
     }
@@ -35,7 +37,7 @@ const ForgotPassword: React.FC = () => {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
       <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
         <div className="mastodon-logo">kaPak</div>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Rikthe Fjalëkalimin</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>{t('forgot_title')}</h2>
         
         <form onSubmit={handleSubmit}>
           <div className="input-group">
@@ -44,7 +46,7 @@ const ForgotPassword: React.FC = () => {
               id="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Adresa e email-it" 
+              placeholder={t('forgot_email_placeholder')} 
               required 
             />
           </div>
@@ -53,12 +55,12 @@ const ForgotPassword: React.FC = () => {
           {message && <div style={{ color: '#4caf50', padding: '0.75rem', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '4px', marginBottom: '1rem', fontSize: '0.9rem' }}>{message}</div>}
           
           <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }} disabled={isLoading}>
-            {isLoading ? 'Duke dërguar...' : 'Dërgo Linkun'}
+            {isLoading ? t('forgot_btn_sending') : t('forgot_btn_send')}
           </button>
         </form>
         
         <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <Link to="/login" style={{ color: '#6364ff' }}>Kthehu tek Logimi</Link>
+          <Link to="/login" style={{ color: '#6364ff' }}>{t('forgot_back_login')}</Link>
         </div>
       </div>
     </div>

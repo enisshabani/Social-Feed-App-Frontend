@@ -1,0 +1,550 @@
+import React, { useState } from 'react';
+import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare } from 'lucide-react';
+import { PostService } from '../services/post.service';
+import type { Comment } from '../services/post.service';
+import ActionBar from './ActionBar';
+import { getLoggedInUser } from './SidebarLeft';
+
+interface PostItemProps {
+  post: any; // Can be Post or PostBrief
+  onPostUpdated: () => void;
+}
+
+const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
+  const currentUser = getLoggedInUser();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [updating, setUpdating] = useState(false);
+  
+  // Comments state (on-demand loading)
+  const [showComments, setShowComments] = useState(false);
+  const [commentsList, setCommentsList] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+
+  // Check if current user is the author
+  const isAuthor = currentUser && currentUser.id === post.author_id;
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editContent.trim() || editContent === post.content) {
+      setIsEditing(false);
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      await PostService.updatePost(post.id, editContent);
+      setIsEditing(false);
+      onPostUpdated();
+    } catch (err) {
+      alert('Gabim gjatë përditësimit të postimit.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('A jeni i sigurt që dëshironi ta fshini këtë postim?')) return;
+
+    try {
+      await PostService.deletePost(post.id);
+      onPostUpdated();
+    } catch (err) {
+      alert('Gabim gjatë fshirjes së postimit.');
+    }
+  };
+
+  // Toggles the comment drawer and loads comment details on-demand from backend
+  const handleCommentToggle = async () => {
+    const nextState = !showComments;
+    setShowComments(nextState);
+
+    if (nextState && commentsList.length === 0) {
+      setLoadingComments(true);
+      try {
+        const fullPost = await PostService.getPost(post.id);
+        setCommentsList(fullPost.comments || []);
+      } catch (err) {
+        console.error('Gabim gjatë marrjes së komenteve:', err);
+      } finally {
+        setLoadingComments(false);
+      }
+    }
+  };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCommentText.trim()) return;
+
+    setSubmittingComment(true);
+    try {
+      const addedComment = await PostService.addComment(post.id, newCommentText);
+      setCommentsList((prev) => [...prev, addedComment]);
+      setNewCommentText('');
+      // Notify parent to increment comment count in list view
+      onPostUpdated();
+    } catch (err) {
+      alert('Gabim gjatë shtimit të komentit.');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  // Callbacks for API action updates in ActionBar
+  const onLikeAPI = async (): Promise<boolean> => {
+    const res = await PostService.toggleLike(post.id);
+    return res.liked;
+  };
+
+  const onRepostAPI = async (): Promise<boolean> => {
+    const res = await PostService.toggleRepost(post.id);
+    return res.reposted;
+  };
+
+  const onBookmarkAPI = async (): Promise<boolean> => {
+    const res = await PostService.toggleBookmark(post.id);
+    return res.bookmarked;
+  };
+
+  // Dynamic Date Formatter
+  const formatPostDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+
+    if (diffMins < 1) return 'tani';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return date.toLocaleDateString('sq', { month: 'short', day: 'numeric' });
+  };
+
+  return (
+    <article className="post-item-wrapper">
+      {/* Repost Indicator Header */}
+      {post.is_repost && (
+        <div className="repost-indicator">
+          <span>↻ u ripostua nga @{post.author?.username || 'user'}</span>
+        </div>
+      )}
+
+      <div className="post-main-content">
+        {/* User Avatar Column */}
+        <div className="avatar-column">
+          <div className="avatar-circle">
+            <User size={20} />
+          </div>
+        </div>
+
+        {/* Text Details Column */}
+        <div className="details-column">
+          {/* Post Header Info */}
+          <header className="post-item-header">
+            <div className="author-metadata">
+              <span className="author-display-name">
+                {post.author?.display_name || post.author?.username || `User ${post.author_id}`}
+              </span>
+              <span className="author-username">@{post.author?.username || `user_${post.author_id}`}</span>
+              <span className="bullet-spacer">•</span>
+              <time className="post-time" dateTime={post.created_at}>
+                {formatPostDate(post.created_at)}
+              </time>
+              
+              {/* Visibility Badge */}
+              <span className="visibility-badge" title={`Dukshmëria: ${post.visibility}`}>
+                {post.visibility === 'public' && <Globe size={13} />}
+                {post.visibility === 'private' && <Lock size={13} />}
+                {post.visibility === 'unlisted' && <EyeOff size={13} />}
+              </span>
+            </div>
+
+            {/* Author Operations Menu */}
+            {isAuthor && !post.is_repost && (
+              <div className="author-actions">
+                <button
+                  className="btn-icon btn-action-edit"
+                  onClick={() => setIsEditing(!isEditing)}
+                  title="Ndrysho postimin"
+                >
+                  <Edit2 size={14} />
+                </button>
+                <button
+                  className="btn-icon btn-action-delete"
+                  onClick={handleDelete}
+                  title="Fshi postimin"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            )}
+          </header>
+
+          {/* Post Body Content */}
+          <div className="post-body-container">
+            {isEditing ? (
+              <form onSubmit={handleEditSubmit} className="inline-edit-form">
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="form-input inline-edit-textarea"
+                  rows={3}
+                  disabled={updating}
+                  required
+                />
+                <div className="inline-edit-buttons">
+                  <button
+                    type="button"
+                    className="btn btn-secondary edit-cancel"
+                    onClick={() => setIsEditing(false)}
+                    disabled={updating}
+                  >
+                    <X size={14} style={{ marginRight: '4px' }} /> Anulo
+                  </button>
+                  <button type="submit" className="btn btn-primary edit-save" disabled={updating}>
+                    <Check size={14} style={{ marginRight: '4px' }} /> Ruaj
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div
+                className="post-text-content"
+                dangerouslySetInnerHTML={{
+                  __html: post.content_html || post.content.replace(/(?:\r\n|\r|\n)/g, '<br/>'),
+                }}
+              />
+            )}
+          </div>
+
+          {/* Action Bar (Only visible if not currently editing) */}
+          {!isEditing && (
+            <ActionBar
+              likeCount={post.like_count || 0}
+              repostCount={post.repost_count || 0}
+              replyCount={post.reply_count || 0}
+              isLikedInitially={post.likes?.some((l: any) => l.user_id === currentUser?.id)}
+              isRepostedInitially={post.reposts?.some((r: any) => r.user_id === currentUser?.id)}
+              isBookmarkedInitially={false} // Will load bookmarked status dynamically if needed
+              onLike={onLikeAPI}
+              onRepost={onRepostAPI}
+              onBookmark={onBookmarkAPI}
+              onCommentClick={handleCommentToggle}
+            />
+          )}
+
+          {/* Interactive Comments Drawer */}
+          {showComments && (
+            <div className="comments-drawer glass-panel">
+              <h4 className="comments-title">Komentet</h4>
+
+              {/* Comments List */}
+              <div className="comments-list">
+                {loadingComments ? (
+                  <div className="comments-loading">Duke ngarkuar komentet...</div>
+                ) : commentsList.length === 0 ? (
+                  <div className="comments-empty">Nuk ka asnjë koment ende. Bëhu i pari!</div>
+                ) : (
+                  commentsList.map((comment) => (
+                    <div key={comment.id} className="comment-item">
+                      <div className="comment-avatar">
+                        <User size={14} />
+                      </div>
+                      <div className="comment-details">
+                        <div className="comment-header">
+                          <span className="comment-author">@{comment.author?.username || `user_${comment.author_id}`}</span>
+                          <span className="comment-time">• {formatPostDate(comment.created_at)}</span>
+                        </div>
+                        <div className="comment-content">{comment.content}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Add Comment Form */}
+              <form onSubmit={handleCommentSubmit} className="add-comment-form">
+                <input
+                  type="text"
+                  placeholder="Shkruaj një përgjigje..."
+                  value={newCommentText}
+                  onChange={(e) => setNewCommentText(e.target.value)}
+                  className="form-input comment-input"
+                  disabled={submittingComment}
+                  required
+                />
+                <button
+                  type="submit"
+                  className="btn btn-primary comment-submit-btn"
+                  disabled={submittingComment || !newCommentText.trim()}
+                >
+                  <MessageSquare size={14} />
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <style>{`
+        .post-item-wrapper {
+          padding: 16px 20px;
+          border-bottom: 1px solid var(--border);
+          background-color: transparent;
+          transition: background-color 0.2s ease;
+        }
+
+        .post-item-wrapper:hover {
+          background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .repost-indicator {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+          padding-left: 36px;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--repost);
+        }
+
+        .post-main-content {
+          display: flex;
+          gap: 12px;
+        }
+
+        .avatar-column {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .avatar-circle {
+          width: 44px;
+          height: 44px;
+          border-radius: var(--radius-round);
+          background-color: var(--primary-light);
+          color: var(--primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .details-column {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .post-item-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 4px;
+        }
+
+        .author-metadata {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 6px;
+          font-size: 15px;
+        }
+
+        .author-display-name {
+          font-weight: 700;
+          color: var(--text-main);
+        }
+
+        .author-username {
+          color: var(--text-dimmed);
+        }
+
+        .bullet-spacer {
+          color: var(--text-dimmed);
+        }
+
+        .post-time {
+          color: var(--text-dimmed);
+        }
+
+        .visibility-badge {
+          display: inline-flex;
+          align-items: center;
+          color: var(--text-dimmed);
+          margin-left: 2px;
+        }
+
+        .author-actions {
+          display: flex;
+          gap: 4px;
+        }
+
+        .btn-action-edit:hover {
+          color: var(--primary);
+          background-color: var(--primary-light);
+        }
+
+        .btn-action-delete:hover {
+          color: var(--error);
+          background-color: var(--error-bg);
+        }
+
+        .post-body-container {
+          margin-top: 6px;
+        }
+
+        .post-text-content {
+          font-size: 16px;
+          line-height: 1.5;
+          color: var(--text-main);
+          word-break: break-word;
+          white-space: pre-wrap;
+        }
+
+        /* Inline edit form */
+        .inline-edit-form {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 6px;
+        }
+
+        .inline-edit-textarea {
+          resize: none;
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        .inline-edit-buttons {
+          display: flex;
+          justify-content: flex-end;
+          gap: 8px;
+        }
+
+        .edit-cancel {
+          padding: 6px 14px;
+          font-size: 13px;
+        }
+
+        .edit-save {
+          padding: 6px 14px;
+          font-size: 13px;
+        }
+
+        /* Comments Drawer */
+        .comments-drawer {
+          margin-top: 16px;
+          padding: 16px;
+          border-radius: var(--radius-md);
+          background-color: rgba(255, 255, 255, 0.01);
+          border: 1px solid var(--border);
+        }
+
+        .comments-title {
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--text-muted);
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .comments-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-height: 250px;
+          overflow-y: auto;
+          margin-bottom: 14px;
+          padding-right: 4px;
+        }
+
+        .comments-loading, .comments-empty {
+          font-size: 13px;
+          color: var(--text-dimmed);
+          text-align: center;
+          padding: 12px 0;
+        }
+
+        .comment-item {
+          display: flex;
+          gap: 10px;
+          padding: 8px;
+          border-radius: var(--radius-sm);
+          background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .comment-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: var(--radius-round);
+          background-color: rgba(255, 255, 255, 0.05);
+          color: var(--text-muted);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .comment-details {
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+        }
+
+        .comment-header {
+          display: flex;
+          gap: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          margin-bottom: 2px;
+        }
+
+        .comment-author {
+          color: var(--primary);
+        }
+
+        .comment-time {
+          color: var(--text-dimmed);
+        }
+
+        .comment-content {
+          font-size: 14px;
+          color: var(--text-main);
+          line-height: 1.4;
+          word-break: break-word;
+        }
+
+        /* Comment Input box */
+        .add-comment-form {
+          display: flex;
+          gap: 8px;
+        }
+
+        .comment-input {
+          flex: 1;
+          padding: 8px 12px;
+          border-radius: 9999px;
+          font-size: 14px;
+        }
+
+        .comment-submit-btn {
+          width: 38px;
+          height: 38px;
+          border-radius: var(--radius-round);
+          padding: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      `}</style>
+    </article>
+  );
+};
+
+export default PostItem;
