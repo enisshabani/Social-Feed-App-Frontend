@@ -22,8 +22,8 @@ const Login: React.FC = () => {
       
       const response = await api.post('/api/v1/auth/google', { token: idToken });
       
-      const { access_token } = response.data;
-      login(access_token, rememberMe);
+      const { access_token, refresh_token } = response.data;
+      login(access_token, refresh_token, rememberMe);
       navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me Google.');
@@ -37,8 +37,8 @@ const Login: React.FC = () => {
       
       const response = await api.post('/api/v1/auth/github', { token: idToken });
       
-      const { access_token } = response.data;
-      login(access_token, rememberMe);
+      const { access_token, refresh_token } = response.data;
+      login(access_token, refresh_token, rememberMe);
       navigate('/profile');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me GitHub.');
@@ -60,8 +60,8 @@ const Login: React.FC = () => {
         }
       });
       
-      const { access_token } = response.data;
-      login(access_token, rememberMe);
+      const { access_token, refresh_token } = response.data;
+      login(access_token, refresh_token, rememberMe);
       
       navigate('/profile');
     } catch (err: any) {

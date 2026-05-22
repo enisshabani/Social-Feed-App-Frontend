@@ -15,7 +15,7 @@ interface AuthContextType {
   user: UserProfile | null;
   token: string | null;
   isLoading: boolean;
-  login: (token: string, rememberMe: boolean) => void;
+  login: (token: string, refreshToken: string, rememberMe: boolean) => void;
   logout: () => void;
   updateUser: (user: UserProfile | null) => void;
 }
@@ -42,6 +42,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Auto logout on invalid token
           localStorage.removeItem('token');
           sessionStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
+          sessionStorage.removeItem('refreshToken');
           setToken(null);
           setUser(null);
         }
@@ -52,11 +54,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     initializeAuth();
   }, []);
 
-  const login = (newToken: string, rememberMe: boolean) => {
+  const login = (newToken: string, newRefreshToken: string, rememberMe: boolean) => {
     if (rememberMe) {
       localStorage.setItem('token', newToken);
+      localStorage.setItem('refreshToken', newRefreshToken);
     } else {
       sessionStorage.setItem('token', newToken);
+      sessionStorage.setItem('refreshToken', newRefreshToken);
     }
     setToken(newToken);
     
@@ -73,6 +77,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('refreshToken');
     setToken(null);
     setUser(null);
   };
