@@ -1,12 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoading, updateUser } = useAuth();
+  const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState('activity');
 
@@ -61,7 +63,7 @@ const Profile: React.FC = () => {
       setSelectedFile(null);
       setPreviewUrl(null);
     } catch (err) {
-      alert('Gabim gjatë ruajtjes së profilit.');
+      alert(t('profile_error_save'));
     } finally {
       setIsSaving(false);
     }
@@ -77,7 +79,7 @@ const Profile: React.FC = () => {
   if (isLoading) {
     return (
       <div style={{ textAlign: 'center', marginTop: '5rem', color: 'var(--text-main)' }}>
-        Duke ngarkuar profilin...
+        {t('profile_loading')}
       </div>
     );
   }
@@ -128,7 +130,7 @@ const Profile: React.FC = () => {
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '4px' }}>
                     <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
                   </svg>
-                  <span>Add Photo</span>
+                  <span>{t('profile_add_photo')}</span>
                 </div>
               )}
             </div>
@@ -141,7 +143,7 @@ const Profile: React.FC = () => {
                     setIsEditing(true);
                   }}
                 >
-                  Edit profile
+                  {t('profile_edit_btn')}
                 </button>
                 <button
                   className="btn-edit-profile"
@@ -173,19 +175,19 @@ const Profile: React.FC = () => {
           <div className="profile-stats">
             <div className="stat-item">
               <span className="stat-value">0</span>
-              <span className="stat-label">Followers</span>
+              <span className="stat-label">{t('profile_followers')}</span>
             </div>
             <div className="stat-item">
               <span className="stat-value">0</span>
-              <span className="stat-label">Following</span>
+              <span className="stat-label">{t('profile_following')}</span>
             </div>
             <div className="stat-item">
               <span className="stat-value">0</span>
-              <span className="stat-label">Posts</span>
+              <span className="stat-label">{t('profile_posts')}</span>
             </div>
             <div className="stat-item">
               <span className="stat-value">{joinedYear}</span>
-              <span className="stat-label">Joined</span>
+              <span className="stat-label">{t('profile_joined')}</span>
             </div>
           </div>
 
@@ -194,36 +196,36 @@ const Profile: React.FC = () => {
               className={`profile-tab ${activeTab === 'activity' ? 'active' : ''}`}
               onClick={() => setActiveTab('activity')}
             >
-              Activity
+              {t('profile_tab_activity')}
             </div>
             <div
               className={`profile-tab ${activeTab === 'media' ? 'active' : ''}`}
               onClick={() => setActiveTab('media')}
             >
-              Media
+              {t('profile_tab_media')}
             </div>
             <div
               className={`profile-tab ${activeTab === 'featured' ? 'active' : ''}`}
               onClick={() => setActiveTab('featured')}
             >
-              Featured
+              {t('profile_tab_featured')}
             </div>
           </div>
 
           <div className="profile-feed">
             {activeTab === 'activity' && (
               <>
-                <p style={{ fontWeight: 500 }}>Posts and boosts</p>
+                <p style={{ fontWeight: 500 }}>{t('profile_activity_title')}</p>
                 <button
                   className="btn-edit-profile"
                   style={{ marginTop: '1rem', border: 'none', color: 'var(--text-muted)' }}
                 >
-                  Load more
+                  {t('profile_activity_load_more')}
                 </button>
               </>
             )}
-            {activeTab === 'media' && <p>No media to display</p>}
-            {activeTab === 'featured' && <p>No featured posts</p>}
+            {activeTab === 'media' && <p>{t('profile_media_empty')}</p>}
+            {activeTab === 'featured' && <p>{t('profile_featured_empty')}</p>}
           </div>
 
         </div>
@@ -240,7 +242,7 @@ const Profile: React.FC = () => {
                     <polyline points="12 19 5 12 12 5"></polyline>
                   </svg>
                 </button>
-                Edit Profile
+                {t('profile_edit_title')}
               </div>
               <button
                 className="btn-primary"
@@ -248,7 +250,7 @@ const Profile: React.FC = () => {
                 onClick={handleSaveProfile}
                 disabled={isSaving}
               >
-                {isSaving ? 'Saving...' : 'Done'}
+                {isSaving ? t('profile_edit_saving') : t('profile_edit_done')}
               </button>
             </div>
 
@@ -285,9 +287,9 @@ const Profile: React.FC = () => {
 
             <div className="edit-profile-section">
               <div className="edit-profile-section-header">
-                <div className="edit-profile-section-title">Display name</div>
+                <div className="edit-profile-section-title">{t('profile_edit_display_name')}</div>
                 {!showNameInput && (
-                  <button className="btn-outline" onClick={() => setShowNameInput(true)}>Add display name</button>
+                  <button className="btn-outline" onClick={() => setShowNameInput(true)}>{t('profile_edit_add_display_name')}</button>
                 )}
               </div>
               {showNameInput && (
@@ -296,19 +298,19 @@ const Profile: React.FC = () => {
                   className="edit-profile-input"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Display name"
+                  placeholder={t('profile_edit_display_name')}
                   style={{ marginBottom: '1rem' }}
                 />
               )}
               <div className="edit-profile-section-desc">
-                Your display name is how your name appears on your profile and in timelines.
+                {t('profile_edit_name_desc')}
               </div>
             </div>
             <div className="edit-profile-section">
               <div className="edit-profile-section-header">
-                <div className="edit-profile-section-title">Bio</div>
+                <div className="edit-profile-section-title">{t('profile_edit_bio')}</div>
                 {!showBioInput && (
-                  <button className="btn-outline" onClick={() => setShowBioInput(true)}>Add bio</button>
+                  <button className="btn-outline" onClick={() => setShowBioInput(true)}>{t('profile_edit_add_bio')}</button>
                 )}
               </div>
               {showBioInput && (
@@ -316,23 +318,23 @@ const Profile: React.FC = () => {
                   className="edit-profile-input"
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
-                  placeholder="Bio"
+                  placeholder={t('profile_edit_bio')}
                   rows={3}
                   style={{ marginBottom: '1rem', resize: 'vertical' }}
                 />
               )}
               <div className="edit-profile-section-desc">
-                Add a short introduction to help others identify you.
+                {t('profile_edit_bio_desc')}
               </div>
             </div>
 
             <div className="edit-profile-section">
               <div className="edit-profile-section-header">
-                <div className="edit-profile-section-title">Custom fields</div>
-                <button className="btn-outline">Add field</button>
+                <div className="edit-profile-section-title">{t('profile_edit_custom_fields')}</div>
+                <button className="btn-outline">{t('profile_edit_add_field')}</button>
               </div>
               <div className="edit-profile-section-desc">
-                Add your pronouns, external links, or anything else you'd like to share.
+                {t('profile_edit_field_desc')}
               </div>
             </div>
 

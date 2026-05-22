@@ -10,7 +10,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('sq'); // default is Albanian as requested originally, or English?
+  const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
     const savedLang = localStorage.getItem('language') as Language | null;

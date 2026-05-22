@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/globals.css';
 
 const ResetPassword: React.FC = () => {
@@ -11,6 +12,7 @@ const ResetPassword: React.FC = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get('token');
@@ -21,12 +23,12 @@ const ResetPassword: React.FC = () => {
     setMessage('');
 
     if (password !== confirmPassword) {
-      setError('Fjalëkalimet nuk përputhen!');
+      setError(t('reset_error_passmatch'));
       return;
     }
 
     if (password.length < 6) {
-      setError('Fjalëkalimi duhet të ketë të paktën 6 karaktere.');
+      setError(t('reset_error_passlength'));
       return;
     }
 
@@ -36,11 +38,11 @@ const ResetPassword: React.FC = () => {
         new_password: password
       });
 
-      setMessage('Fjalëkalimi u ndryshua me sukses! Tani mund të logoheni.');
+      setMessage(t('reset_success_msg'));
       setTimeout(() => navigate('/login'), 3000);
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { detail?: string } } };
-      const errorMsg = errorObj.response?.data?.detail || 'Gabim gjatë rinovimit të fjalëkalimit. Ndoshta linku ka skaduar.';
+      const errorMsg = errorObj.response?.data?.detail || t('reset_error_generic');
       setError(errorMsg);
     }
   };
@@ -49,13 +51,13 @@ const ResetPassword: React.FC = () => {
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
       <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
         <div className="mastodon-logo">kaPak</div>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Fjalëkalimi i Ri</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>{t('reset_title')}</h2>
 
         {!token ? (
           <div style={{ textAlign: 'center' }}>
-            <div className="error-message">Link i mbetur bosh ose i pasaktë. Kërkoni sërish një link të ri nga forma e Harruat Fjalëkalimin.</div>
+            <div className="error-message">{t('reset_error_token_empty')}</div>
             <div style={{ marginTop: '1.5rem' }}>
-              <Link to="/forgot-password" style={{ color: '#6364ff' }}>Shko te Kërkesa e Fjalëkalimit</Link>
+              <Link to="/forgot-password" style={{ color: '#6364ff' }}>{t('reset_go_forgot')}</Link>
             </div>
           </div>
         ) : (
@@ -66,7 +68,7 @@ const ResetPassword: React.FC = () => {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Fjalëkalimi i ri (min. 6 karaktere)"
+                placeholder={t('reset_pass_placeholder')}
                 required
               />
             </div>
@@ -77,7 +79,7 @@ const ResetPassword: React.FC = () => {
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Konfirmo fjalëkalimin e ri"
+                placeholder={t('reset_confirm_placeholder')}
                 required
               />
             </div>
@@ -86,7 +88,7 @@ const ResetPassword: React.FC = () => {
             {message && <div style={{ color: '#4caf50', padding: '0.75rem', background: 'rgba(76, 175, 80, 0.1)', borderRadius: '4px', marginBottom: '1rem', fontSize: '0.9rem' }}>{message}</div>}
 
             <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
-              Ruaj Fjalëkalimin
+              {t('reset_btn_save')}
             </button>
           </form>
         )}
