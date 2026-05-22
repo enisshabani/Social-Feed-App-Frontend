@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Flame, TrendingUp } from 'lucide-react';
-import { PostService, TrendingHashtag } from '../services/post.service';
+import { PostService } from '../services/post.service';
+import type { TrendingHashtag } from '../services/post.service';
 
 interface SidebarRightProps {
   onTagClick: (tagName: string) => void;
