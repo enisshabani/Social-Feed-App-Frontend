@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
@@ -19,8 +19,16 @@ const Login: React.FC = () => {
   const [tempToken, setTempToken] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const { t } = useLanguage();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('error') === 'account_disabled') {
+      setError('Kjo llogari është fshirë ose çaktivizuar. Ju lutem kontaktoni administratorin.');
+    }
+  }, [location]);
 
   const handleGoogleLogin = async () => {
     try {

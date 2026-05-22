@@ -21,6 +21,16 @@ api.interceptors.response.use((response) => {
 }, async (error) => {
   const originalRequest = error.config;
   
+  // Nëse gabimi është 403 (Forbidden), pastrojmë të dhënat dhe e dërgojmë dërgojmë në login
+  if (error.response?.status === 403) {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('refreshToken');
+    window.location.href = '/login?error=account_disabled';
+    return Promise.reject(error);
+  }
+
   // Nëse gabimi është 401 dhe nuk kemi provuar ende ta rifreskojmë
   if (error.response?.status === 401 && !originalRequest._retry) {
     // Shmangim loop-in e pafund nëse vetë endpointi /refresh kthen 401

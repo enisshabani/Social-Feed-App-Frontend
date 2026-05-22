@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/globals.css';
@@ -173,7 +173,7 @@ const Register: React.FC = () => {
 
         <label className="privacy-checkbox">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
-          <span>{t('register_privacy')} <a href="#">{t('register_privacy_link')}</a></span>
+          <span>{t('register_privacy')} <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer">{t('register_privacy_link')}</Link></span>
         </label>
 
         <button type="submit" className="btn-primary" disabled={loading}>
