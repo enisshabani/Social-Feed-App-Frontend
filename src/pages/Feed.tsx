@@ -1,177 +1,384 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getPosts, createPost, likePost, repostPost, createComment } from '../services/api';
-import '../styles/globals.css';
-
-// TODO: Enhance Feed UI and implement post editing
+import React, { useState, useEffect, useRef } from 'react';
+import { PostService } from '../services/post.service';
+import MainLayout from '../components/MainLayout';
+import CreatePostBox from '../components/CreatePostBox';
+import PostItem from '../components/PostItem';
+import { Sparkles, Bookmark, Search, RefreshCw, Hash, AlertCircle } from 'lucide-react';
 
 const Feed: React.FC = () => {
+  const [currentTab, setCurrentTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [posts, setPosts] = useState<any[]>([]);
-  const [newPostContent, setNewPostContent] = useState('');
-  const [commentContent, setCommentContent] = useState<{ [key: number]: string }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  
+  // Search & Hashtag Filtering States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Focus reference for text composing
+  const feedTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [currentTab, selectedTag, refreshKey]);
 
   const fetchPosts = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const response = await getPosts();
-      setPosts(response.data);
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        navigate('/login');
-      } else {
-        setError('Gabim gjatë marrjes së postimeve.');
+      let fetchedItems: any[] = [];
+      
+      if (selectedTag) {
+        // Tag filtering feed
+        const res = await PostService.getPostsByTag(selectedTag);
+        fetchedItems = res.items || [];
+      } else if (currentTab === 'home' || currentTab === 'explore') {
+        // Home Feed
+        const res = await PostService.getHomeFeed(0, 40);
+        fetchedItems = res.items || [];
+      } else if (currentTab === 'bookmarks') {
+        // Bookmarks Feed
+        fetchedItems = await PostService.getBookmarks(0, 40);
       }
+
+      setPosts(fetchedItems);
+    } catch (err: any) {
+      console.error(err);
+      setError('Ndodhi një gabim gjatë ngarkimit të postimeve.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPostContent.trim()) return;
-    try {
-      await createPost({ content: newPostContent });
-      setNewPostContent('');
-      fetchPosts();
-    } catch (err) {
-      alert('Gabim gjatë krijimit të postimit.');
+  const handlePostCreated = () => {
+    // Increment refresh key to trigger a feed re-fetch
+    setRefreshKey((prev) => prev + 1);
+    // Scroll to top of feed to see the new post
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleTagClick = (tagName: string) => {
+    setSelectedTag(tagName);
+    setCurrentTab('home'); // Ensure they are on Home/feed tab to see it
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleDismissTag = () => {
+    setSelectedTag(null);
+  };
+
+  const handleTabChange = (tab: 'home' | 'explore' | 'bookmarks') => {
+    setSelectedTag(null); // Clear tag filter when changing tabs
+    setCurrentTab(tab);
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleScrollToTop = () => {
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Find the textarea inside CreatePostBox and focus it
+    const textarea = document.querySelector('.post-textarea') as HTMLTextAreaElement;
+    if (textarea) {
+      textarea.focus();
     }
   };
 
-  const handleLike = async (postId: number) => {
-    try {
-      await likePost(postId);
-      fetchPosts();
-    } catch (err) {
-      alert('Gabim gjatë like.');
-    }
-  };
-
-  const handleRepost = async (postId: number) => {
-    try {
-      await repostPost(postId);
-      fetchPosts();
-    } catch (err) {
-      alert('Gabim gjatë repost.');
-    }
-  };
-
-  const handleComment = async (e: React.FormEvent, postId: number) => {
-    e.preventDefault();
-    const content = commentContent[postId];
-    if (!content || !content.trim()) return;
-
-    try {
-      await createComment(postId, { content });
-      setCommentContent({ ...commentContent, [postId]: '' });
-      fetchPosts();
-    } catch (err) {
-      alert('Gabim gjatë shtimit të komentit.');
-    }
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
+  // Real-time client-side search filter
+  const filteredPosts = posts.filter((post) => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return true;
+    
+    const contentMatch = post.content.toLowerCase().includes(query);
+    const authorMatch = post.author?.username?.toLowerCase().includes(query) ||
+                        post.author?.display_name?.toLowerCase().includes(query);
+    return contentMatch || authorMatch;
+  });
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem 1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1 style={{ color: 'var(--text-color)', margin: 0 }}>Feed</h1>
-        <button onClick={logout} className="btn-secondary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>Dalje</button>
-      </div>
+    <MainLayout
+      currentTab={currentTab}
+      setCurrentTab={handleTabChange}
+      onPostClick={handleScrollToTop}
+      onTagClick={handleTagClick}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+    >
+      <div ref={feedTopRef} />
 
-      <div className="mastodon-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-        <form onSubmit={handleCreatePost}>
-          <div className="input-group">
-            <textarea 
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder="Çfarë po mendoni?"
-              rows={3}
-              style={{ width: '100%', resize: 'none' }}
-              required 
-            />
+      {/* Sticky Glass Header */}
+      <header className="feed-header">
+        <div className="feed-header-title">
+          <h2>
+            {selectedTag ? `Hashtag: #${selectedTag}` : 
+             currentTab === 'home' ? 'Ballina' : 
+             currentTab === 'explore' ? 'Eksploro' : 'Të ruajtura'}
+          </h2>
+          <button 
+            className="btn-icon refresh-feed-btn" 
+            onClick={() => setRefreshKey(prev => prev + 1)}
+            disabled={loading}
+            title="Rifresko feed-in"
+          >
+            <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+          </button>
+        </div>
+
+        {/* Home Subtabs (Për ty, Të ndjekur) */}
+        {!selectedTag && currentTab === 'home' && (
+          <div className="feed-subtabs">
+            <button className="subtab-btn active">Për ty</button>
+            <button className="subtab-btn">Të ndjekur</button>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-            <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0.5rem 1.5rem' }}>
-              Publiko
-            </button>
+        )}
+      </header>
+
+      {/* Hashtag Filtering Banner */}
+      {selectedTag && (
+        <div className="filter-banner glass-panel">
+          <div className="filter-banner-text">
+            <Hash size={18} className="banner-hash-icon" />
+            <span>Po shfaqen postimet që përmbajnë tagun <strong>#{selectedTag}</strong></span>
           </div>
-        </form>
-      </div>
-
-      {error && <div className="error-message" style={{ marginBottom: '1rem' }}>{error}</div>}
-
-      {loading ? (
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>Duke ngarkuar...</div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {posts.length === 0 && (
-            <div className="mastodon-panel" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-              Nuk ka asnjë postim. Bëhu i pari që poston diçka!
-            </div>
-          )}
-          
-          {posts.map(post => (
-            <div key={post.id} className="mastodon-panel" style={{ padding: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span style={{ fontWeight: 'bold', color: 'var(--primary-color)' }}>
-                  User ID: {post.author_id}
-                </span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  {new Date(post.created_at).toLocaleString('sq')}
-                </span>
-              </div>
-              
-              <div style={{ margin: '1rem 0', fontSize: '1.1rem', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-                {post.content}
-              </div>
-              
-              <div style={{ display: 'flex', gap: '1rem', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', padding: '0.75rem 0', margin: '1rem 0' }}>
-                <button onClick={() => handleLike(post.id)} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, justifyContent: 'center' }}>
-                  ♥ {post.likes?.length || 0}
-                </button>
-                <button onClick={() => handleRepost(post.id)} className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, justifyContent: 'center' }}>
-                  ↻ {post.reposts?.length || 0}
-                </button>
-              </div>
-
-              {/* Komentet */}
-              <div style={{ marginTop: '1rem' }}>
-                <h4 style={{ color: 'var(--text-muted)', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Komentet ({post.comments?.length || 0})</h4>
-                
-                {post.comments?.map((comment: any) => (
-                  <div key={comment.id} style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                    <span style={{ fontWeight: 'bold', marginRight: '0.5rem', color: '#888' }}>User {comment.author_id}:</span>
-                    <span>{comment.content}</span>
-                  </div>
-                ))}
-
-                <form onSubmit={(e) => handleComment(e, post.id)} style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                  <input 
-                    type="text" 
-                    value={commentContent[post.id] || ''}
-                    onChange={(e) => setCommentContent({ ...commentContent, [post.id]: e.target.value })}
-                    placeholder="Shkruaj një koment..." 
-                    style={{ flex: 1 }}
-                  />
-                  <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '0.5rem 1rem' }}>Koment</button>
-                </form>
-              </div>
-            </div>
-          ))}
+          <button className="btn btn-secondary banner-dismiss" onClick={handleDismissTag}>
+            Shfaq të gjitha
+          </button>
         </div>
       )}
-    </div>
+
+      {/* Main Feed Content Area */}
+      <div className="feed-content-scroller">
+        {/* Create Post Area (Only on home tab and when not filtering by tag) */}
+        {currentTab === 'home' && !selectedTag && (
+          <CreatePostBox onPostCreated={handlePostCreated} />
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="error-container">
+            <AlertCircle size={18} style={{ marginRight: '8px' }} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Feed Posts List */}
+        <div className="posts-feed-list">
+          {loading ? (
+            // Premium skeleton loaders
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="post-skeleton-card">
+                <div className="skeleton-avatar skeleton"></div>
+                <div className="skeleton-details">
+                  <div className="skeleton skeleton-title" style={{ width: '40%' }}></div>
+                  <div className="skeleton skeleton-body-line" style={{ width: '90%', marginTop: '12px' }}></div>
+                  <div className="skeleton skeleton-body-line" style={{ width: '75%', marginTop: '8px' }}></div>
+                  <div className="skeleton skeleton-footer" style={{ width: '60%', marginTop: '16px' }}></div>
+                </div>
+              </div>
+            ))
+          ) : filteredPosts.length === 0 ? (
+            // Premium empty states
+            <div className="empty-feed-card glass-panel">
+              {currentTab === 'bookmarks' ? (
+                <>
+                  <Bookmark size={48} className="empty-icon text-primary" />
+                  <h3>Nuk ka asnjë postim të ruajtur</h3>
+                  <p>Klikoni ikonën e faqeshënuesit në postimet e rregullta për t'i ruajtur këtu për t'i parë më vonë.</p>
+                </>
+              ) : selectedTag ? (
+                <>
+                  <Hash size={48} className="empty-icon text-primary" />
+                  <h3>Nuk u gjet asnjë postim</h3>
+                  <p>Nuk ka postime që përmbajnë hashtagun #{selectedTag} në këtë tenant momentalisht.</p>
+                </>
+              ) : searchQuery ? (
+                <>
+                  <Search size={48} className="empty-icon text-muted" />
+                  <h3>Nuk u gjet asnjë rezultat</h3>
+                  <p>Nuk mundëm të gjenim asnjë postim që përputhet me kërkimin tuaj: "{searchQuery}". Provoni terma të tjerë.</p>
+                </>
+              ) : (
+                <>
+                  <Sparkles size={48} className="empty-icon text-primary" />
+                  <h3>Feed-i juaj është bosh</h3>
+                  <p>Bëhu i pari që ndan një mendim ose histori me komunitetin! Shkruaj diçka më lart.</p>
+                </>
+              )}
+            </div>
+          ) : (
+            // Render actual posts
+            filteredPosts.map((post) => (
+              <PostItem 
+                key={post.id} 
+                post={post} 
+                onPostUpdated={handlePostCreated} 
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      <style>{`
+        .refresh-feed-btn {
+          color: var(--primary);
+        }
+
+        .refresh-feed-btn:hover {
+          background-color: var(--primary-light);
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+
+        /* Feed Subtabs Për ty / Të ndjekur */
+        .feed-subtabs {
+          display: flex;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .subtab-btn {
+          flex: 1;
+          padding: 16px;
+          background: transparent;
+          border: none;
+          color: var(--text-muted);
+          font-weight: 600;
+          font-size: 15px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .subtab-btn:hover {
+          background-color: rgba(255, 255, 255, 0.03);
+          color: var(--text-main);
+        }
+
+        .subtab-btn.active {
+          color: var(--text-main);
+        }
+
+        .subtab-btn.active::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 56px;
+          height: 4px;
+          border-radius: 99px;
+          background-color: var(--primary);
+        }
+
+        /* Tag filtering banner */
+        .filter-banner {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 14px 20px;
+          margin: 16px;
+          border-radius: var(--radius-md);
+          background-color: var(--primary-light);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .filter-banner-text {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-size: 15px;
+          color: var(--text-main);
+        }
+
+        .banner-hash-icon {
+          color: var(--primary);
+        }
+
+        .banner-dismiss {
+          padding: 6px 14px;
+          font-size: 13px;
+          border-radius: 999px;
+        }
+
+        .feed-content-scroller {
+          padding-bottom: 100px;
+        }
+
+        /* Premium Skeleton styles */
+        .post-skeleton-card {
+          padding: 16px 20px;
+          border-bottom: 1px solid var(--border);
+          display: flex;
+          gap: 12px;
+        }
+
+        .skeleton-avatar {
+          width: 44px;
+          height: 44px;
+          border-radius: var(--radius-round);
+          flex-shrink: 0;
+        }
+
+        .skeleton-details {
+          flex: 1;
+        }
+
+        .skeleton-title {
+          height: 16px;
+          border-radius: 4px;
+        }
+
+        .skeleton-body-line {
+          height: 14px;
+          border-radius: 4px;
+        }
+
+        .skeleton-footer {
+          height: 12px;
+          border-radius: 4px;
+        }
+
+        /* Empty states styles */
+        .empty-feed-card {
+          margin: 20px;
+          padding: 40px 24px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 14px;
+          background: rgba(255, 255, 255, 0.01);
+          border: 1px dashed var(--border);
+        }
+
+        .empty-icon {
+          filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.05));
+        }
+
+        .empty-feed-card h3 {
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--text-main);
+        }
+
+        .empty-feed-card p {
+          font-size: 15px;
+          color: var(--text-dimmed);
+          max-width: 380px;
+          line-height: 1.5;
+        }
+
+        .text-primary {
+          color: var(--primary);
+        }
+      `}</style>
+    </MainLayout>
   );
 };
 
