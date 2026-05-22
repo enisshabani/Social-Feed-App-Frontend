@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/globals.css';
 import '../styles/register.css';
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const [username, setUsername] = useState('');
@@ -27,12 +29,12 @@ const Register: React.FC = () => {
     setErrorMsg('');
 
     if (password !== confirmPassword) {
-      setErrorMsg('Fjalëkalimet nuk përputhen.');
+      setErrorMsg(t('register_error_passmatch'));
       return;
     }
 
     if (!agreed) {
-      setErrorMsg('Duhet të pranoni politikat e privatësisë.');
+      setErrorMsg(t('register_error_privacy'));
       return;
     }
 
@@ -42,7 +44,7 @@ const Register: React.FC = () => {
       // Success, move to step 3
       setStep(3);
     } catch (error: any) {
-      setErrorMsg(error.response?.data?.detail || 'Gabim gjatë regjistrimit.');
+      setErrorMsg(error.response?.data?.detail || t('register_error_generic'));
     } finally {
       setLoading(false);
     }
@@ -60,55 +62,55 @@ const Register: React.FC = () => {
         <div className="wizard-step-circle">
           {step > 1 && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
         </div>
-        <div className="wizard-step-label">Accept<br/>rules</div>
+        <div className="wizard-step-label" style={{ whiteSpace: 'pre-line' }}>{t('register_stepper_1')}</div>
       </div>
       
       <div className={`wizard-step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
         <div className="wizard-step-circle">
           {step > 2 && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
         </div>
-        <div className="wizard-step-label">Your details</div>
+        <div className="wizard-step-label" style={{ whiteSpace: 'pre-line' }}>{t('register_stepper_2')}</div>
       </div>
       
       <div className={`wizard-step ${step >= 3 ? 'active' : ''}`}>
         <div className="wizard-step-circle"></div>
-        <div className="wizard-step-label">Confirm<br/>email</div>
+        <div className="wizard-step-label" style={{ whiteSpace: 'pre-line' }}>{t('register_stepper_3')}</div>
       </div>
     </div>
   );
 
   const renderStep1 = () => (
     <div className="rules-container">
-      <h1 className="rules-title">Some ground rules.</h1>
-      <p className="rules-subtitle">These are set and enforced by the kaPak moderators.</p>
+      <h1 className="rules-title">{t('register_step1_title')}</h1>
+      <p className="rules-subtitle">{t('register_step1_subtitle')}</p>
 
       <div className="rule-item">
         <div className="rule-number">1</div>
         <div className="rule-content">
-          <div className="rule-title">No harassment or doxxing of others</div>
-          <div className="rule-desc">Repeat attempts to communicate with users who have blocked you or creation of accounts solely to harass others is strictly prohibited.</div>
+          <div className="rule-title">{t('register_rule1_title')}</div>
+          <div className="rule-desc">{t('register_rule1_desc')}</div>
         </div>
       </div>
 
       <div className="rule-item">
         <div className="rule-number">2</div>
         <div className="rule-content">
-          <div className="rule-title">Do not share false and misleading information</div>
-          <div className="rule-desc">False and misleading information and links from low-quality sources may not be posted.</div>
+          <div className="rule-title">{t('register_rule2_title')}</div>
+          <div className="rule-desc">{t('register_rule2_desc')}</div>
         </div>
       </div>
 
       <div className="wizard-actions">
-        <button className="btn-primary" onClick={() => setStep(2)}>Accept</button>
-        <button className="btn-secondary" onClick={() => navigate('/login')}>Back</button>
+        <button className="btn-primary" onClick={() => setStep(2)}>{t('register_step1_accept')}</button>
+        <button className="btn-secondary" onClick={() => navigate('/login')}>{t('register_step1_back')}</button>
       </div>
     </div>
   );
 
   const renderStep2 = () => (
     <div className="rules-container">
-      <h1 className="rules-title">Let's get you set up on kaPak.</h1>
-      <p className="rules-subtitle">With an account on this server, you'll be able to follow any other person on the Fediverse.</p>
+      <h1 className="rules-title">{t('register_step2_title')}</h1>
+      <p className="rules-subtitle">{t('register_step2_subtitle')}</p>
 
       {errorMsg && (
         <div className="error-message">
@@ -118,7 +120,7 @@ const Register: React.FC = () => {
 
       <form onSubmit={handleRegister}>
         <div className="input-group">
-          <label>Username *</label>
+          <label>{t('register_username')}</label>
           <input 
             type="text" 
             value={username}
@@ -126,11 +128,11 @@ const Register: React.FC = () => {
             placeholder="@username"
             required
           />
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>You can use letters, numbers, and underscores</p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{t('register_username_hint')}</p>
         </div>
 
         <div className="input-group">
-          <label>Email address *</label>
+          <label>{t('register_email')}</label>
           <input 
             type="email" 
             value={email}
@@ -140,7 +142,7 @@ const Register: React.FC = () => {
         </div>
 
         <div className="input-group">
-          <label>Password *</label>
+          <label>{t('register_password')}</label>
           <input 
             type="password" 
             value={password}
@@ -154,14 +156,14 @@ const Register: React.FC = () => {
             type="password" 
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm password"
+            placeholder={t('register_confirm_password')}
             required
           />
         </div>
 
         <div className="input-group">
-          <label>Date of birth *</label>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>We have to make sure you're at least 16 to use kaPak. We won't store this.</p>
+          <label>{t('register_dob')}</label>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{t('register_dob_hint')}</p>
           <div className="date-inputs">
             <input type="text" placeholder="DD" value={dobDay} onChange={(e) => setDobDay(e.target.value)} maxLength={2} required />
             <input type="text" placeholder="MM" value={dobMonth} onChange={(e) => setDobMonth(e.target.value)} maxLength={2} required />
@@ -171,11 +173,11 @@ const Register: React.FC = () => {
 
         <label className="privacy-checkbox">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
-          <span>I have read and agree to the <a href="#">privacy policy</a></span>
+          <span>{t('register_privacy')} <a href="#">{t('register_privacy_link')}</a></span>
         </label>
 
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Submitting...' : 'Sign up'}
+          {loading ? t('register_submitting') : t('register_button')}
         </button>
       </form>
     </div>
@@ -183,14 +185,14 @@ const Register: React.FC = () => {
 
   const renderStep3 = () => (
     <div className="inbox-container">
-      <h1 className="inbox-title">Check your inbox</h1>
+      <h1 className="inbox-title">{t('register_step3_title')}</h1>
       <p className="inbox-desc">
-        Click the link we sent to <strong>{email}</strong> to begin using kaPak. We'll wait right here.
+        {t('register_step3_desc1')}<strong>{email}</strong>{t('register_step3_desc2')}
       </p>
       
       <div className="inbox-link">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-        Didn't get a link?
+        {t('register_step3_no_link')}
       </div>
       
       <button 
@@ -198,7 +200,7 @@ const Register: React.FC = () => {
         style={{ marginTop: '3rem' }}
         onClick={() => navigate('/login')}
       >
-        Go to Login
+        {t('register_step3_go_login')}
       </button>
     </div>
   );
