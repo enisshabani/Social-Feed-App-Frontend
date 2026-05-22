@@ -422,7 +422,7 @@ a:hover {
 .settings-input-group label {
   font-size: 0.85rem;
   font-weight: 500;
-  color: #000;
+  color: #fff;
   margin-bottom: 0.5rem;
 }
 
@@ -527,7 +527,7 @@ a:hover {
 }
 
 .settings-checkbox-title {
-  color: #fff;
+  color: #ffffff;
   font-weight: 500;
   font-size: 0.95rem;
 }
@@ -581,6 +581,19 @@ a:hover {
   --primary: #6364ff;
   --primary-hover: #5254d8;
   --danger: #f44336;
+}
+
+:root.light-mode .settings-input-group label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #000000;
+  margin-bottom: 0.5rem;
+}
+
+:root.light-mode .settings-checkbox-title {
+  color: #000000;
+  font-weight: 500;
+  font-size: 0.95rem;
 }
 
 :root.light-mode .settings-layout {

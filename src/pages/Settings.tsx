@@ -251,7 +251,7 @@ const Settings: React.FC = () => {
       <button
         className="settings-btn-save"
         onClick={handleDeactivate}
-        style={{ backgroundColor: 'transparent', padding: 0, border: '1px solid var(--danger)', color: 'var(--error)', width: 'auto', marginTop: 0 }}
+        style={{ backgroundColor: 'transparent', padding: 10, border: '1px solid var(--danger)', color: 'var(--error)', width: 'auto', marginTop: 0 }}
       >
         Delete account
       </button>
