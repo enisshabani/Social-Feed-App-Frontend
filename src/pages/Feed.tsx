@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { getPosts, createPost, likePost, repostPost, createComment } from '../services/api';
 import '../styles/globals.css';
 
+// TODO: Enhance Feed UI and implement post editing
+
 const Feed: React.FC = () => {
   const [posts, setPosts] = useState<any[]>([]);
   const [newPostContent, setNewPostContent] = useState('');
