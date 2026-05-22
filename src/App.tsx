@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -6,9 +7,9 @@ import ResetPassword from './pages/ResetPassword';
 import Feed from './pages/Feed';
 
 // Komponent për të mbrojtur rrugët që duan kyçje
-const PrivateRoute = ({ children }: { children: JSX.Element }) => {
+const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const token = localStorage.getItem('token');
-  return token ? children : <Navigate to="/login" replace />;
+  return token ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
 function App() {
