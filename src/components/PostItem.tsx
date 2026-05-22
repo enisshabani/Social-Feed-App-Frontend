@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare } from 'lucide-react';
-import { PostService, Post, Comment } from '../services/post.service';
+import { PostService } from '../services/post.service';
+import type { Comment } from '../services/post.service';
 import ActionBar from './ActionBar';
 import { getLoggedInUser } from './SidebarLeft';
 
@@ -221,7 +222,6 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
           {/* Action Bar (Only visible if not currently editing) */}
           {!isEditing && (
             <ActionBar
-              postId={post.id}
               likeCount={post.like_count || 0}
               repostCount={post.repost_count || 0}
               replyCount={post.reply_count || 0}
