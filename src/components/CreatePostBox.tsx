@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, Save, BookOpen, Globe, EyeOff, Lock, ChevronDown, Check } from 'lucide-react';
-import { PostService, Draft } from '../services/post.service';
+import { PostService } from '../services/post.service';
+import type { Draft } from '../services/post.service';
 
 interface CreatePostBoxProps {
   onPostCreated: () => void;
