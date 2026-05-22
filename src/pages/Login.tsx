@@ -129,10 +129,7 @@ const Login: React.FC = () => {
         return;
       }
       
-      const { access_token, refresh_token } = response.data;
-      login(access_token, refresh_token, rememberMe);
-      
-      navigate('/profile');
+      navigate('/feed');
     } catch (err: any) {
       setError(err.response?.data?.detail || t('login_error_generic'));
     }
