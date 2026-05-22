@@ -24,15 +24,15 @@ const Settings: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleDeactivate = async () => {
-    if (window.confirm('Jeni të sigurt që dëshironi të çaktivizoni llogarinë tuaj? Ky veprim mund të anulohet vetëm nga një administrator.')) {
+  const handleDeleteAccount = async () => {
+    if (window.confirm('Jeni të sigurt që dëshironi të fshini llogarinë tuaj plotësisht? Ky veprim nuk mund të anulohet!')) {
       try {
         await api.delete('/api/v1/users/me');
-        alert('Llogaria juaj u çaktivizua.');
+        alert('Llogaria juaj u fshi me sukses.');
         logout();
         navigate('/login');
       } catch (error: any) {
-        alert(error.response?.data?.detail || 'Gabim gjatë çaktivizimit të llogarisë.');
+        alert(error.response?.data?.detail || 'Gabim gjatë fshirjes së llogarisë.');
       }
     }
   };
@@ -250,7 +250,7 @@ const Settings: React.FC = () => {
       </p>
       <button
         className="settings-btn-save"
-        onClick={handleDeactivate}
+        onClick={handleDeleteAccount}
         style={{ backgroundColor: 'transparent', padding: 10, border: '1px solid var(--danger)', color: 'var(--error)', width: 'auto', marginTop: 0 }}
       >
         Delete account
