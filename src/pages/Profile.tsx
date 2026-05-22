@@ -6,7 +6,7 @@ import '../styles/globals.css';
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isLoading, logout, updateUser } = useAuth();
+  const { user, isLoading, updateUser } = useAuth();
 
   const [activeTab, setActiveTab] = useState('activity');
 
