@@ -13,6 +13,9 @@ const Profile: React.FC = () => {
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user?.display_name || user?.username || '');
+  const [showNameInput, setShowNameInput] = useState(!!user?.display_name);
+  const [editBio, setEditBio] = useState('');
+  const [showBioInput, setShowBioInput] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -169,43 +172,8 @@ const Profile: React.FC = () => {
             onChange={handleFileChange}
           />
 
-          {isEditing ? (
-            <div style={{ marginTop: '1rem', padding: '1.5rem', backgroundColor: 'var(--bg-dark)', borderRadius: '8px', border: '1px solid var(--border-input)' }}>
-
-              <div className="input-group" style={{ marginBottom: '1.5rem' }}>
-                <label>Emri i Profilit (Display Name)</label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Emri juaj i shfaqur"
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button
-                  className="btn-primary"
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  style={{ flex: 1, padding: '0.75rem' }}
-                >
-                  {isSaving ? 'Duke u ruajtur...' : 'Ruaj'}
-                </button>
-                <button
-                  className="btn-primary"
-                  onClick={cancelEdit}
-                  style={{ flex: 1, padding: '0.75rem', backgroundColor: 'transparent', border: '1px solid var(--text-muted)' }}
-                >
-                  Anulo
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="profile-name">{user.display_name || user.username}</div>
-              <div className="profile-username">@{user.username}@{user.tenant_id}</div>
-            </>
-          )}
+          <div className="profile-name">{user.display_name || user.username}</div>
+          <div className="profile-username">@{user.username}@{user.tenant_id}</div>
 
           <div className="profile-stats">
             <div className="stat-item">
@@ -264,24 +232,118 @@ const Profile: React.FC = () => {
           </div>
 
         </div>
-
-        {/* Logout */}
-        <div style={{ padding: '1rem', borderTop: '1px solid var(--border-input)', textAlign: 'center' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              background: 'transparent',
-              color: 'var(--error)',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 500,
-            }}
-          >
-            Logout
-          </button>
-        </div>
-
       </div>
+
+      {isEditing && (
+        <div className="edit-profile-modal-overlay">
+          <div className="edit-profile-modal">
+            <div className="edit-profile-header">
+              <div className="edit-profile-title">
+                <button className="edit-profile-back" onClick={cancelEdit}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                </button>
+                Edit Profile
+              </div>
+              <button
+                className="btn-primary"
+                style={{ width: 'auto', padding: '0.5rem 1rem', textTransform: 'none', borderRadius: '4px' }}
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Done'}
+              </button>
+            </div>
+
+            <div className="edit-profile-cover">
+              <div className="edit-profile-camera-btn" style={{ top: '1rem', right: '1rem' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+            </div>
+
+            <div className="edit-profile-avatar-container">
+              <div className="edit-profile-avatar">
+                {currentAvatar ? (
+                  <img src={currentAvatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                ) : (
+                  <svg width="80" height="80" viewBox="0 0 24 24" fill="var(--text-muted)" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                  </svg>
+                )}
+                <div
+                  className="edit-profile-camera-btn"
+                  style={{ bottom: '-10px', right: '-10px' }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="edit-profile-section">
+              <div className="edit-profile-section-header">
+                <div className="edit-profile-section-title">Display name</div>
+                {!showNameInput && (
+                  <button className="btn-outline" onClick={() => setShowNameInput(true)}>Add display name</button>
+                )}
+              </div>
+              {showNameInput && (
+                <input
+                  type="text"
+                  className="edit-profile-input"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Display name"
+                  style={{ marginBottom: '1rem' }}
+                />
+              )}
+              <div className="edit-profile-section-desc">
+                Your display name is how your name appears on your profile and in timelines.
+              </div>
+            </div>
+            <div className="edit-profile-section">
+              <div className="edit-profile-section-header">
+                <div className="edit-profile-section-title">Bio</div>
+                {!showBioInput && (
+                  <button className="btn-outline" onClick={() => setShowBioInput(true)}>Add bio</button>
+                )}
+              </div>
+              {showBioInput && (
+                <textarea
+                  className="edit-profile-input"
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  placeholder="Bio"
+                  rows={3}
+                  style={{ marginBottom: '1rem', resize: 'vertical' }}
+                />
+              )}
+              <div className="edit-profile-section-desc">
+                Add a short introduction to help others identify you.
+              </div>
+            </div>
+
+            <div className="edit-profile-section">
+              <div className="edit-profile-section-header">
+                <div className="edit-profile-section-title">Custom fields</div>
+                <button className="btn-outline">Add field</button>
+              </div>
+              <div className="edit-profile-section-desc">
+                Add your pronouns, external links, or anything else you'd like to share.
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 };

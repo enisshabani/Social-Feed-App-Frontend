@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
@@ -8,9 +8,10 @@ import '../styles/globals.css';
 type Tab = 'account-settings' | 'appearance' | 'posting-defaults' | 'two-factor-auth';
 
 const Settings: React.FC = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  
+
   const [activeTab, setActiveTab] = useState<Tab>('account-settings');
   const [isPreferencesOpen, setIsPreferencesOpen] = useState(true);
   const [isAccountOpen, setIsAccountOpen] = useState(true);
@@ -22,6 +23,19 @@ const Settings: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const handleDeactivate = async () => {
+    if (window.confirm('Jeni të sigurt që dëshironi të çaktivizoni llogarinë tuaj? Ky veprim mund të anulohet vetëm nga një administrator.')) {
+      try {
+        await api.delete('/api/v1/users/me');
+        alert('Llogaria juaj u çaktivizua.');
+        logout();
+        navigate('/login');
+      } catch (error: any) {
+        alert(error.response?.data?.detail || 'Gabim gjatë çaktivizimit të llogarisë.');
+      }
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +58,7 @@ const Settings: React.FC = () => {
         current_password: currentPassword,
         new_password: newPassword
       });
-      
+
       setSuccessMsg('Fjalëkalimi u ndryshua me sukses!');
       setCurrentPassword('');
       setNewPassword('');
@@ -74,15 +88,15 @@ const Settings: React.FC = () => {
       </Link>
 
       <div className="settings-nav-group">
-        <div 
-          className="settings-nav-title" 
+        <div
+          className="settings-nav-title"
           onClick={() => setIsPreferencesOpen(!isPreferencesOpen)}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             Preferences
           </div>
-          <svg 
+          <svg
             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: isPreferencesOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
           >
@@ -91,13 +105,13 @@ const Settings: React.FC = () => {
         </div>
         {isPreferencesOpen && (
           <div className="settings-subnav">
-            <div 
+            <div
               className={`settings-nav-item ${activeTab === 'appearance' ? 'active' : ''}`}
               onClick={() => setActiveTab('appearance')}
             >
               Appearance
             </div>
-            <div 
+            <div
               className={`settings-nav-item ${activeTab === 'posting-defaults' ? 'active' : ''}`}
               onClick={() => setActiveTab('posting-defaults')}
             >
@@ -112,7 +126,7 @@ const Settings: React.FC = () => {
 
 
       <div className="settings-nav-group">
-        <div 
+        <div
           className="settings-nav-title"
           onClick={() => setIsAccountOpen(!isAccountOpen)}
         >
@@ -120,7 +134,7 @@ const Settings: React.FC = () => {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             Account
           </div>
-          <svg 
+          <svg
             width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: isAccountOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
           >
@@ -129,13 +143,13 @@ const Settings: React.FC = () => {
         </div>
         {isAccountOpen && (
           <div className="settings-subnav">
-            <div 
+            <div
               className={`settings-nav-item ${activeTab === 'account-settings' ? 'active' : ''}`}
               onClick={() => setActiveTab('account-settings')}
             >
               Account settings
             </div>
-            <div 
+            <div
               className={`settings-nav-item ${activeTab === 'two-factor-auth' ? 'active' : ''}`}
               onClick={() => setActiveTab('two-factor-auth')}
             >
@@ -145,18 +159,36 @@ const Settings: React.FC = () => {
           </div>
         )}
       </div>
+
+      <div style={{ marginTop: 'auto', color: 'var(--error)', paddingTop: '1rem', borderTop: '1px solid var(--border-input)' }}>
+        <div
+          className="settings-nav-item"
+          style={{ color: 'var(--danger)' }}
+          onClick={() => {
+            logout();
+            navigate('/login');
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '10px' }}>
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Logout
+        </div>
+      </div>
     </div>
   );
 
   const renderAccountSettings = () => (
     <>
       <div className="settings-content-header">Account settings</div>
-      
+
       <div className="settings-section-title">Account status</div>
       <div className="settings-status-text">Your account is fully operational.</div>
 
       <div className="settings-section-title">Security</div>
-      
+
       {successMsg && (
         <div style={{ padding: '1rem', backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', borderRadius: '4px', marginBottom: '1rem', border: '1px solid #4CAF50' }}>
           {successMsg}
@@ -178,11 +210,11 @@ const Settings: React.FC = () => {
           </div>
           <div className="settings-input-group">
             <label>Current password <span>*</span></label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              required 
+              required
             />
           </div>
         </div>
@@ -190,8 +222,8 @@ const Settings: React.FC = () => {
         <div className="settings-form-row">
           <div className="settings-input-group">
             <label>New password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
@@ -199,8 +231,8 @@ const Settings: React.FC = () => {
           </div>
           <div className="settings-input-group">
             <label>Confirm new password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
@@ -211,6 +243,18 @@ const Settings: React.FC = () => {
           {loading ? 'Saving...' : 'Save changes'}
         </button>
       </form>
+
+      <div className="settings-section-title" style={{ marginTop: '3rem', color: 'var(--danger)' }}>Delete account</div>
+      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+        Permanently delete your account and all associated data. This action cannot be undone.
+      </p>
+      <button
+        className="settings-btn-save"
+        onClick={handleDeactivate}
+        style={{ backgroundColor: 'transparent', padding: 0, border: '1px solid var(--danger)', color: 'var(--error)', width: 'auto', marginTop: 0 }}
+      >
+        Delete account
+      </button>
     </>
   );
 
@@ -242,19 +286,19 @@ const Settings: React.FC = () => {
         <label>Color scheme</label>
         <div className="settings-radio-group">
           <label className="settings-radio-label">
-            <input 
-              type="radio" 
-              name="color-scheme" 
-              checked={theme === 'dark'} 
-              onChange={() => setTheme('dark')} 
+            <input
+              type="radio"
+              name="color-scheme"
+              checked={theme === 'dark'}
+              onChange={() => setTheme('dark')}
             /> Dark (Default)
           </label>
           <label className="settings-radio-label">
-            <input 
-              type="radio" 
-              name="color-scheme" 
-              checked={theme === 'light'} 
-              onChange={() => setTheme('light')} 
+            <input
+              type="radio"
+              name="color-scheme"
+              checked={theme === 'light'}
+              onChange={() => setTheme('light')}
             /> Light
           </label>
         </div>
@@ -283,7 +327,7 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="settings-section-title" style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: '#9baec8' }}>Animations and Accessibility</div>
-      
+
       <div className="settings-checkbox-list">
         <div className="settings-checkbox-item">
           <input type="checkbox" id="slow-mode" />
@@ -369,7 +413,7 @@ const Settings: React.FC = () => {
       </div>
 
       <div className="settings-section-title" style={{ marginTop: '2rem', fontSize: '1rem', borderBottom: '1px solid #282c37', paddingBottom: '0.5rem' }}>Two-factor methods</div>
-      
+
       <div className="settings-2fa-box">
         <div>Authenticator app</div>
         <div className="settings-2fa-action">
@@ -397,7 +441,7 @@ const Settings: React.FC = () => {
   return (
     <div className="settings-layout">
       {renderSidebar()}
-      
+
       <div className="settings-content-wrapper">
         {activeTab === 'account-settings' && renderAccountSettings()}
         {activeTab === 'appearance' && renderAppearance()}
