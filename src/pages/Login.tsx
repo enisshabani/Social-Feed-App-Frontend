@@ -35,7 +35,11 @@ const Login: React.FC = () => {
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
       
-      const response = await api.post('/api/v1/auth/google', { token: idToken });
+      const trustedDeviceToken = localStorage.getItem('trustedDeviceToken');
+      const response = await api.post('/api/v1/auth/google', { 
+        token: idToken,
+        trusted_device_token: trustedDeviceToken
+      });
       
       if (response.data.requires_2fa) {
         setRequires2FA(true);
@@ -56,7 +60,11 @@ const Login: React.FC = () => {
       const result = await signInWithPopup(auth, githubProvider);
       const idToken = await result.user.getIdToken();
       
-      const response = await api.post('/api/v1/auth/github', { token: idToken });
+      const trustedDeviceToken = localStorage.getItem('trustedDeviceToken');
+      const response = await api.post('/api/v1/auth/github', { 
+        token: idToken,
+        trusted_device_token: trustedDeviceToken
+      });
       
       if (response.data.requires_2fa) {
         setRequires2FA(true);
@@ -79,8 +87,13 @@ const Login: React.FC = () => {
     try {
       const response = await api.post('/api/v1/auth/login/2fa', {
         temp_token: tempToken,
-        code: twoFactorCode
+        code: twoFactorCode,
+        remember_device: rememberMe
       });
+      
+      if (response.data.trusted_device_token) {
+        localStorage.setItem('trustedDeviceToken', response.data.trusted_device_token);
+      }
       
       const { access_token, refresh_token } = response.data;
       login(access_token, refresh_token, rememberMe);
@@ -98,6 +111,11 @@ const Login: React.FC = () => {
       const formData = new URLSearchParams();
       formData.append('username', email);
       formData.append('password', password);
+      
+      const trustedDeviceToken = localStorage.getItem('trustedDeviceToken');
+      if (trustedDeviceToken) {
+        formData.append('trusted_device_token', trustedDeviceToken);
+      }
 
       const response = await api.post('/api/v1/auth/login', formData, {
         headers: {
@@ -111,10 +129,7 @@ const Login: React.FC = () => {
         return;
       }
       
-      const { access_token, refresh_token } = response.data;
-      login(access_token, refresh_token, rememberMe);
-      
-      navigate('/profile');
+      navigate('/feed');
     } catch (err: any) {
       setError(err.response?.data?.detail || t('login_error_generic'));
     }
