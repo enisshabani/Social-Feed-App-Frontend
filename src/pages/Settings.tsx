@@ -21,7 +21,6 @@ const Settings: React.FC = () => {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [themeState, setThemeState] = useState<'light' | 'dark'>('dark');
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -357,16 +356,16 @@ const Settings: React.FC = () => {
             <input
               type="radio"
               name="color-scheme"
-              checked={themeState === 'dark'}
-              onChange={() => setThemeState('dark')}
+              checked={theme === 'dark'}
+              onChange={() => setTheme('dark')}
             /> {t('settings_app_theme_dark')}
           </label>
           <label className="settings-radio-label">
             <input
               type="radio"
               name="color-scheme"
-              checked={themeState === 'light'}
-              onChange={() => setThemeState('light')}
+              checked={theme === 'light'}
+              onChange={() => setTheme('light')}
             /> {t('settings_app_theme_light')}
           </label>
         </div>
