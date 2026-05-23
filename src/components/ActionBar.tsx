@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Repeat2, MessageSquare, Bookmark } from 'lucide-react';
+import { Star, Repeat2, MessageSquare, Bookmark } from 'lucide-react';
 
 interface ActionBarProps {
   likeCount: number;
@@ -106,7 +106,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
         title="Pëlqe"
       >
         <div className={`icon-wrapper ${likePulse ? 'pulse-active' : ''}`}>
-          <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
+          <Star size={18} fill={liked ? 'currentColor' : 'none'} />
         </div>
         <span className="action-count">{likes}</span>
       </button>

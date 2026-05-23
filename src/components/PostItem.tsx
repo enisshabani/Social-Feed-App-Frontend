@@ -4,7 +4,6 @@ import { PostService } from '../services/post.service';
 import type { Comment } from '../services/post.service';
 import ActionBar from './ActionBar';
 import { getLoggedInUser } from './SidebarLeft';
-import { FollowButton } from '../modules/follows/components/FollowButton';
 
 interface PostItemProps {
   post: any; // Can be Post or PostBrief
@@ -24,8 +23,28 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
   const [newCommentText, setNewCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
 
-  // Check if current user is the author
-  const isAuthor = currentUser && currentUser.id === post.author_id;
+  // Content Warning Expanded state
+  const [cwExpanded, setCwExpanded] = useState(false);
+
+  // Check if current user is the author (safely convert both to string)
+  const isAuthor = currentUser && String(currentUser.id) === String(post.author_id);
+
+  // CW parsing
+  const cwRegex = /^CW:\s*(.*?)\s*\n\n---\n\n([\s\S]*)$/;
+  const hasCW = post.content && cwRegex.test(post.content);
+  let spoilerText = '';
+  let bodyHtml = '';
+
+  if (hasCW) {
+    const match = post.content.match(cwRegex);
+    spoilerText = match ? match[1] : '';
+    if (post.content_html) {
+      const htmlParts = post.content_html.split(/<br\s*\/?>\s*<br\s*\/?>\s*---\s*<br\s*\/?>\s*<br\s*\/?>/i);
+      bodyHtml = htmlParts.length > 1 ? htmlParts.slice(1).join('<br/><br/>---<br/><br/>') : post.content_html;
+    } else {
+      bodyHtml = post.content.replace(/(?:\r\n|\r|\n)/g, '<br/>');
+    }
+  }
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +143,8 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
     return date.toLocaleDateString('sq', { month: 'short', day: 'numeric' });
   };
 
+  const authorInitial = post.author?.username ? post.author.username.charAt(0).toUpperCase() : 'U';
+
   return (
     <article className="post-item-wrapper">
       {/* Repost Indicator Header */}
@@ -136,9 +157,32 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
       <div className="post-main-content">
         {/* User Avatar Column */}
         <div className="avatar-column">
-          <div className="avatar-circle">
-            <User size={20} />
-          </div>
+          {post.author?.avatar_url ? (
+            <img
+              src={post.author.avatar_url}
+              alt={post.author.username}
+              className="avatar"
+              style={{ borderRadius: '4px', width: '44px', height: '44px' }}
+            />
+          ) : (
+            <div
+              className="avatar-circle"
+              style={{
+                borderRadius: '4px',
+                width: '44px',
+                height: '44px',
+                backgroundColor: 'var(--primary-light)',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                border: '1px solid rgba(99, 100, 255, 0.2)'
+              }}
+            >
+              {authorInitial}
+            </div>
+          )}
         </div>
 
         {/* Text Details Column */}
@@ -163,8 +207,8 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
               </span>
             </div>
 
-            {/* Author Operations Menu */}
-            {isAuthor && !post.is_repost ? (
+            {/* Author Operations — only show edit/delete on own posts */}
+            {isAuthor && !post.is_repost && (
               <div className="author-actions">
                 <button
                   className="btn-icon btn-action-edit"
@@ -181,9 +225,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
                   <Trash2 size={14} />
                 </button>
               </div>
-            ) : !isAuthor && post.author_id ? (
-              <FollowButton userId={post.author_id} />
-            ) : null}
+            )}
           </header>
 
           {/* Post Body Content */}
@@ -212,6 +254,27 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
                   </button>
                 </div>
               </form>
+            ) : hasCW ? (
+              <div className="cw-post-container">
+                <div className="cw-alert-banner">
+                  <div className="cw-alert-text">
+                    <span>⚠️ Spoiler: {spoilerText}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-cw-toggle"
+                    onClick={() => setCwExpanded(!cwExpanded)}
+                  >
+                    {cwExpanded ? 'Fshih' : 'Trego më shumë'}
+                  </button>
+                </div>
+                <div className={cwExpanded ? 'cw-expanded-content' : 'cw-collapsed-content'}>
+                  <div
+                    className="post-text-content"
+                    dangerouslySetInnerHTML={{ __html: bodyHtml }}
+                  />
+                </div>
+              </div>
             ) : (
               <div
                 className="post-text-content"
@@ -322,18 +385,6 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
         .avatar-column {
           display: flex;
           flex-direction: column;
-        }
-
-        .avatar-circle {
-          width: 44px;
-          height: 44px;
-          border-radius: var(--radius-round);
-          background-color: var(--primary-light);
-          color: var(--primary);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border: 1px solid rgba(59, 130, 246, 0.2);
         }
 
         .details-column {

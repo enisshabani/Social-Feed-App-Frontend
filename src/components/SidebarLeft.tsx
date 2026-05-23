@@ -83,7 +83,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
       <div className="sidebar-left-content">
         {/* App Logo */}
         <div className="sidebar-logo" onClick={() => setCurrentTab('home')}>
-          <span className="mastodon-logo" style={{ marginBottom: 0, padding: 0, textAlign: 'left', fontSize: '2.5rem' }}>kaPak</span>
+          <span className="mastodon-logo" style={{ marginBottom: 0, padding: 0, textAlign: 'left', fontSize: '1.8rem', color: 'var(--text-main)' }}>kaPak</span>
         </div>
 
         {/* Navigation Tabs */}
@@ -104,13 +104,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
           })}
         </nav>
 
-        {/* CTA Post Button */}
-        {onPostClick && (
-          <button className="btn btn-primary cta-post-btn" onClick={onPostClick}>
-            <span className="cta-btn-text">Posto</span>
-            <Sparkles size={20} className="cta-btn-icon" />
-          </button>
-        )}
+
 
         {/* Profile Link */}
         <button
@@ -158,6 +152,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
           flex-direction: column;
           justify-content: space-between;
           border-right: none;
+          background-color: var(--bg-app);
         }
 
         .sidebar-left-content {

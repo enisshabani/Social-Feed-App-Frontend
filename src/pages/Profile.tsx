@@ -5,6 +5,9 @@ import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 import MainLayout from '../components/MainLayout';
 import { getFollowCounts } from '../modules/follows/api/followsApi';
+import { PostService } from '../services/post.service';
+import PostItem from '../components/PostItem';
+import { AlertCircle } from 'lucide-react';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
@@ -16,6 +19,10 @@ const Profile: React.FC = () => {
   const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [followCounts, setFollowCounts] = useState({ followers_count: 0, following_count: 0 });
+
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [postsError, setPostsError] = useState('');
 
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
@@ -34,8 +41,24 @@ const Profile: React.FC = () => {
       getFollowCounts(user.id)
         .then(data => setFollowCounts(data))
         .catch(() => {});
+        
+      fetchUserPosts(user.id);
     }
   }, [user?.id]);
+
+  const fetchUserPosts = async (userId: number) => {
+    setLoadingPosts(true);
+    setPostsError('');
+    try {
+      const response = await PostService.getUserTimeline(userId, 0, 40);
+      setPosts(response.items || []);
+    } catch (err: any) {
+      console.error(err);
+      setPostsError('Gabim gjatë ngarkimit të postimeve.');
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -248,15 +271,53 @@ const Profile: React.FC = () => {
 
           <div className="profile-feed">
             {activeTab === 'activity' && (
-              <>
-                <p style={{ fontWeight: 500 }}>{t('profile_activity_title')}</p>
-                <button
-                  className="btn-edit-profile"
-                  style={{ marginTop: '1rem', border: 'none', color: 'var(--text-muted)' }}
-                >
-                  {t('profile_activity_load_more')}
-                </button>
-              </>
+              <div style={{ width: '100%' }}>
+                {loadingPosts ? (
+                  <div style={{ width: '100%', padding: '0 1rem' }}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="post-skeleton-card" style={{ width: '100%', borderBottom: '1px solid var(--border)' }}>
+                        <div className="skeleton-avatar skeleton"></div>
+                        <div className="skeleton-details">
+                          <div className="skeleton skeleton-title" style={{ width: '40%' }}></div>
+                          <div className="skeleton skeleton-body-line" style={{ width: '90%', marginTop: '12px' }}></div>
+                          <div className="skeleton skeleton-body-line" style={{ width: '75%', marginTop: '8px' }}></div>
+                          <div className="skeleton skeleton-footer" style={{ width: '60%', marginTop: '16px' }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : postsError ? (
+                  <div className="error-container">
+                    <AlertCircle size={18} style={{ marginRight: '8px' }} />
+                    <span>{postsError}</span>
+                  </div>
+                ) : posts.length === 0 ? (
+                   <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+                     <p style={{ fontWeight: 600, fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Asnjë postim ende</p>
+                     <p style={{ fontSize: '0.95rem' }}>Kur ky përdorues të postojë diçka, do të shfaqet këtu.</p>
+                   </div>
+                ) : (
+                  <div className="posts-feed-list" style={{ width: '100%' }}>
+                    {posts.map(post => (
+                      <PostItem 
+                        key={post.id} 
+                        post={post} 
+                        onPostUpdated={() => {
+                          if (user) fetchUserPosts(user.id);
+                        }} 
+                      />
+                    ))}
+                  </div>
+                )}
+                {posts.length > 0 && !loadingPosts && (
+                  <button
+                    className="btn-edit-profile"
+                    style={{ margin: '1rem auto', display: 'block', border: 'none', color: 'var(--text-muted)' }}
+                  >
+                    {t('profile_activity_load_more')}
+                  </button>
+                )}
+              </div>
             )}
             {activeTab === 'media' && <p>{t('profile_media_empty')}</p>}
             {activeTab === 'featured' && <p>{t('profile_featured_empty')}</p>}

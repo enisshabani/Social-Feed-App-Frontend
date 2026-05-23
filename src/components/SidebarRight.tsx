@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Flame, TrendingUp } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import type { TrendingHashtag } from '../services/post.service';
+import CreatePostBox from './CreatePostBox';
+import { getLoggedInUser } from './SidebarLeft';
 
 interface SidebarRightProps {
   searchQuery: string;
@@ -23,6 +25,8 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
   useEffect(() => {
     fetchTrendingTags();
   }, []);
+
+  const currentUser = getLoggedInUser();
 
   const fetchTrendingTags = async () => {
     try {
@@ -63,8 +67,26 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
         </div>
       </div>
 
+      {/* Profile Card */}
+      {currentUser && (
+        <div className="mastodon-profile-card">
+          <div className="profile-card-header">
+            <div className="profile-card-avatar">
+              {currentUser.username.charAt(0).toUpperCase()}
+            </div>
+            <div className="profile-card-info">
+              <div className="profile-card-name">@{currentUser.username}</div>
+              <div className="profile-card-handle">@{currentUser.username}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Composer Box */}
+      <CreatePostBox onPostCreated={() => {}} />
+
       {/* Trending Box */}
-      <div className="glass-panel trending-box">
+      <div className="trending-box">
         <div className="trending-header">
           <Flame size={20} className="trending-icon" />
           <h3>Çfarë po ndodh</h3>
@@ -122,18 +144,26 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
           position: sticky;
           top: 0;
           height: 100vh;
-          padding: 16px 20px;
+          padding: 16px 12px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 16px;
+          overflow-y: auto;
+          scrollbar-width: none;
+          background-color: var(--bg-app);
+        }
+
+        .sidebar-right::-webkit-scrollbar {
+          display: none;
         }
 
         .search-bar-wrapper {
           position: sticky;
           top: 0;
           background-color: var(--bg-app);
-          padding: 4px 0 12px 0;
+          padding: 8px 0;
           z-index: 5;
+          flex-shrink: 0;
         }
 
         .search-input-container {
@@ -153,13 +183,55 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
         .search-input {
           width: 100%;
           padding: 12px 16px 12px 48px;
-          background-color: rgba(255, 255, 255, 0.04);
+          background-color: var(--bg-form);
           border: 1px solid transparent;
           border-radius: 9999px;
           color: var(--text-main);
           font-size: 15px;
           outline: none;
           transition: all 0.2s ease;
+        }
+
+        .mastodon-profile-card {
+          background-color: var(--bg-form);
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border);
+          padding: 16px;
+        }
+
+        .profile-card-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .profile-card-avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: var(--radius-sm);
+          background-color: var(--primary-light);
+          color: var(--primary);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          font-weight: 700;
+        }
+
+        .profile-card-info {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .profile-card-name {
+          font-weight: 700;
+          font-size: 15px;
+          color: var(--text-main);
+        }
+
+        .profile-card-handle {
+          font-size: 14px;
+          color: var(--text-dimmed);
         }
 
         .search-input:focus {
@@ -173,7 +245,9 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
         }
 
         .trending-box {
+          background-color: var(--bg-form);
           border-radius: var(--radius-md);
+          border: 1px solid var(--border);
           overflow: hidden;
         }
 
@@ -186,8 +260,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
         }
 
         .trending-icon {
-          color: #ff9f43;
-          filter: drop-shadow(0 0 6px rgba(255, 159, 67, 0.4));
+          color: var(--text-main);
         }
 
         .trending-header h3 {
