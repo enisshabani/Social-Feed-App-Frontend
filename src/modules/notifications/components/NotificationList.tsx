@@ -24,7 +24,7 @@ export const NotificationList: React.FC = () => {
       }}>
         <h3 style={{ margin: 0, fontSize: '16px', color: '#333' }}>Notifications</h3>
         {unreadCount > 0 && (
-          <button 
+          <button
             onClick={() => markAllAsReadBulk()}
             style={{
               background: 'none',

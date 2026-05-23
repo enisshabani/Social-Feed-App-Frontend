@@ -21,11 +21,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 }) => {
   return (
     <div className="app-container">
-      {/* Left Navigation Sidebar */}
-      <SidebarLeft
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        onPostClick={onPostClick}
+      {/* Left Search & Compose Sidebar (previously SidebarRight) */}
+      <SidebarRight
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
       />
 
       {/* Center Feed Component */}
@@ -33,10 +32,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         {children}
       </main>
 
-      {/* Right Search & Trends Sidebar */}
-      <SidebarRight
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
+      {/* Right Navigation Sidebar (previously SidebarLeft) */}
+      <SidebarLeft
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        onPostClick={onPostClick}
       />
     </div>
   );

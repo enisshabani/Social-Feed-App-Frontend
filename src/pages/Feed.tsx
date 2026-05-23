@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PostService } from '../services/post.service';
 import MainLayout from '../components/MainLayout';
-import CreatePostBox from '../components/CreatePostBox';
+
 import PostItem from '../components/PostItem';
 import { Sparkles, Bookmark, Search, RefreshCw, Hash, AlertCircle } from 'lucide-react';
+import { getFollowing } from '../modules/follows/api/followsApi';
+import { getLoggedInUser } from '../components/SidebarLeft';
 
 const Feed: React.FC = () => {
+  const currentUser = getLoggedInUser();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as 'home' | 'explore' | 'bookmarks') || 'home';
   const [currentTab, setCurrentTab] = useState<'home' | 'explore' | 'bookmarks'>(initialTab);
@@ -18,6 +21,10 @@ const Feed: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Home Sub-tabs: 'forYou' (all posts) or 'following' (posts from users we follow)
+  const [homeSubTab, setHomeSubTab] = useState<'forYou' | 'following'>('forYou');
+  const [followingIds, setFollowingIds] = useState<Set<number>>(new Set());
 
   // Focus reference for text composing
   const feedTopRef = useRef<HTMLDivElement>(null);
@@ -37,6 +44,31 @@ const Feed: React.FC = () => {
   useEffect(() => {
     fetchPosts();
   }, [currentTab, selectedTag, refreshKey]);
+
+  useEffect(() => {
+    const loadFollowingList = async () => {
+      if (currentUser?.id) {
+        try {
+          const list = await getFollowing(currentUser.id, 0, 1000);
+          const ids = new Set(list.map(item => item.followee_id));
+          setFollowingIds(ids);
+        } catch (e) {
+          console.error("Failed to load following IDs", e);
+        }
+      }
+    };
+    loadFollowingList();
+
+    const handleGlobalPostCreated = () => {
+      setRefreshKey((prev) => prev + 1);
+      feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.addEventListener('postCreated', handleGlobalPostCreated);
+    return () => {
+      window.removeEventListener('postCreated', handleGlobalPostCreated);
+    };
+  }, [refreshKey, currentUser?.id]);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -89,6 +121,13 @@ const Feed: React.FC = () => {
 
   // Real-time client-side search filter
   const filteredPosts = posts.filter((post) => {
+    // Local subtab filtering for "Të ndjekur"
+    if (!selectedTag && currentTab === 'home' && homeSubTab === 'following') {
+      const isSelf = currentUser && post.author_id === currentUser.id;
+      const isFollowed = followingIds.has(post.author_id);
+      if (!isSelf && !isFollowed) return false;
+    }
+
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
     
@@ -129,8 +168,18 @@ const Feed: React.FC = () => {
         {/* Home Subtabs (Për ty, Të ndjekur) */}
         {!selectedTag && currentTab === 'home' && (
           <div className="feed-subtabs">
-            <button className="subtab-btn active">Për ty</button>
-            <button className="subtab-btn">Të ndjekur</button>
+            <button 
+              className={`subtab-btn ${homeSubTab === 'forYou' ? 'active' : ''}`}
+              onClick={() => setHomeSubTab('forYou')}
+            >
+              Për ty
+            </button>
+            <button 
+              className={`subtab-btn ${homeSubTab === 'following' ? 'active' : ''}`}
+              onClick={() => setHomeSubTab('following')}
+            >
+              Të ndjekur
+            </button>
           </div>
         )}
       </header>
@@ -150,10 +199,7 @@ const Feed: React.FC = () => {
 
       {/* Main Feed Content Area */}
       <div className="feed-content-scroller">
-        {/* Create Post Area (Only on home tab and when not filtering by tag) */}
-        {currentTab === 'home' && !selectedTag && (
-          <CreatePostBox onPostCreated={handlePostCreated} />
-        )}
+        {/* Create Post Area moved to left column */}
 
         {/* Error Display */}
         {error && (

@@ -7,6 +7,7 @@ import MainLayout from '../components/MainLayout';
 import { getFollowCounts } from '../modules/follows/api/followsApi';
 import { PostService, type PostBrief } from '../services/post.service';
 import PostItem from '../components/PostItem';
+import { AlertCircle } from 'lucide-react';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
@@ -18,8 +19,9 @@ const Profile: React.FC = () => {
   const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [followCounts, setFollowCounts] = useState({ followers_count: 0, following_count: 0 });
-  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
+  const [postsError, setPostsError] = useState('');
 
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
@@ -43,18 +45,19 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     if (user?.id && activeTab === 'activity') {
-      fetchUserPosts();
+      fetchUserPosts(user.id);
     }
   }, [user?.id, activeTab]);
 
-  const fetchUserPosts = async () => {
-    if (!user?.id) return;
+  const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
+    setPostsError('');
     try {
-      const res = await PostService.getUserTimeline(user.id);
-      setUserPosts(res.items || []);
-    } catch (error) {
-      console.error('Failed to fetch user posts:', error);
+      const response = await PostService.getUserTimeline(userId, 0, 40);
+      setPosts(response.items || []);
+    } catch (err: any) {
+      console.error(err);
+      setPostsError('Gabim gjatë ngarkimit të postimeve.');
     } finally {
       setLoadingPosts(false);
     }
@@ -271,32 +274,53 @@ const Profile: React.FC = () => {
 
           <div className="profile-feed">
             {activeTab === 'activity' && (
-              <>
+              <div style={{ width: '100%' }}>
                 {loadingPosts ? (
-                  <p style={{ color: 'var(--text-muted)' }}>{t('profile_loading')}</p>
-                ) : userPosts.length > 0 ? (
-                  <div className="posts-feed-list">
-                    {userPosts.map(post => (
+                  <div style={{ width: '100%', padding: '0 1rem' }}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="post-skeleton-card" style={{ width: '100%', borderBottom: '1px solid var(--border)' }}>
+                        <div className="skeleton-avatar skeleton"></div>
+                        <div className="skeleton-details">
+                          <div className="skeleton skeleton-title" style={{ width: '40%' }}></div>
+                          <div className="skeleton skeleton-body-line" style={{ width: '90%', marginTop: '12px' }}></div>
+                          <div className="skeleton skeleton-body-line" style={{ width: '75%', marginTop: '8px' }}></div>
+                          <div className="skeleton skeleton-footer" style={{ width: '60%', marginTop: '16px' }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : postsError ? (
+                  <div className="error-container">
+                    <AlertCircle size={18} style={{ marginRight: '8px' }} />
+                    <span>{postsError}</span>
+                  </div>
+                ) : posts.length === 0 ? (
+                   <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-muted)' }}>
+                     <p style={{ fontWeight: 600, fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>Asnjë postim ende</p>
+                     <p style={{ fontSize: '0.95rem' }}>Kur ky përdorues të postojë diçka, do të shfaqet këtu.</p>
+                   </div>
+                ) : (
+                  <div className="posts-feed-list" style={{ width: '100%' }}>
+                    {posts.map(post => (
                       <PostItem 
                         key={post.id} 
                         post={post} 
-                        onPostUpdated={fetchUserPosts} 
+                        onPostUpdated={() => {
+                          if (user) fetchUserPosts(user.id);
+                        }} 
                       />
                     ))}
-                    <button
-                      className="btn-edit-profile"
-                      style={{ marginTop: '1rem', border: 'none', color: 'var(--text-muted)' }}
-                    >
-                      {t('profile_activity_load_more')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="empty-feed-card glass-panel" style={{ marginTop: '1rem', padding: '2rem' }}>
-                    <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>{t('feed_empty_title')}</p>
                   </div>
                 )}
-              </>
-            )}
+                {posts.length > 0 && !loadingPosts && (
+                  <button
+                    className="btn-edit-profile"
+                    style={{ margin: '1rem auto', display: 'block', border: 'none', color: 'var(--text-muted)' }}
+                  >
+                    {t('profile_activity_load_more')}
+                  </button>
+                )}
+              </div>
             {activeTab === 'media' && <p>{t('profile_media_empty')}</p>}
             {activeTab === 'featured' && <p>{t('profile_featured_empty')}</p>}
           </div>
