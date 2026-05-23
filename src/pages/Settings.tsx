@@ -82,6 +82,7 @@ const Settings: React.FC = () => {
 
   const handleSetup2FA = async () => {
     setErrorMsg('');
+    setSuccessMsg('');
     try {
       const response = await api.post('/api/v1/auth/2fa/setup');
       setQrCodeUrl(response.data.qr_code_url);
@@ -95,6 +96,7 @@ const Settings: React.FC = () => {
 
   const handleEnable2FA = async () => {
     setErrorMsg('');
+    setSuccessMsg('');
     try {
       const response = await api.post('/api/v1/auth/2fa/enable', { code: twoFactorCode });
       setBackupCodes(response.data.backup_codes);
@@ -102,6 +104,7 @@ const Settings: React.FC = () => {
       setShowBackupModal(true);
       if (user) updateUser({ ...user, two_factor_enabled: true });
       setSuccessMsg('2FA u aktivizua me sukses!');
+      setTwoFactorCode('');
     } catch (err: any) {
       setErrorMsg(err.response?.data?.detail || 'Kodi i pasaktë.');
     }
@@ -109,6 +112,7 @@ const Settings: React.FC = () => {
 
   const handleDisable2FA = async () => {
     setErrorMsg('');
+    setSuccessMsg('');
     try {
       await api.post('/api/v1/auth/2fa/disable', { code: twoFactorCode });
       setShowDisableModal(false);
@@ -122,6 +126,7 @@ const Settings: React.FC = () => {
 
   const handleGenerateRecovery = async () => {
     setErrorMsg('');
+    setSuccessMsg('');
     try {
       const response = await api.post('/api/v1/auth/2fa/recovery-codes', { code: twoFactorCode });
       setBackupCodes(response.data.backup_codes);
@@ -473,6 +478,18 @@ const Settings: React.FC = () => {
           <button className="settings-btn-save" style={{ width: 'auto', marginTop: 0 }} onClick={handleSetup2FA}>{t('settings_2fa_enable')}</button>
         )}
       </div>
+
+      {successMsg && (
+        <div style={{ padding: '1rem', backgroundColor: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', borderRadius: '4px', marginBottom: '1rem', border: '1px solid #4CAF50' }}>
+          {successMsg}
+        </div>
+      )}
+
+      {errorMsg && (
+        <div style={{ padding: '1rem', backgroundColor: 'rgba(244, 67, 54, 0.1)', color: '#F44336', borderRadius: '4px', marginBottom: '1rem', border: '1px solid #F44336' }}>
+          {errorMsg}
+        </div>
+      )}
 
       {user?.two_factor_enabled ? (
         <>
