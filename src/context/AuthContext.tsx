@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const initializeAuth = async () => {
       const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
-      
+
       if (storedToken) {
         setToken(storedToken);
         try {
@@ -62,12 +62,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (rememberMe) {
       localStorage.setItem('token', newToken);
       localStorage.setItem('refreshToken', newRefreshToken);
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('refreshToken');
     } else {
       sessionStorage.setItem('token', newToken);
       sessionStorage.setItem('refreshToken', newRefreshToken);
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
     }
     setToken(newToken);
-    
+
     // Fetch profile immediately after login
     api.get('/api/v1/auth/me')
       .then(response => {

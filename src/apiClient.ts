@@ -10,7 +10,7 @@ const getBaseUrl = () => {
   if (import.meta && import.meta.env && import.meta.env.REACT_APP_API_URL) {
     return import.meta.env.REACT_APP_API_URL;
   }
-  return 'http://localhost:8000/api/v1';
+  return '/api/v1';
 };
 
 const apiClient = axios.create({
@@ -34,10 +34,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Clear token and redirect to login if session expires
+      console.error("apiClient caught 401 Unauthorized. Not redirecting to avoid loops.");
+      // Clear token but do not force redirect
       localStorage.removeItem('token');
       sessionStorage.removeItem('token');
-      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
