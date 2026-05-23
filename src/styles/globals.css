@@ -524,13 +524,10 @@ button, input, textarea, select {
 }
 
 .profile-feed {
-  padding: 2.5rem 1.5rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
   color: var(--text-muted);
-  gap: 1rem;
+  padding-bottom: 2rem;
 }
 
 /* Settings Layout (Mastodon Style) */

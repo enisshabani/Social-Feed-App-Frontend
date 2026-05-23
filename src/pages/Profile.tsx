@@ -5,6 +5,8 @@ import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 import MainLayout from '../components/MainLayout';
 import { getFollowCounts } from '../modules/follows/api/followsApi';
+import { PostService, type PostBrief } from '../services/post.service';
+import PostItem from '../components/PostItem';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
@@ -16,6 +18,8 @@ const Profile: React.FC = () => {
   const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [followCounts, setFollowCounts] = useState({ followers_count: 0, following_count: 0 });
+  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
 
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
@@ -36,6 +40,25 @@ const Profile: React.FC = () => {
         .catch(() => {});
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id && activeTab === 'activity') {
+      fetchUserPosts();
+    }
+  }, [user?.id, activeTab]);
+
+  const fetchUserPosts = async () => {
+    if (!user?.id) return;
+    setLoadingPosts(true);
+    try {
+      const res = await PostService.getUserTimeline(user.id);
+      setUserPosts(res.items || []);
+    } catch (error) {
+      console.error('Failed to fetch user posts:', error);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -249,13 +272,29 @@ const Profile: React.FC = () => {
           <div className="profile-feed">
             {activeTab === 'activity' && (
               <>
-                <p style={{ fontWeight: 500 }}>{t('profile_activity_title')}</p>
-                <button
-                  className="btn-edit-profile"
-                  style={{ marginTop: '1rem', border: 'none', color: 'var(--text-muted)' }}
-                >
-                  {t('profile_activity_load_more')}
-                </button>
+                {loadingPosts ? (
+                  <p style={{ color: 'var(--text-muted)' }}>{t('profile_loading')}</p>
+                ) : userPosts.length > 0 ? (
+                  <div className="posts-feed-list">
+                    {userPosts.map(post => (
+                      <PostItem 
+                        key={post.id} 
+                        post={post} 
+                        onPostUpdated={fetchUserPosts} 
+                      />
+                    ))}
+                    <button
+                      className="btn-edit-profile"
+                      style={{ marginTop: '1rem', border: 'none', color: 'var(--text-muted)' }}
+                    >
+                      {t('profile_activity_load_more')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="empty-feed-card glass-panel" style={{ marginTop: '1rem', padding: '2rem' }}>
+                    <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>{t('feed_empty_title')}</p>
+                  </div>
+                )}
               </>
             )}
             {activeTab === 'media' && <p>{t('profile_media_empty')}</p>}
