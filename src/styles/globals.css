@@ -799,17 +799,145 @@ button, input, textarea, select {
 
 /* Light Mode Styles */
 :root.light-mode {
+  --bg-app: #f4f6fb;
+  --bg-panel: rgba(255, 255, 255, 0.92);
+  --bg-panel-solid: #ffffff;
   --bg-dark: #f4f0fa;
   --bg-darker: #ffffff;
   --bg-card: #ffffff;
   --bg-form: #ffffff;
   --bg-input: #ffffff;
+  --border: rgba(17, 20, 36, 0.08);
+  --border-input: rgba(17, 20, 36, 0.12);
   --text-main: #111424;
   --text-muted: #5e6882;
-  --border-input: #d9d3e6;
+  --text-dimmed: #7a849d;
   --primary: #6364ff;
   --primary-hover: #5254d8;
   --danger: #f44336;
+  --shadow: 0 10px 28px rgba(17, 20, 36, 0.08);
+}
+
+:root.light-mode body {
+  background-color: var(--bg-app);
+}
+
+:root.light-mode ::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+:root.light-mode ::-webkit-scrollbar-thumb {
+  background: rgba(17, 20, 36, 0.16);
+}
+
+:root.light-mode ::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 20, 36, 0.24);
+}
+
+:root.light-mode .feed-container {
+  background-color: rgba(255, 255, 255, 0.72);
+}
+
+:root.light-mode .feed-header {
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom-color: var(--border);
+}
+
+:root.light-mode .glass-panel,
+:root.light-mode .trending-box,
+:root.light-mode .mastodon-panel {
+  background: var(--bg-panel);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+}
+
+:root.light-mode .btn-secondary {
+  background-color: rgba(17, 20, 36, 0.04);
+  border-color: var(--border);
+  color: var(--text-main);
+}
+
+:root.light-mode .btn-icon:hover {
+  background-color: rgba(17, 20, 36, 0.05);
+}
+
+:root.light-mode .btn-outline {
+  border-color: var(--border-input);
+}
+
+:root.light-mode .btn-outline:hover {
+  background: rgba(17, 20, 36, 0.05);
+}
+
+:root.light-mode .sidebar-left,
+:root.light-mode .sidebar-right,
+:root.light-mode .search-bar-wrapper {
+  background-color: var(--bg-app);
+}
+
+:root.light-mode .nav-item:hover,
+:root.light-mode .trending-item:hover,
+:root.light-mode .sidebar-user-card {
+  background-color: rgba(17, 20, 36, 0.04);
+}
+
+:root.light-mode .sidebar-user-card:hover {
+  background-color: rgba(17, 20, 36, 0.07);
+}
+
+:root.light-mode .search-input {
+  background-color: rgba(17, 20, 36, 0.04);
+  border-color: rgba(17, 20, 36, 0.08);
+}
+
+:root.light-mode .search-input:focus {
+  background-color: #ffffff;
+}
+
+:root.light-mode .sidebar-left .mastodon-logo,
+:root.light-mode .feed-header h2,
+:root.light-mode .trending-header h3,
+:root.light-mode .trend-name,
+:root.light-mode .nav-item,
+:root.light-mode .user-display-name {
+  color: var(--text-main);
+}
+
+:root.light-mode .sidebar-left .nav-item.active {
+  color: var(--primary);
+}
+
+:root.light-mode .edit-profile-modal,
+:root.light-mode .edit-profile-header {
+  background: var(--bg-form);
+}
+
+:root.light-mode .edit-profile-cover {
+  background: #eef2ff;
+}
+
+:root.light-mode .edit-profile-avatar {
+  border-color: var(--bg-form);
+}
+
+:root.light-mode .edit-profile-camera-btn {
+  background: rgba(17, 20, 36, 0.6);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+:root.light-mode .edit-profile-camera-btn:hover {
+  background: rgba(17, 20, 36, 0.75);
+}
+
+:root.light-mode .form-input,
+:root.light-mode .edit-profile-input {
+  background-color: rgba(17, 20, 36, 0.03);
+  border-color: var(--border-input);
+}
+
+:root.light-mode .form-input:focus,
+:root.light-mode .edit-profile-input:focus {
+  background-color: #ffffff;
 }
 
 :root.light-mode .settings-input-group label {
