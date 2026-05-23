@@ -94,7 +94,6 @@ const Profile: React.FC = () => {
       <MainLayout
         currentTab={currentFeedTab}
         setCurrentTab={setCurrentFeedTab}
-        onTagClick={() => {}}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       >
@@ -121,7 +120,6 @@ const Profile: React.FC = () => {
     <MainLayout
       currentTab={currentFeedTab}
       setCurrentTab={setCurrentFeedTab}
-      onTagClick={() => {}}
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
     >

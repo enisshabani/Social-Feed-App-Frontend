@@ -284,6 +284,17 @@ export class PostService {
   }
 
   /**
+   * Get paginated posts for a specific hashtag (server-side).
+   * Uses the dedicated hashtag posts endpoint with 404 handling.
+   */
+  static async getHashtagPosts(hashtagName: string, skip = 0, limit = 20): Promise<Post[]> {
+    const response = await api.get<Post[]>(`/api/v1/hashtags/${encodeURIComponent(hashtagName)}/posts`, {
+      params: { skip, limit },
+    });
+    return response.data;
+  }
+
+  /**
    * Refine post text using the OpenAI AI refinement endpoint.
    * Style can be: 'casual', 'professional', 'witty', 'concise'.
    */

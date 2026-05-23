@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Flame, TrendingUp } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import type { TrendingHashtag } from '../services/post.service';
 
 interface SidebarRightProps {
-  onTagClick: (tagName: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
 }
 
-const SidebarRight: React.FC<SidebarRightProps> = ({ onTagClick, searchQuery, setSearchQuery }) => {
+const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery }) => {
+  const navigate = useNavigate();
   const [trends, setTrends] = useState<TrendingHashtag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+
+  // Sync external value into local state (e.g., when Feed.tsx clears search)
+  useEffect(() => {
+    setLocalQuery(searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchTrendingTags();
@@ -28,6 +35,17 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ onTagClick, searchQuery, se
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalQuery(e.target.value);
+    setSearchQuery(e.target.value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && localQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(localQuery.trim())}`);
+    }
+  };
+
   return (
     <aside className="sidebar-right">
       {/* Search Input Container */}
@@ -37,8 +55,9 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ onTagClick, searchQuery, se
           <input
             type="text"
             placeholder="Kërko postime..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={localQuery}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
             className="search-input"
           />
         </div>
@@ -72,7 +91,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ onTagClick, searchQuery, se
                 <div
                   key={trend.id}
                   className="trending-item"
-                  onClick={() => onTagClick(trend.name)}
+                  onClick={() => navigate(`/hashtag/${trend.name}`)}
                 >
                   <div className="trend-meta">Më të përdorur këtë javë</div>
                   <div className="trend-name">#{trend.name}</div>

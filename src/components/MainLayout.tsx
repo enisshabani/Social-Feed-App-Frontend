@@ -7,7 +7,6 @@ interface MainLayoutProps {
   currentTab: 'home' | 'explore' | 'bookmarks';
   setCurrentTab: (tab: 'home' | 'explore' | 'bookmarks') => void;
   onPostClick?: () => void;
-  onTagClick: (tagName: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
 }
@@ -17,7 +16,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   currentTab,
   setCurrentTab,
   onPostClick,
-  onTagClick,
   searchQuery,
   setSearchQuery,
 }) => {
@@ -37,7 +35,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Right Search & Trends Sidebar */}
       <SidebarRight
-        onTagClick={onTagClick}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
