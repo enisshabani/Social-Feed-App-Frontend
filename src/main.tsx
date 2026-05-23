@@ -4,6 +4,8 @@ import App from './App.tsx';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { FollowProvider } from './modules/follows/context/FollowContext';
+import { NotificationProvider } from './modules/notifications/context/NotificationContext';
 import './styles/globals.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -11,7 +13,11 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <App />
+          <FollowProvider>
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
+          </FollowProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

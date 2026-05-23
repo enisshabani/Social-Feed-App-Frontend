@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 import MainLayout from '../components/MainLayout';
+import { getFollowCounts } from '../modules/follows/api/followsApi';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
@@ -14,6 +15,7 @@ const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState('activity');
   const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [searchQuery, setSearchQuery] = useState('');
+  const [followCounts, setFollowCounts] = useState({ followers_count: 0, following_count: 0 });
 
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
@@ -26,6 +28,14 @@ const Profile: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      getFollowCounts(user.id)
+        .then(data => setFollowCounts(data))
+        .catch(() => {});
+    }
+  }, [user?.id]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -191,12 +201,20 @@ const Profile: React.FC = () => {
           <div className="profile-username">@{user.username}@{user.tenant_id}</div>
 
           <div className="profile-stats">
-            <div className="stat-item">
-              <span className="stat-value">0</span>
+            <div
+              className="stat-item"
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigate(`/followers/${user.id}`)}
+            >
+              <span className="stat-value">{followCounts.followers_count}</span>
               <span className="stat-label">{t('profile_followers')}</span>
             </div>
-            <div className="stat-item">
-              <span className="stat-value">0</span>
+            <div
+              className="stat-item"
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigate(`/following/${user.id}`)}
+            >
+              <span className="stat-value">{followCounts.following_count}</span>
               <span className="stat-label">{t('profile_following')}</span>
             </div>
             <div className="stat-item">

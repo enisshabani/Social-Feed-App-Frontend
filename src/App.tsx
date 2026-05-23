@@ -8,6 +8,7 @@ import VerifyCode from './pages/VerifyCode';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Feed from './pages/Feed';
+import Followers from './pages/Followers';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -41,6 +42,22 @@ function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/followers/:userId"
+          element={
+            <ProtectedRoute>
+              <Followers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/following/:userId"
+          element={
+            <ProtectedRoute>
+              <Followers />
             </ProtectedRoute>
           }
         />

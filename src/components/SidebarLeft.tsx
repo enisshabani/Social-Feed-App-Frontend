@@ -1,7 +1,8 @@
 import React from 'react';
-import { Home, Hash, Bookmark, LogOut, User, Sparkles } from 'lucide-react';
+import { Home, Hash, Bookmark, LogOut, User, Sparkles, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { NotificationBell } from '../modules/notifications/components/NotificationBell';
 
 interface SidebarLeftProps {
   currentTab: 'home' | 'explore' | 'bookmarks';
@@ -96,6 +97,11 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
           <User size={24} className="nav-icon" />
           <span className="nav-label">Profili</span>
         </button>
+
+        {/* Notification Bell */}
+        <div style={{ padding: '4px 20px' }}>
+          <NotificationBell />
+        </div>
 
         {/* User Card at bottom */}
         {user && (
