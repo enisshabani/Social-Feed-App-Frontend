@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import '../styles/globals.css';
+import '../styles/register.css';
 
 const VerifyCode: React.FC = () => {
   const [code, setCode] = useState('');
@@ -21,7 +22,9 @@ const VerifyCode: React.FC = () => {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
       <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
-        <div className="mastodon-logo">kaPak</div>
+        <div className="reg-logo" style={{ marginBottom: '1.5rem' }}>
+          <span className="reg-logo-text">kaPak</span>
+        </div>
         <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>{t('verify_title')}</h2>
         
         <form onSubmit={handleSubmit}>

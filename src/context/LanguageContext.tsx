@@ -10,22 +10,24 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Default is always English; only override if user explicitly saved a preference
   const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    const savedLang = localStorage.getItem('language') as Language | null;
-    if (savedLang) {
+    const savedLang = localStorage.getItem('kapak_language') as Language | null;
+    if (savedLang === 'en' || savedLang === 'sq') {
       setLanguageState(savedLang);
     }
+    // If nothing saved → stay 'en'
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem('language', lang);
+    localStorage.setItem('kapak_language', lang);
   };
 
   const t = (key: keyof typeof translations['en']): string => {
-    return translations[language][key] || translations['en'][key] || key;
+    return translations[language]?.[key] || translations['en'][key] || key;
   };
 
   return (

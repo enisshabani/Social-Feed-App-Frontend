@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 import MainLayout from '../components/MainLayout';
 import { getFollowCounts } from '../modules/follows/api/followsApi';
-import { PostService } from '../services/post.service';
+import { PostService, type PostBrief } from '../services/post.service';
 import PostItem from '../components/PostItem';
 import { AlertCircle } from 'lucide-react';
 import '../styles/globals.css';
@@ -19,7 +19,6 @@ const Profile: React.FC = () => {
   const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [followCounts, setFollowCounts] = useState({ followers_count: 0, following_count: 0 });
-
   const [posts, setPosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [postsError, setPostsError] = useState('');
@@ -41,10 +40,14 @@ const Profile: React.FC = () => {
       getFollowCounts(user.id)
         .then(data => setFollowCounts(data))
         .catch(() => {});
-        
-      fetchUserPosts(user.id);
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id && activeTab === 'activity') {
+      fetchUserPosts(user.id);
+    }
+  }, [user?.id, activeTab]);
 
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
@@ -318,7 +321,6 @@ const Profile: React.FC = () => {
                   </button>
                 )}
               </div>
-            )}
             {activeTab === 'media' && <p>{t('profile_media_empty')}</p>}
             {activeTab === 'featured' && <p>{t('profile_featured_empty')}</p>}
           </div>
