@@ -321,8 +321,9 @@ const Profile: React.FC = () => {
                   </button>
                 )}
               </div>
-            {activeTab === 'media' && <p>{t('profile_media_empty')}</p>}
-            {activeTab === 'featured' && <p>{t('profile_featured_empty')}</p>}
+            )}
+            {activeTab === 'media' && <p style={{ padding: '2rem', color: 'var(--text-muted)' }}>{t('profile_media_empty')}</p>}
+            {activeTab === 'featured' && <p style={{ padding: '2rem', color: 'var(--text-muted)' }}>{t('profile_featured_empty')}</p>}
           </div>
 
         </div>
