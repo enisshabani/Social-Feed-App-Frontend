@@ -27,6 +27,7 @@ const Settings: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
   const [twoFactorSecret, setTwoFactorSecret] = useState('');
   const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);

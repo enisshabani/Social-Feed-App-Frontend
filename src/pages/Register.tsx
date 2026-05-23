@@ -1,225 +1,226 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
-import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import '../styles/globals.css';
-import '../styles/register.css';
 
 const Register: React.FC = () => {
-  const navigate = useNavigate();
-  const { t } = useLanguage();
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [agreed, setAgreed] = useState(false);
-  
-  // Date of birth UI only (not sent to backend)
-  const [dobDay, setDobDay] = useState('');
-  const [dobMonth, setDobMonth] = useState('');
-  const [dobYear, setDobYear] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const [errorMsg, setErrorMsg] = useState('');
-  const [loading, setLoading] = useState(false);
+  const calculatePasswordStrength = (pass: string) => {
+    let score = 0;
+    if (!pass) return score;
+    if (pass.length >= 8) score += 1;
+    if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score += 1;
+    if (/\d/.test(pass)) score += 1;
+    if (/[^a-zA-Z\d]/.test(pass)) score += 1;
+    return score;
+  };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-
-    if (password !== confirmPassword) {
-      setErrorMsg(t('register_error_passmatch'));
-      return;
-    }
-
-    if (!agreed) {
-      setErrorMsg(t('register_error_privacy'));
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await api.post('/api/v1/auth/register', { username, email, password });
-      // Success, move to step 3
-      setStep(3);
-    } catch (error: any) {
-      setErrorMsg(error.response?.data?.detail || t('register_error_generic'));
-    } finally {
-      setLoading(false);
+  const getStrengthColor = (score: number) => {
+    switch (score) {
+      case 0: return '#d32f2f';
+      case 1: return '#f57c00';
+      case 2: return '#fbc02d';
+      case 3: return '#7cb342';
+      case 4: return '#388e3c';
+      default: return '#e0e0e0';
     }
   };
 
-  const renderStepper = () => (
-    <div className="wizard-stepper">
-      <div className="wizard-line"></div>
-      <div 
-        className="wizard-line-progress" 
-        style={{ width: step === 1 ? '0%' : step === 2 ? '50%' : '100%' }}
-      ></div>
-      
-      <div className={`wizard-step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
-        <div className="wizard-step-circle">
-          {step > 1 && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
-        </div>
-        <div className="wizard-step-label" style={{ whiteSpace: 'pre-line' }}>{t('register_stepper_1')}</div>
-      </div>
-      
-      <div className={`wizard-step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
-        <div className="wizard-step-circle">
-          {step > 2 && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
-        </div>
-        <div className="wizard-step-label" style={{ whiteSpace: 'pre-line' }}>{t('register_stepper_2')}</div>
-      </div>
-      
-      <div className={`wizard-step ${step >= 3 ? 'active' : ''}`}>
-        <div className="wizard-step-circle"></div>
-        <div className="wizard-step-label" style={{ whiteSpace: 'pre-line' }}>{t('register_stepper_3')}</div>
-      </div>
-    </div>
-  );
+  const getStrengthText = (score: number) => {
+    if (password.length === 0) return '';
+    switch (score) {
+      case 0: return 'Shumë i dobët (vendosni të paktën 8 karaktere)';
+      case 1: return 'I dobët (shtoni shkronja të mëdha/vogla)';
+      case 2: return 'Mesatar (shtoni numra)';
+      case 3: return 'I fortë (shtoni simbole)';
+      case 4: return 'Shumë i fortë!';
+      default: return '';
+    }
+  };
 
-  const renderStep1 = () => (
-    <div className="rules-container">
-      <h1 className="rules-title">{t('register_step1_title')}</h1>
-      <p className="rules-subtitle">{t('register_step1_subtitle')}</p>
+  const strengthScore = calculatePasswordStrength(password);
 
-      <div className="rule-item">
-        <div className="rule-number">1</div>
-        <div className="rule-content">
-          <div className="rule-title">{t('register_rule1_title')}</div>
-          <div className="rule-desc">{t('register_rule1_desc')}</div>
-        </div>
-      </div>
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    try {
+      await api.post('/api/v1/auth/register', { email, username, password });
+      navigate('/login');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit. Keni provuar një email/username ekzistues?');
+    }
+  };
 
-      <div className="rule-item">
-        <div className="rule-number">2</div>
-        <div className="rule-content">
-          <div className="rule-title">{t('register_rule2_title')}</div>
-          <div className="rule-desc">{t('register_rule2_desc')}</div>
-        </div>
-      </div>
+  const handleGoogleRegister = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+      const response = await api.post('/api/v1/auth/google', { token: idToken });
+      const { access_token, refresh_token } = response.data;
+      login(access_token, refresh_token, false);
+      navigate('/feed');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit me Google.');
+    }
+  };
 
-      <div className="wizard-actions">
-        <button className="btn-primary" onClick={() => setStep(2)}>{t('register_step1_accept')}</button>
-        <button className="btn-secondary" onClick={() => navigate('/login')}>{t('register_step1_back')}</button>
-      </div>
-    </div>
-  );
-
-  const renderStep2 = () => (
-    <div className="rules-container">
-      <h1 className="rules-title">{t('register_step2_title')}</h1>
-      <p className="rules-subtitle">{t('register_step2_subtitle')}</p>
-
-      {errorMsg && (
-        <div className="error-message">
-          {errorMsg}
-        </div>
-      )}
-
-      <form onSubmit={handleRegister}>
-        <div className="input-group">
-          <label>{t('register_username')}</label>
-          <input 
-            type="text" 
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="@username"
-            required
-          />
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{t('register_username_hint')}</p>
-        </div>
-
-        <div className="input-group">
-          <label>{t('register_email')}</label>
-          <input 
-            type="email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="input-group">
-          <label>{t('register_password')}</label>
-          <input 
-            type="password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="input-group">
-          <input 
-            type="password" 
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder={t('register_confirm_password')}
-            required
-          />
-        </div>
-
-        <div className="input-group">
-          <label>{t('register_dob')}</label>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>{t('register_dob_hint')}</p>
-          <div className="date-inputs">
-            <input type="text" placeholder="DD" value={dobDay} onChange={(e) => setDobDay(e.target.value)} maxLength={2} required />
-            <input type="text" placeholder="MM" value={dobMonth} onChange={(e) => setDobMonth(e.target.value)} maxLength={2} required />
-            <input type="text" placeholder="YYYY" value={dobYear} onChange={(e) => setDobYear(e.target.value)} maxLength={4} required />
-          </div>
-        </div>
-
-        <label className="privacy-checkbox">
-          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} required />
-          <span>{t('register_privacy')} <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer">{t('register_privacy_link')}</Link></span>
-        </label>
-
-        <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? t('register_submitting') : t('register_button')}
-        </button>
-      </form>
-    </div>
-  );
-
-  const renderStep3 = () => (
-    <div className="inbox-container">
-      <h1 className="inbox-title">{t('register_step3_title')}</h1>
-      <p className="inbox-desc">
-        {t('register_step3_desc1')}<strong>{email}</strong>{t('register_step3_desc2')}
-      </p>
-      
-      <div className="inbox-link">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-        {t('register_step3_no_link')}
-      </div>
-      
-      <button 
-        className="btn-primary" 
-        style={{ marginTop: '3rem' }}
-        onClick={() => navigate('/login')}
-      >
-        {t('register_step3_go_login')}
-      </button>
-    </div>
-  );
+  const handleGithubRegister = async () => {
+    try {
+      const result = await signInWithPopup(auth, githubProvider);
+      const idToken = await result.user.getIdToken();
+      const response = await api.post('/api/v1/auth/github', { token: idToken });
+      const { access_token, refresh_token } = response.data;
+      login(access_token, refresh_token, false);
+      navigate('/feed');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit me GitHub.');
+    }
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', width: '100%', alignItems: 'center', paddingTop: '2rem' }}>
-      
-      <div className="mastodon-logo" style={{ marginBottom: '1rem' }}>
-        kaPak
-      </div>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
+      <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
+        <div className="mastodon-logo">kaPak</div>
 
-      <div className="register-wizard-container">
-        {renderStepper()}
-        
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
+        <form onSubmit={handleRegister}>
+          <div className="input-group">
+            <input
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              required
+            />
+          </div>
+
+          <div className="input-group">
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Adresa e email-it"
+              required
+            />
+          </div>
+
+          <div className="input-group" style={{ position: 'relative' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Fjalëkalimi"
+              style={{ paddingRight: '2.5rem' }}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: password ? '15px' : '50%',
+                transform: password ? 'none' : 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              {showPassword ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              )}
+            </button>
+
+            {password && (
+              <div style={{ marginTop: '8px', fontSize: '0.8rem' }}>
+                <div style={{ display: 'flex', gap: '4px', height: '6px', marginBottom: '4px' }}>
+                  {[1, 2, 3, 4].map((level) => (
+                    <div
+                      key={level}
+                      style={{
+                        flex: 1,
+                        backgroundColor: strengthScore >= level ? getStrengthColor(strengthScore) : 'var(--border-input)',
+                        borderRadius: '3px',
+                        transition: 'background-color 0.3s ease',
+                      }}
+                    />
+                  ))}
+                </div>
+                <span style={{ color: getStrengthColor(strengthScore), transition: 'color 0.3s ease' }}>
+                  {getStrengthText(strengthScore)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {error && <div className="error-message">{error}</div>}
+
+          <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
+            Regjistrohu
+          </button>
+        </form>
+
+        <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', textAlign: 'center' }}>
+          <hr style={{ flex: 1, border: 'none', borderTop: '1px solid var(--border-input)' }} />
+          <span style={{ padding: '0 10px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>OSE</span>
+          <hr style={{ flex: 1, border: 'none', borderTop: '1px solid var(--border-input)' }} />
+        </div>
+
+        <button
+          onClick={handleGoogleRegister}
+          type="button"
+          style={{
+            width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-input)',
+            backgroundColor: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex',
+            justifyContent: 'center', alignItems: 'center', gap: '10px', fontWeight: 'bold',
+          }}
+        >
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
+          Google
+        </button>
+
+        <button
+          onClick={handleGithubRegister}
+          type="button"
+          style={{
+            width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid var(--border-input)',
+            backgroundColor: 'transparent', color: 'var(--text-main)', cursor: 'pointer', display: 'flex',
+            justifyContent: 'center', alignItems: 'center', gap: '10px', fontWeight: 'bold', marginTop: '0.75rem',
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.379.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
+          </svg>
+          GitHub
+        </button>
+
+        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>
+          <Link to="/login" style={{ color: 'var(--text-muted)' }}>Keni tashmë llogari? Hyni këtu.</Link>
+        </div>
       </div>
-      
     </div>
   );
 };

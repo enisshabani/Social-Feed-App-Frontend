@@ -8,20 +8,20 @@
   --bg-input: #080c16;
   --border: rgba(255, 255, 255, 0.08);
   --border-focus: #3b82f6;
-  
+
   --primary: #3b82f6;
   --primary-hover: #2563eb;
   --primary-glow: rgba(59, 130, 246, 0.3);
   --primary-light: rgba(59, 130, 246, 0.1);
-  
+
   --like: #f43f5e;
   --like-hover: #e11d48;
   --like-light: rgba(244, 63, 94, 0.1);
-  
+
   --repost: #10b981;
   --repost-hover: #059669;
   --repost-light: rgba(16, 185, 129, 0.1);
-  
+
   --comment: #0ea5e9;
   --comment-hover: #0284c7;
   --comment-light: rgba(14, 165, 233, 0.1);
@@ -29,16 +29,16 @@
   --text-main: #f3f4f6;
   --text-muted: #9ca3af;
   --text-dimmed: #6b7280;
-  
+
   --error: #ef4444;
   --error-bg: rgba(239, 68, 68, 0.1);
-  
+
   --font-family: 'Outfit', sans-serif;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 20px;
   --radius-round: 50%;
-  
+
   --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
   --glass-blur: blur(16px);
 }
@@ -1099,4 +1099,77 @@ button, input, textarea, select {
 .edit-profile-input:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+/* Mastodon UI Legacy Design */
+.mastodon-panel {
+  background: var(--bg-form);
+  border-radius: 4px;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+}
+
+.mastodon-logo {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: 2rem;
+  letter-spacing: -0.5px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.input-group {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-main);
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
 }
