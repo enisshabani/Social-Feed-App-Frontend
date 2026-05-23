@@ -4,6 +4,7 @@ import { PostService } from '../services/post.service';
 import type { Comment } from '../services/post.service';
 import ActionBar from './ActionBar';
 import { getLoggedInUser } from './SidebarLeft';
+import { FollowButton } from '../modules/follows/components/FollowButton';
 
 interface PostItemProps {
   post: any; // Can be Post or PostBrief
@@ -163,7 +164,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
             </div>
 
             {/* Author Operations Menu */}
-            {isAuthor && !post.is_repost && (
+            {isAuthor && !post.is_repost ? (
               <div className="author-actions">
                 <button
                   className="btn-icon btn-action-edit"
@@ -180,7 +181,9 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
                   <Trash2 size={14} />
                 </button>
               </div>
-            )}
+            ) : !isAuthor && post.author_id ? (
+              <FollowButton userId={post.author_id} />
+            ) : null}
           </header>
 
           {/* Post Body Content */}
