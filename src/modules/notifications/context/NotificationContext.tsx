@@ -37,7 +37,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     // Optimistic UI update
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
-    
+
     try {
       await markAsRead(id);
     } catch (error) {
@@ -50,7 +50,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     // Optimistic UI update
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     setUnreadCount(0);
-    
+
     try {
       await markAllAsRead();
     } catch (error) {
@@ -66,7 +66,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (notification && !notification.is_read) {
       setUnreadCount(prev => Math.max(0, prev - 1));
     }
-    
+
     try {
       await deleteNotification(id);
     } catch (error) {
@@ -90,7 +90,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
     fetchCount(); // Initial fetch
     const intervalId = setInterval(fetchCount, 30000);
-    
+
     return () => clearInterval(intervalId);
   }, []);
 

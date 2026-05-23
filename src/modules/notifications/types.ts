@@ -1,5 +1,12 @@
 export type NotificationType = 'FOLLOW' | 'LIKE' | 'REPOST' | 'MENTION' | 'COMMENT';
 
+export interface UserBrief {
+  id: number;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+}
+
 export interface NotificationItem {
   id: string;
   recipient_id: number;
@@ -8,6 +15,7 @@ export interface NotificationItem {
   entity_id: number | null;
   is_read: boolean;
   created_at: string;
+  actor?: UserBrief;
 }
 
 export interface NotificationListResponse {

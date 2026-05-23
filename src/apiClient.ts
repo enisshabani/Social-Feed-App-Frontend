@@ -37,7 +37,7 @@ apiClient.interceptors.response.use(
       // Clear token and redirect to login if session expires
       localStorage.removeItem('token');
       sessionStorage.removeItem('token');
-      window.location.href = '/login'; 
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

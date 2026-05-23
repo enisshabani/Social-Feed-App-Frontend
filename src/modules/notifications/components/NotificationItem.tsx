@@ -101,7 +101,11 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
         </div>
         <div>
           <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>
-            <strong>User {notification.actor_id}</strong> {getMessageForType(notification.type)}
+            <strong>
+              {notification.actor
+                ? (notification.actor.display_name || `@${notification.actor.username}`)
+                : `User ${notification.actor_id}`}
+            </strong>{' '}{getMessageForType(notification.type)}
           </p>
           <span style={{ fontSize: '12px', color: '#888' }}>
             {getRelativeTime(notification.created_at)}

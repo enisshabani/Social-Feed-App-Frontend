@@ -117,6 +117,9 @@ const Followers: React.FC = () => {
         ) : (
           list.map(item => {
             const targetId = activeTab === 'followers' ? item.follower_id : item.followee_id;
+            const userInfo = activeTab === 'followers' ? item.follower : item.followee;
+            const displayName = userInfo?.display_name || (userInfo ? `@${userInfo.username}` : `User ${targetId}`);
+            const username = userInfo?.username ? `@${userInfo.username}` : `@user${targetId}`;
             return (
               <div key={item.id} style={{
                 display: 'flex',
@@ -132,12 +135,15 @@ const Followers: React.FC = () => {
                     backgroundColor: 'var(--primary-light, #1e3a5f)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: 'var(--primary, #3b82f6)',
+                    overflow: 'hidden',
                   }}>
-                    <User size={20} />
+                    {userInfo?.avatar_url
+                      ? <img src={userInfo.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <User size={20} />}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '15px' }}>User {targetId}</div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted, #8899a6)' }}>@user{targetId}</div>
+                    <div style={{ fontWeight: 600, fontSize: '15px' }}>{displayName}</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-muted, #8899a6)' }}>{username}</div>
                   </div>
                 </div>
                 <FollowButton userId={targetId} />
