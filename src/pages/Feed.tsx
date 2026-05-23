@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { PostService } from '../services/post.service';
 import MainLayout from '../components/MainLayout';
 import CreatePostBox from '../components/CreatePostBox';
@@ -6,11 +7,13 @@ import PostItem from '../components/PostItem';
 import { Sparkles, Bookmark, Search, RefreshCw, Hash, AlertCircle } from 'lucide-react';
 
 const Feed: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as 'home' | 'explore' | 'bookmarks') || 'home';
+  const [currentTab, setCurrentTab] = useState<'home' | 'explore' | 'bookmarks'>(initialTab);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Search & Hashtag Filtering States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -18,6 +21,18 @@ const Feed: React.FC = () => {
 
   // Focus reference for text composing
   const feedTopRef = useRef<HTMLDivElement>(null);
+
+  // Sync tab to URL
+  const handleTabChange = (tab: 'home' | 'explore' | 'bookmarks') => {
+    setCurrentTab(tab);
+    setSelectedTag(null);
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (tab === 'bookmarks') {
+      setSearchParams({ tab: 'bookmarks' });
+    } else {
+      setSearchParams({});
+    }
+  };
 
   useEffect(() => {
     fetchPosts();
@@ -68,12 +83,6 @@ const Feed: React.FC = () => {
     setSelectedTag(null);
   };
 
-  const handleTabChange = (tab: 'home' | 'explore' | 'bookmarks') => {
-    setSelectedTag(null); // Clear tag filter when changing tabs
-    setCurrentTab(tab);
-    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const handleScrollToTop = () => {
     feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
     // Find the textarea inside CreatePostBox and focus it
@@ -99,7 +108,6 @@ const Feed: React.FC = () => {
       currentTab={currentTab}
       setCurrentTab={handleTabChange}
       onPostClick={handleScrollToTop}
-      onTagClick={handleTagClick}
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
     >

@@ -9,6 +9,8 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Feed from './pages/Feed';
 import Followers from './pages/Followers';
+import SearchPage from './pages/SearchPage';
+import HashtagFeed from './pages/HashtagFeed';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -58,6 +60,22 @@ function App() {
           element={
             <ProtectedRoute>
               <Followers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <SearchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/hashtag/:name"
+          element={
+            <ProtectedRoute>
+              <HashtagFeed />
             </ProtectedRoute>
           }
         />

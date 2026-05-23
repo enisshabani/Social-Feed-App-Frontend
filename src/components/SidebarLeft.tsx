@@ -1,6 +1,6 @@
 import React from 'react';
 import { Home, Hash, Bookmark, LogOut, User, Sparkles, Bell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { NotificationBell } from '../modules/notifications/components/NotificationBell';
 
@@ -9,6 +9,12 @@ interface SidebarLeftProps {
   setCurrentTab: (tab: 'home' | 'explore' | 'bookmarks') => void;
   onPostClick?: () => void;
 }
+
+const NAV_ROUTES: Record<'home' | 'explore' | 'bookmarks', string> = {
+  home: '/feed',
+  explore: '/search',
+  bookmarks: '/feed?tab=bookmarks',
+};
 
 // Client-side JWT decoder to fetch details of logged-in user
 export const getLoggedInUser = () => {
@@ -40,12 +46,30 @@ export const getLoggedInUser = () => {
 
 const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, onPostClick }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useAuth();
   const user = getLoggedInUser();
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const resolveActiveTab = (): 'home' | 'explore' | 'bookmarks' => {
+    if (location.pathname === '/search') return 'explore';
+    if (location.pathname === '/feed') {
+      const params = new URLSearchParams(location.search);
+      const tab = params.get('tab');
+      if (tab === 'bookmarks') return 'bookmarks';
+    }
+    return currentTab;
+  };
+
+  const activeTab = resolveActiveTab();
+
+  const handleNavClick = (tab: 'home' | 'explore' | 'bookmarks') => {
+    setCurrentTab(tab);
+    navigate(NAV_ROUTES[tab]);
   };
 
   const navItems = [
@@ -66,11 +90,11 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
         <nav className="sidebar-nav">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentTab === item.id;
+            const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setCurrentTab(item.id)}
+                onClick={() => handleNavClick(item.id)}
                 className={`nav-item ${isActive ? 'active' : ''}`}
               >
                 <Icon size={24} className="nav-icon" />
