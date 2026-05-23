@@ -79,7 +79,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
   useEffect(() => {
     const fetchCount = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (!token) return;
         const res = await getUnreadCount();
         setUnreadCount(res.unread_count);

@@ -36,8 +36,9 @@ export const FollowButton: React.FC<FollowButtonProps> = ({ userId, initialIsFol
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (loading) return;
-    
+
     if (isFollowing) {
       unfollow(userId);
     } else {
