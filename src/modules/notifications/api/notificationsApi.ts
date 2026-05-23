@@ -1,5 +1,5 @@
 import apiClient from '../../../apiClient';
-import { NotificationType, NotificationListResponse, MarkReadResponse, UnreadCountResponse } from '../types';
+import type { NotificationType, NotificationListResponse, MarkReadResponse, UnreadCountResponse } from '../types';
 
 const BASE = '/notifications';
 

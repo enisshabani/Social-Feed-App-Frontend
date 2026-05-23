@@ -1,6 +1,7 @@
-import React, { createContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useCallback, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { getNotifications, markAsRead, markAllAsRead, deleteNotification, getUnreadCount } from '../api/notificationsApi';
-import { NotificationItem, NotificationType } from '../types';
+import type { NotificationItem, NotificationType } from '../types';
 
 interface NotificationContextState {
   notifications: NotificationItem[];

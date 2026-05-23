@@ -1,5 +1,5 @@
 import apiClient from '../../../apiClient';
-import { FollowResponse, FollowCountResponse, IsFollowingResponse } from '../types';
+import type { FollowResponse, FollowCountResponse, IsFollowingResponse } from '../types';
 
 const BASE = '/follows';
 

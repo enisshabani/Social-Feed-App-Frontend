@@ -134,9 +134,6 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleThemeToggle = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
 
   const renderSidebar = () => (
     <div className="settings-sidebar">

@@ -1,6 +1,7 @@
 import React from 'react';
-import { NotificationItem as INotificationItem, NotificationType } from '../types';
+import type { NotificationItem as INotificationItem } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
+import { UserPlus, Heart, Repeat, AtSign, MessageCircle, Bell } from 'lucide-react';
 
 interface Props {
   notification: INotificationItem;
@@ -31,17 +32,17 @@ const getRelativeTime = (dateString: string): string => {
   return rtf.format(diffInDays, 'day');
 };
 
-const getMessageForType = (type: NotificationType): string => {
+const getMessageForType = (type: string): string => {
   switch (type) {
-    case NotificationType.FOLLOW:
+    case 'FOLLOW':
       return 'started following you';
-    case NotificationType.LIKE:
+    case 'LIKE':
       return 'liked your post';
-    case NotificationType.REPOST:
+    case 'REPOST':
       return 'reposted your post';
-    case NotificationType.MENTION:
+    case 'MENTION':
       return 'mentioned you in a post';
-    case NotificationType.COMMENT:
+    case 'COMMENT':
       return 'commented on your post';
     default:
       return 'interacted with you';
@@ -50,6 +51,23 @@ const getMessageForType = (type: NotificationType): string => {
 
 export const NotificationItem: React.FC<Props> = ({ notification }) => {
   const { markAsReadById, deleteNotificationById } = useNotifications();
+
+  const getIcon = () => {
+    switch (notification.type) {
+      case 'FOLLOW':
+        return <UserPlus size={18} color="var(--primary)" />;
+      case 'LIKE':
+        return <Heart size={18} color="var(--error)" />;
+      case 'REPOST':
+        return <Repeat size={18} color="var(--repost)" />;
+      case 'MENTION':
+        return <AtSign size={18} color="var(--primary-light)" />;
+      case 'COMMENT':
+        return <MessageCircle size={18} color="var(--text-main)" />;
+      default:
+        return <Bell size={18} color="var(--text-muted)" />;
+    }
+  };
 
   const handleMarkRead = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -77,13 +95,18 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
         transition: 'background-color 0.2s ease'
       }}
     >
-      <div>
-        <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>
-          <strong>User {notification.actor_id}</strong> {getMessageForType(notification.type)}
-        </p>
-        <span style={{ fontSize: '12px', color: '#888' }}>
-          {getRelativeTime(notification.created_at)}
-        </span>
+      <div style={{ display: 'flex', gap: '12px' }}>
+        <div style={{ marginTop: '2px' }}>
+          {getIcon()}
+        </div>
+        <div>
+          <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>
+            <strong>User {notification.actor_id}</strong> {getMessageForType(notification.type)}
+          </p>
+          <span style={{ fontSize: '12px', color: '#888' }}>
+            {getRelativeTime(notification.created_at)}
+          </span>
+        </div>
       </div>
       
       <button 

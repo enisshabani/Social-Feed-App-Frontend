@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Hash, Bookmark, LogOut, User, Sparkles, Bell } from 'lucide-react';
+import { Home, Hash, Bookmark, LogOut, User, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { NotificationBell } from '../modules/notifications/components/NotificationBell';

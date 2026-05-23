@@ -73,11 +73,6 @@ const Feed: React.FC = () => {
     feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleTagClick = (tagName: string) => {
-    setSelectedTag(tagName);
-    setCurrentTab('home'); // Ensure they are on Home/feed tab to see it
-    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const handleDismissTag = () => {
     setSelectedTag(null);

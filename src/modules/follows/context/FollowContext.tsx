@@ -1,4 +1,5 @@
-import React, { createContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { followUser, unfollowUser } from '../api/followsApi';
 
 interface FollowContextState {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getFollowers, getFollowing } from '../modules/follows/api/followsApi';
 import { FollowButton } from '../modules/follows/components/FollowButton';
-import { FollowResponse } from '../modules/follows/types';
+import type { FollowResponse } from '../modules/follows/types';
 import { ArrowLeft, User } from 'lucide-react';
 
 type Mode = 'followers' | 'following';

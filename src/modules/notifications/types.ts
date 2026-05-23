@@ -1,10 +1,4 @@
-export enum NotificationType {
-  FOLLOW = 'FOLLOW',
-  LIKE = 'LIKE',
-  REPOST = 'REPOST',
-  MENTION = 'MENTION',
-  COMMENT = 'COMMENT',
-}
+export type NotificationType = 'FOLLOW' | 'LIKE' | 'REPOST' | 'MENTION' | 'COMMENT';
 
 export interface NotificationItem {
   id: string;
