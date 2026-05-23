@@ -1,21 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  /* Cosmic Dark Theme Design Tokens */
-  --bg-app: #060913;
-  --bg-panel: rgba(13, 20, 35, 0.7);
-  --bg-panel-solid: #0d1424;
-  --bg-input: #080c16;
+  /* Mastodon Default Dark Theme Design Tokens */
+  --bg-app: #191b22;
+  --bg-panel: rgba(40, 44, 55, 0.9);
+  --bg-panel-solid: #282c37;
+  --bg-input: rgba(0, 0, 0, 0.2);
   --bg-form: var(--bg-panel-solid);
-  --bg-dark: #030408;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-input: var(--border);
-  --border-focus: #3b82f6;
+  --bg-dark: #12141a;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-input: rgba(255, 255, 255, 0.1);
+  --border-focus: #6364ff;
 
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-glow: rgba(59, 130, 246, 0.3);
-  --primary-light: rgba(59, 130, 246, 0.1);
+  --primary: #6364ff;
+  --primary-hover: #563acc;
+  --primary-glow: rgba(99, 100, 255, 0.3);
+  --primary-light: rgba(99, 100, 255, 0.1);
 
   --like: #f43f5e;
   --like-hover: #e11d48;
@@ -383,7 +383,7 @@ button, input, textarea, select {
   width: 100%;
   max-width: 600px;
   border-radius: 4px;
-  border: 2px solid var(--border-input);
+  border: 2px solid #6e6c6c;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -540,7 +540,7 @@ button, input, textarea, select {
   width: 100%;
   background: var(--bg-form);
   /* Darker background from screenshot */
-  color: #fff;
+  color: var(--text-main);
 }
 
 .settings-sidebar {
@@ -549,28 +549,6 @@ button, input, textarea, select {
   padding: 2rem 0 2rem 2rem;
   display: flex;
   flex-direction: column;
-}
-
-.settings-logo {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #6364ff;
-  text-align: center;
-  margin-bottom: 2rem;
-  display: flex;
-  justify-content: center;
-}
-
-.settings-logo-img {
-  width: 60px;
-  height: 60px;
-  background: #6364ff;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 2rem;
 }
 
 .settings-nav-group {
@@ -582,7 +560,7 @@ button, input, textarea, select {
   align-items: center;
   gap: 12px;
   padding: 0.75rem 1rem;
-  color: #9baec8;
+  color: var(--text-muted);
   text-decoration: none;
   font-size: 0.95rem;
   cursor: pointer;
@@ -593,27 +571,27 @@ button, input, textarea, select {
 
 .settings-nav-item:hover,
 .settings-nav-item.active {
-  color: #fff;
+  color: var(--text-main);
   background: rgba(255, 255, 255, 0.05);
 }
 
 .settings-nav-item.active {
   font-weight: 500;
-  color: #6364ff;
+  color: var(--primary);
   background: rgba(99, 100, 255, 0.1);
 }
 
 .settings-nav-item.back-link {
-  color: #9baec8;
+  color: var(--text-muted);
   margin-bottom: 1rem;
 }
 
 .settings-nav-item.back-link:hover {
-  color: #fff;
+  color: var(--text-main);
 }
 
 .settings-nav-title {
-  color: #9baec8;
+  color: var(--text-muted);
   font-size: 0.9rem;
   padding: 0.5rem 1rem;
   margin-top: 1rem;
@@ -628,7 +606,7 @@ button, input, textarea, select {
 .settings-subnav {
   margin-left: 1.5rem;
   margin-top: 0.5rem;
-  border-left: 1px solid #282c37;
+  border-left: 1px solid var(--border-input);
   padding-left: 0.5rem;
 }
 
@@ -642,13 +620,13 @@ button, input, textarea, select {
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 2rem;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .settings-section-title {
   font-size: 1.1rem;
   margin-bottom: 1rem;
-  color: #fff;
+  color: var(--text-main);
   padding-bottom: 0.5rem;
 }
 
@@ -673,7 +651,7 @@ button, input, textarea, select {
 .settings-input-group label {
   font-size: 0.85rem;
   font-weight: 500;
-  color: #fff;
+  color: var(--text-main);
   margin-bottom: 0.5rem;
 }
 
@@ -683,32 +661,32 @@ button, input, textarea, select {
 
 .settings-input-group input,
 .settings-input-group select {
-  background: #191b22;
-  border: 1px solid #282c37;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
   border-radius: 4px;
   padding: 0.75rem 1rem;
-  color: #fff;
+  color: var(--text-main);
   font-size: 0.95rem;
 }
 
 .settings-input-group input:focus,
 .settings-input-group select:focus {
   outline: none;
-  border-color: #6364ff;
+  border-color: var(--primary);
 }
 
 .settings-input-group input[readOnly] {
-  color: #9baec8;
+  color: var(--text-muted);
 }
 
 .settings-input-group p {
   font-size: 0.8rem;
-  color: #9baec8;
+  color: var(--text-muted);
   margin-top: 0.5rem;
 }
 
 .settings-btn-save {
-  background: #6364ff;
+  background: var(--primary);
   color: white;
   border: none;
   padding: 0.8rem;
@@ -721,17 +699,17 @@ button, input, textarea, select {
 }
 
 .settings-btn-save:hover {
-  background: #563acc;
+  background: var(--primary-hover);
 }
 
 .settings-footer-text {
   margin-top: 2rem;
   font-size: 0.9rem;
-  color: #9baec8;
+  color: var(--text-muted);
 }
 
 .settings-footer-text a {
-  color: #9baec8;
+  color: var(--text-muted);
   text-decoration: underline;
 }
 
@@ -747,11 +725,11 @@ button, input, textarea, select {
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .settings-radio-label input {
-  accent-color: #6364ff;
+  accent-color: var(--primary);
 }
 
 .settings-checkbox-list {
@@ -769,7 +747,7 @@ button, input, textarea, select {
 
 .settings-checkbox-item input {
   margin-top: 0.2rem;
-  accent-color: #6364ff;
+  accent-color: var(--primary);
 }
 
 .settings-checkbox-text {
@@ -778,20 +756,20 @@ button, input, textarea, select {
 }
 
 .settings-checkbox-title {
-  color: #ffffff;
+  color: var(--text-main);
   font-weight: 500;
   font-size: 0.95rem;
 }
 
 .settings-checkbox-desc {
-  color: #9baec8;
+  color: var(--text-muted);
   font-size: 0.85rem;
   margin-top: 0.25rem;
 }
 
 .badge-recommended {
-  background: #282c37;
-  color: #9baec8;
+  background: var(--bg-panel-solid);
+  color: var(--text-muted);
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -803,12 +781,12 @@ button, input, textarea, select {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 0;
-  border-bottom: 1px solid #282c37;
-  color: #fff;
+  border-bottom: 1px solid var(--border-input);
+  color: var(--text-main);
 }
 
 .settings-2fa-action {
-  color: #9baec8;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -816,7 +794,7 @@ button, input, textarea, select {
 }
 
 .settings-2fa-action:hover {
-  color: #fff;
+  color: var(--text-main);
 }
 
 /* Light Mode Styles */
@@ -1008,7 +986,7 @@ button, input, textarea, select {
 
 .edit-profile-cover {
   height: 200px;
-  background: #282c37;
+  background: var(--bg-panel-solid);
   position: relative;
 }
 
@@ -1114,7 +1092,8 @@ button, input, textarea, select {
 .mastodon-panel {
   background: var(--bg-form);
   border-radius: 4px;
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+  /* box-shadow: 0 0 15px rgba(255, 255, 255, 0.05); */
+  border: 2px solid #6e6c6c;
 }
 
 .mastodon-logo {

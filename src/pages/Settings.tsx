@@ -140,10 +140,8 @@ const Settings: React.FC = () => {
 
   const renderSidebar = () => (
     <div className="settings-sidebar">
-      <div className="settings-logo">
-        <div className="settings-logo-img">
-          kP
-        </div>
+      <div className="mastodon-logo" style={{ textAlign: 'left', marginBottom: '3rem', marginLeft: '0.5rem', fontSize: '2.5rem' }}>
+        kaPak
       </div>
 
       <Link to="/profile" className="settings-nav-item back-link">

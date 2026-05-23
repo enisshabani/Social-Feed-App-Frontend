@@ -58,8 +58,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
       <div className="sidebar-left-content">
         {/* App Logo */}
         <div className="sidebar-logo" onClick={() => setCurrentTab('home')}>
-          <Sparkles className="logo-icon" size={32} />
-          <span className="logo-text">KaPak</span>
+          <span className="mastodon-logo" style={{ marginBottom: 0, padding: 0, textAlign: 'left', fontSize: '2.5rem' }}>kaPak</span>
         </div>
 
         {/* Navigation Tabs */}
@@ -140,29 +139,10 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
         .sidebar-logo {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 12px;
+          padding: 12px 16px;
           cursor: pointer;
           margin-bottom: 20px;
           width: max-content;
-        }
-
-        .logo-icon {
-          color: var(--primary);
-          filter: drop-shadow(0 0 8px var(--primary-glow));
-          transition: transform 0.3s ease;
-        }
-
-        .sidebar-logo:hover .logo-icon {
-          transform: rotate(20deg) scale(1.1);
-        }
-
-        .logo-text {
-          font-size: 22px;
-          font-weight: 800;
-          background: linear-gradient(135deg, #fff 30%, var(--primary) 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
         }
 
         .sidebar-nav {
