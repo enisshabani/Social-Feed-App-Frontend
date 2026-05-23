@@ -271,6 +271,10 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
         .trending-list {
           display: flex;
           flex-direction: column;
+          max-height: 55vh;
+          overflow-y: auto;
+          scrollbar-width: thin;
+          scrollbar-color: var(--border) transparent;
         }
 
         .trending-item {
