@@ -4,6 +4,7 @@ import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/globals.css';
 import '../styles/register.css';
 
@@ -19,11 +20,12 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('error') === 'account_disabled') {
-      setError('Kjo llogari është fshirë ose çaktivizuar. Ju lutem kontaktoni administratorin.');
+      setError(t('login_error_disabled') || 'This account has been disabled. Please contact the administrator.');
     }
   }, [location]);
 
@@ -48,7 +50,7 @@ const Login: React.FC = () => {
       login(access_token, refresh_token, rememberMe);
       navigate('/feed');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me Google.');
+      setError(err.response?.data?.detail || t('login_error_google'));
     }
   };
 
@@ -73,7 +75,7 @@ const Login: React.FC = () => {
       login(access_token, refresh_token, rememberMe);
       navigate('/feed');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Gabim gjatë kyçjes me GitHub.');
+      setError(err.response?.data?.detail || t('login_error_github'));
     }
   };
 
@@ -95,7 +97,7 @@ const Login: React.FC = () => {
       login(access_token, refresh_token, rememberMe);
       navigate('/feed');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Kodi nuk është i saktë.');
+      setError(err.response?.data?.detail || t('two_factor_error'));
     }
   };
 
@@ -131,7 +133,7 @@ const Login: React.FC = () => {
       navigate('/feed');
 
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Gabim gjatë logimit. Ju lutem provoni përsëri.');
+      setError(err.response?.data?.detail || t('login_error_generic'));
     }
   };
 
@@ -145,9 +147,9 @@ const Login: React.FC = () => {
         {requires2FA ? (
           <form onSubmit={handle2FASubmit}>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--text-main)' }}>
-              <h3 style={{ marginBottom: '0.5rem' }}>Verifikimi me dy Hapa</h3>
+              <h3 style={{ marginBottom: '0.5rem' }}>{t('two_factor_title')}</h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                Ju lutem vendosni kodin 6-shifror nga aplikacioni juaj i autentikimit ose një kod emergjence.
+                {t('two_factor_desc')}
               </p>
             </div>
             
@@ -157,7 +159,7 @@ const Login: React.FC = () => {
                 id="twoFactorCode" 
                 value={twoFactorCode}
                 onChange={(e) => setTwoFactorCode(e.target.value)}
-                placeholder="Kodi (psh. 123456)" 
+                placeholder={t('two_factor_code_placeholder')} 
                 required 
                 autoFocus
                 style={{ textAlign: 'center', letterSpacing: '2px', fontSize: '1.2rem' }}
@@ -167,7 +169,7 @@ const Login: React.FC = () => {
             {error && <div className="error-message">{error}</div>}
             
             <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
-              Verifiko
+              {t('two_factor_verify_btn')}
             </button>
             <button 
               type="button" 
@@ -179,7 +181,7 @@ const Login: React.FC = () => {
               }} 
               style={{ width: '100%', padding: '0.75rem', marginTop: '0.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
             >
-              Kthehu pas
+              {t('two_factor_go_back')}
             </button>
           </form>
         ) : (
@@ -191,7 +193,7 @@ const Login: React.FC = () => {
               id="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email ose Username" 
+              placeholder={t('login_email_username')} 
               required 
             />
           </div>
@@ -202,7 +204,7 @@ const Login: React.FC = () => {
               id="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Fjalëkalimi" 
+              placeholder={t('login_password')} 
               style={{ paddingRight: '2.5rem' }}
               required 
             />
@@ -245,20 +247,20 @@ const Login: React.FC = () => {
               style={{ marginRight: '8px', cursor: 'pointer', accentColor: 'var(--primary)', width: '16px', height: '16px' }}
             />
             <label htmlFor="rememberMe" style={{ color: 'var(--text-main)', fontSize: '0.9rem', cursor: 'pointer' }}>
-              Më mbaj mend
+              {t('login_remember_me')}
             </label>
           </div>
           
           {error && <div className="error-message">{error}</div>}
           
           <button type="submit" className="btn-primary" style={{ marginTop: '0.5rem' }}>
-            Hyr
+            {t('login_button')}
           </button>
         </form>
 
         <div style={{ margin: '1.5rem 0', display: 'flex', alignItems: 'center', textAlign: 'center', color: 'var(--border-color)' }}>
           <hr style={{ flex: 1, border: 'none', borderTop: '1px solid var(--border-color)' }} />
-          <span style={{ padding: '0 10px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>OSE</span>
+          <span style={{ padding: '0 10px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('login_or')}</span>
           <hr style={{ flex: 1, border: 'none', borderTop: '1px solid var(--border-color)' }} />
         </div>
 
@@ -272,7 +274,7 @@ const Login: React.FC = () => {
           }}
         >
           <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
-          Google
+          {t('login_google')}
         </button>
 
         <button 
@@ -287,12 +289,12 @@ const Login: React.FC = () => {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.379.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/>
           </svg>
-          GitHub
+          {t('login_github')}
         </button>
         
         <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <Link to="/forgot-password" style={{ color: '#6364ff' }}>Harruat fjalëkalimin?</Link>
-          <Link to="/register" style={{ color: 'var(--text-muted)' }}>Nuk keni llogari? Regjistrohuni.</Link>
+          <Link to="/forgot-password" style={{ color: '#6364ff' }}>{t('login_forgot_password')}</Link>
+          <Link to="/register" style={{ color: 'var(--text-muted)' }}>{t('login_register_link')}</Link>
         </div>
         </>
         )}

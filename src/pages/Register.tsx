@@ -4,37 +4,40 @@ import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/globals.css';
 import '../styles/register.css';
 
-const RULES = [
-  {
-    title: 'Përmbajtja eksplicite ose e dhunshme duhet të shënohet si e ndjeshme ose me paralajmërim.',
-    desc: 'Kjo përfshin përmbajtje që është veçanërisht provokuese edhe nëse nuk tregon pjesë specifike të trupit.',
-  },
-  {
-    title: 'Pa racizëm, seksizëm, homofobia, transfobia, ableizëm, ksenofobia, ose casteizëm.',
-    desc: 'Sjellja transfobike si çkeqidentifikimi qëllimtar dhe deadnaming është rreptësisht e ndaluar.',
-  },
-  {
-    title: 'Pa nxitje dhune ose promovim ideologjish të dhunshme.',
-    desc: 'Thirrja për njerëz ose grupe për t\'u vrarë, asasinuar ose sulmuar fizikisht është rreptësisht e ndaluar.',
-  },
-  {
-    title: 'Pa ngacmim, shmangje të bllokimit, dogpiling ose doxxing të të tjerëve.',
-    desc: 'Përpjekjet e përsëritura për të komunikuar me përdoruesit që ju kanë bllokuar ose krijimin e llogarive me qëllim ngacmimi janë të ndaluara.',
-  },
-  {
-    title: 'Mos ndani informacione të njohura si të rreme dhe mashtruese.',
-    desc: 'Informacioni i rremë dhe mashtrimtar dhe lidhjet nga burime të cilësisë së ulët nuk lejohen të postohen.',
-  },
-  {
-    title: 'Përmbajtja e krijuar nga të tjerët duhet të atribuohet, dhe përdorimi i AI gjenerues duhet të zbulohet.',
-    desc: 'Përmbajtja e krijuar nga të tjerët duhet të ofrojë qartë një referencë tek autori, krijuesi ose burimi.',
-  },
-];
-
 const Register: React.FC = () => {
+  const { t } = useLanguage();
+
+  const RULES = [
+    {
+      title: t('register_rule1_title'),
+      desc: t('register_rule1_desc'),
+    },
+    {
+      title: t('register_rule2_title'),
+      desc: t('register_rule2_desc'),
+    },
+    {
+      title: t('register_rule3_title'),
+      desc: t('register_rule3_desc'),
+    },
+    {
+      title: t('register_rule4_title'),
+      desc: t('register_rule4_desc'),
+    },
+    {
+      title: t('register_rule5_title'),
+      desc: t('register_rule5_desc'),
+    },
+    {
+      title: t('register_rule6_title'),
+      desc: t('register_rule6_desc'),
+    },
+  ];
+
   const [step, setStep] = useState(0); // 0 = rules, 1 = details, 2 = confirm
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -74,11 +77,11 @@ const Register: React.FC = () => {
   const getStrengthText = (score: number) => {
     if (password.length === 0) return '';
     switch (score) {
-      case 0: return 'Shumë i dobët';
-      case 1: return 'I dobët';
-      case 2: return 'Mesatar';
-      case 3: return 'I fortë';
-      case 4: return 'Shumë i fortë!';
+      case 0: return t('register_pass_very_weak');
+      case 1: return t('register_pass_weak');
+      case 2: return t('register_pass_fair');
+      case 3: return t('register_pass_strong');
+      case 4: return t('register_pass_very_strong');
       default: return '';
     }
   };
@@ -98,14 +101,14 @@ const Register: React.FC = () => {
     e.preventDefault();
     setError('');
     if (password !== confirmPassword) {
-      setError('Fjalëkalimet nuk përputhen!');
+      setError(t('register_error_passmatch'));
       return;
     }
     try {
       await api.post('/api/v1/auth/register', { email, username, password });
       setStep(2);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit. Keni provuar një email/username ekzistues?');
+      setError(err.response?.data?.detail || t('register_error_generic'));
     }
   };
 
@@ -118,7 +121,7 @@ const Register: React.FC = () => {
       login(access_token, refresh_token, false);
       navigate('/feed');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit me Google.');
+      setError(err.response?.data?.detail || t('login_error_google'));
     }
   };
 
@@ -131,7 +134,7 @@ const Register: React.FC = () => {
       login(access_token, refresh_token, false);
       navigate('/feed');
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Gabim gjatë regjistrimit me GitHub.');
+      setError(err.response?.data?.detail || t('login_error_github'));
     }
   };
 
@@ -155,7 +158,7 @@ const Register: React.FC = () => {
                 <span className="reg-step-dot" />
               )}
             </div>
-            <span className="reg-step-label">Rregullat</span>
+            <span className="reg-step-label">{t('register_stepper_1')}</span>
           </div>
 
           <div className={`reg-stepper-line ${step > 0 ? 'filled' : ''}`} />
@@ -170,7 +173,7 @@ const Register: React.FC = () => {
                 <span className="reg-step-dot" />
               ) : null}
             </div>
-            <span className="reg-step-label">Detajet tuaja</span>
+            <span className="reg-step-label">{t('register_stepper_2')}</span>
           </div>
 
           <div className={`reg-stepper-line ${step > 1 ? 'filled' : ''}`} />
@@ -179,15 +182,15 @@ const Register: React.FC = () => {
             <div className="reg-step-circle">
               {step === 2 ? <span className="reg-step-dot" /> : null}
             </div>
-            <span className="reg-step-label">Konfirmo<br />email-in</span>
+            <span className="reg-step-label">{t('register_stepper_3')}</span>
           </div>
         </div>
 
         {/* ── STEP 0: Rules ── */}
         {step === 0 && (
           <>
-            <h2 className="reg-title">Disa rregulla bazë.</h2>
-            <p className="reg-subtitle">Këto janë vendosur dhe zbatohen nga moderatorët e kaPak.</p>
+            <h2 className="reg-title">{t('register_step1_title')}</h2>
+            <p className="reg-subtitle">{t('register_step1_subtitle')}</p>
 
             <div className="reg-rules-list">
               {RULES.map((rule, idx) => (
@@ -209,10 +212,10 @@ const Register: React.FC = () => {
             </div>
 
             <button className="btn-primary reg-btn" onClick={() => setStep(1)}>
-              Pranoj
+              {t('register_step1_accept')}
             </button>
             <button className="reg-btn-back" onClick={() => navigate('/login')}>
-              Kthehu
+              {t('register_step1_back')}
             </button>
           </>
         )}
@@ -220,16 +223,14 @@ const Register: React.FC = () => {
         {/* ── STEP 1: Your Details ── */}
         {step === 1 && (
           <>
-            <h2 className="reg-title">Le t'ju konfigurojmë në kaPak.</h2>
-            <p className="reg-subtitle">
-              Me një llogari në këtë server, do të mund të ndiqni çdo person tjetër në Fediverse, pavarësisht se ku është llogaria e tyre.
-            </p>
+            <h2 className="reg-title">{t('register_step2_title')}</h2>
+            <p className="reg-subtitle">{t('register_step2_subtitle')}</p>
 
             <form onSubmit={handleRegister} style={{ width: '100%' }}>
               {/* Username */}
               <div className="reg-field">
                 <label className="reg-label">
-                  Username <span className="reg-required">*</span>
+                  {t('register_username')}
                 </label>
                 <div className="reg-input-wrap">
                   <input
@@ -243,14 +244,12 @@ const Register: React.FC = () => {
                   />
                   <span className="reg-input-suffix">@kapak.social</span>
                 </div>
-                <span className="reg-hint">Mund të përdorni shkronja, numra dhe nënvija</span>
+                <span className="reg-hint">{t('register_username_hint')}</span>
               </div>
 
               {/* Email */}
               <div className="reg-field">
-                <label className="reg-label">
-                  Adresa e email-it <span className="reg-required">*</span>
-                </label>
+                <label className="reg-label">{t('register_email')}</label>
                 <input
                   type="email"
                   id="email"
@@ -263,9 +262,7 @@ const Register: React.FC = () => {
 
               {/* Password */}
               <div className="reg-field">
-                <label className="reg-label">
-                  Fjalëkalimi <span className="reg-required">*</span>
-                </label>
+                <label className="reg-label">{t('register_password')}</label>
                 <div className="reg-input-pw-wrap">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -322,7 +319,7 @@ const Register: React.FC = () => {
                   id="confirmPassword"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Konfirmo fjalëkalimin"
+                  placeholder={t('register_confirm_password')}
                   required
                   className="reg-input"
                 />
@@ -330,10 +327,8 @@ const Register: React.FC = () => {
 
               {/* Date of birth */}
               <div className="reg-field">
-                <label className="reg-label">
-                  Data e lindjes <span className="reg-required">*</span>
-                </label>
-                <p className="reg-hint">Duhet të jeni të paktën 16 vjeç. Nuk do ta ruajmë këtë.</p>
+                <label className="reg-label">{t('register_dob')}</label>
+                <p className="reg-hint">{t('register_dob_hint')}</p>
                 <div className="reg-dob-wrap">
                   <input
                     type="text"
@@ -372,8 +367,8 @@ const Register: React.FC = () => {
                   className="reg-checkbox"
                 />
                 <label htmlFor="privacy" className="reg-privacy-label">
-                  Kam lexuar dhe pajtohem me{' '}
-                  <Link to="/privacy-policy" className="reg-link">politikën e privatësisë</Link>
+                  {t('register_privacy')}{' '}
+                  <Link to="/privacy-policy" className="reg-link">{t('register_privacy_link')}</Link>
                 </label>
               </div>
 
@@ -385,31 +380,31 @@ const Register: React.FC = () => {
                 disabled={!privacyChecked}
                 style={{ opacity: privacyChecked ? 1 : 0.5 }}
               >
-                Regjistrohu
+                {t('register_button')}
               </button>
             </form>
 
             {/* Social register */}
             <div className="reg-divider">
               <hr className="reg-hr" />
-              <span className="reg-or">OSE</span>
+              <span className="reg-or">{t('login_or')}</span>
               <hr className="reg-hr" />
             </div>
 
             <button onClick={handleGoogleRegister} type="button" className="reg-social-btn">
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="20" height="20" />
-              Vazhdo me Google
+              {t('login_google')}
             </button>
 
             <button onClick={handleGithubRegister} type="button" className="reg-social-btn" style={{ marginTop: '0.6rem' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.379.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
               </svg>
-              Vazhdo me GitHub
+              {t('login_github')}
             </button>
 
             <div className="reg-footer-link">
-              <Link to="/login" style={{ color: 'var(--text-muted)' }}>Keni tashmë llogari? Hyni këtu.</Link>
+              <Link to="/login" style={{ color: 'var(--text-muted)' }}>{t('register_login_link')}</Link>
             </div>
           </>
         )}
@@ -417,16 +412,14 @@ const Register: React.FC = () => {
         {/* ── STEP 2: Confirm Email ── */}
         {step === 2 && (
           <div className="reg-confirm">
-            <h2 className="reg-title">Kontrolloni kutinë tuaj postare</h2>
+            <h2 className="reg-title">{t('register_step3_title')}</h2>
             <p className="reg-subtitle">
-              Klikoni lidhjen që ju dërguam te{' '}
-              <strong style={{ color: 'var(--text-main)' }}>{email}</strong> për të filluar të përdorni kaPak. Do t'ju presim këtu.
+              {t('register_step3_desc1')}
+              <strong style={{ color: 'var(--text-main)' }}>{email}</strong>
+              {t('register_step3_desc2')}
             </p>
-            <button
-              className="reg-resend-btn"
-              onClick={() => {}}
-            >
-              ▶ Nuk morët lidhjen?
+            <button className="reg-resend-btn" onClick={() => {}}>
+              ▶ {t('register_step3_no_link')}
             </button>
           </div>
         )}
