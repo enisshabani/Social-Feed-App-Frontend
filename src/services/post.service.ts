@@ -105,9 +105,15 @@ export interface Draft {
 }
 
 export interface TrendingHashtag {
-  tag_id: number;
+  id: number;
   name: string;
-  usage_count: number;
+  mention_count: number;
+  created_at: string;
+  history: {
+    day: string;
+    uses: number;
+    accounts: number;
+  }[];
 }
 
 // ==========================================
@@ -141,6 +147,16 @@ export class PostService {
   static async getExploreTrending(limit = 10): Promise<TrendingHashtag[]> {
     const response = await api.get<TrendingHashtag[]>('/api/v1/feeds/explore', {
       params: { limit }
+    });
+    return response.data;
+  }
+
+  /**
+   * Trending hashtags from the last N days with daily history.
+   */
+  static async getTrendingHashtags(days = 7, limit = 10): Promise<TrendingHashtag[]> {
+    const response = await api.get<TrendingHashtag[]>('/api/v1/hashtags/trending', {
+      params: { days, limit }
     });
     return response.data;
   }

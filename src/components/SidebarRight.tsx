@@ -19,7 +19,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ onTagClick, searchQuery, se
 
   const fetchTrendingTags = async () => {
     try {
-      const trending = await PostService.getExploreTrending(6);
+      const trending = await PostService.getTrendingHashtags(7);
       setTrends(trending);
     } catch (e) {
       console.error('Gabim gjatë marrjes së hashtags trending:', e);
@@ -65,20 +65,35 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ onTagClick, searchQuery, se
               Nuk ka asnjë hashtag trending momentalisht.
             </div>
           ) : (
-            trends.map((trend) => (
-              <div
-                key={trend.tag_id}
-                className="trending-item"
-                onClick={() => onTagClick(trend.name)}
-              >
-                <div className="trend-meta">Trending në Shqipëri</div>
-                <div className="trend-name">#{trend.name}</div>
-                <div className="trend-count">
-                  <TrendingUp size={12} style={{ marginRight: '4px' }} />
-                  {trend.usage_count} postime
+            trends.map((trend) => {
+              const totalUses = trend.history.reduce((sum, h) => sum + h.uses, 0);
+              const maxUses = Math.max(...trend.history.map(h => h.uses), 1);
+              return (
+                <div
+                  key={trend.id}
+                  className="trending-item"
+                  onClick={() => onTagClick(trend.name)}
+                >
+                  <div className="trend-meta">Më të përdorur këtë javë</div>
+                  <div className="trend-name">#{trend.name}</div>
+                  <div className="trend-count">
+                    <TrendingUp size={12} style={{ marginRight: '4px' }} />
+                    {totalUses} postime në 7 ditët e fundit
+                  </div>
+                  <div className="trend-dots">
+                    {trend.history.slice(-5).map((h, i) => (
+                      <span
+                        key={i}
+                        className="trend-dot"
+                        style={{
+                          opacity: 0.3 + (h.uses / maxUses) * 0.7,
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -199,6 +214,19 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ onTagClick, searchQuery, se
           font-size: 12px;
           color: var(--text-muted);
           margin-top: 4px;
+        }
+
+        .trend-dots {
+          display: flex;
+          gap: 4px;
+          margin-top: 6px;
+        }
+
+        .trend-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: var(--primary);
         }
 
         .trending-empty {
