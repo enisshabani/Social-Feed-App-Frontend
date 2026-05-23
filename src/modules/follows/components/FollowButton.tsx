@@ -5,19 +5,23 @@ import { checkIsFollowing } from '../api/followsApi';
 interface FollowButtonProps {
   userId: number;
   initialIsFollowing?: boolean;
+  /** Hide the button if this is the current user */
+  hideForCurrentUser?: boolean;
 }
 
 export const FollowButton: React.FC<FollowButtonProps> = ({ userId, initialIsFollowing }) => {
   const { following, isLoading, follow, unfollow, setInitialFollowingStatus } = useFollow();
-  const [isInitializing, setIsInitializing] = useState(initialIsFollowing === undefined);
+  // Only show initializing spinner when we truly don't know the state yet
+  const [isInitializing, setIsInitializing] = useState(false);
 
   useEffect(() => {
     if (initialIsFollowing !== undefined) {
+      // We were given the initial status — set it immediately, no delay
       setInitialFollowingStatus(userId, initialIsFollowing);
-      setIsInitializing(false);
-    } else {
-      // If we don't know the status, fetch it
+    } else if (!following.has(userId)) {
+      // Only fetch if we don't already know the status from context
       let mounted = true;
+      setIsInitializing(true);
       checkIsFollowing(userId).then((res) => {
         if (mounted) {
           setInitialFollowingStatus(userId, res.is_following);
