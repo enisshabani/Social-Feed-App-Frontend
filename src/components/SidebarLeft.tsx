@@ -1,6 +1,7 @@
 import React from 'react';
 import { Home, Hash, Bookmark, LogOut, User, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface SidebarLeftProps {
   currentTab: 'home' | 'explore' | 'bookmarks';
@@ -38,10 +39,11 @@ export const getLoggedInUser = () => {
 
 const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, onPostClick }) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const user = getLoggedInUser();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    logout();
     navigate('/login');
   };
 
@@ -86,9 +88,19 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
           </button>
         )}
 
+        {/* Profile Link */}
+        <button
+          className="nav-item profile-nav-item"
+          onClick={() => navigate('/profile')}
+          title="Profili im"
+        >
+          <User size={24} className="nav-icon" />
+          <span className="nav-label">Profili</span>
+        </button>
+
         {/* User Card at bottom */}
         {user && (
-          <div className="sidebar-user-card">
+          <div className="sidebar-user-card" onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
             <div className="user-info-wrapper">
               <div className="user-avatar-placeholder">
                 <User size={20} />
@@ -100,7 +112,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, on
                 </div>
               </div>
             </div>
-            <button className="btn-icon logout-btn" title="Dil" onClick={handleLogout}>
+            <button className="btn-icon logout-btn" title="Dil" onClick={(e) => { e.stopPropagation(); handleLogout(); }}>
               <LogOut size={18} />
             </button>
           </div>

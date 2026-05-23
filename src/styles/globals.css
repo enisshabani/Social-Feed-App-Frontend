@@ -6,7 +6,10 @@
   --bg-panel: rgba(13, 20, 35, 0.7);
   --bg-panel-solid: #0d1424;
   --bg-input: #080c16;
+  --bg-form: var(--bg-panel-solid);
+  --bg-dark: #030408;
   --border: rgba(255, 255, 255, 0.08);
+  --border-input: var(--border);
   --border-focus: #3b82f6;
 
   --primary: #3b82f6;
@@ -951,11 +954,11 @@ button, input, textarea, select {
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--bg-dark);
+  background: rgba(0, 0, 0, 0.6);
   z-index: 1000;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   overflow-y: auto;
 }
 
@@ -963,9 +966,15 @@ button, input, textarea, select {
   width: 100%;
   max-width: 600px;
   background: var(--bg-form);
-  min-height: 100vh;
-  border-left: 1px solid var(--border-input);
-  border-right: 1px solid var(--border-input);
+  min-height: auto;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-input);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .edit-profile-header {

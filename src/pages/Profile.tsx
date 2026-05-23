@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
+import MainLayout from '../components/MainLayout';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
@@ -11,6 +12,8 @@ const Profile: React.FC = () => {
   const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState('activity');
+  const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
@@ -78,9 +81,17 @@ const Profile: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '5rem', color: 'var(--text-main)' }}>
-        {t('profile_loading')}
-      </div>
+      <MainLayout
+        currentTab={currentFeedTab}
+        setCurrentTab={setCurrentFeedTab}
+        onTagClick={() => {}}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      >
+        <div style={{ textAlign: 'center', marginTop: '5rem', color: 'var(--text-main)' }}>
+          {t('profile_loading')}
+        </div>
+      </MainLayout>
     );
   }
 
@@ -97,6 +108,13 @@ const Profile: React.FC = () => {
   }
 
   return (
+    <MainLayout
+      currentTab={currentFeedTab}
+      setCurrentTab={setCurrentFeedTab}
+      onTagClick={() => {}}
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+    >
     <div className="profile-wrapper">
       <div className="profile-container">
 
@@ -342,6 +360,7 @@ const Profile: React.FC = () => {
         </div>
       )}
     </div>
+    </MainLayout>
   );
 };
 
