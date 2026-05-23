@@ -11,23 +11,23 @@ const getRelativeTime = (dateString: string): string => {
   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
   const date = new Date(dateString);
   const now = new Date();
-  
+
   const diffInSeconds = Math.floor((date.getTime() - now.getTime()) / 1000);
-  
+
   if (Math.abs(diffInSeconds) < 60) {
     return 'just now';
   }
-  
+
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (Math.abs(diffInMinutes) < 60) {
     return rtf.format(diffInMinutes, 'minute');
   }
-  
+
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (Math.abs(diffInHours) < 24) {
     return rtf.format(diffInHours, 'hour');
   }
-  
+
   const diffInDays = Math.floor(diffInHours / 24);
   return rtf.format(diffInDays, 'day');
 };
@@ -82,7 +82,7 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
   };
 
   return (
-    <div 
+    <div
       onClick={handleMarkRead}
       style={{
         padding: '12px 16px',
@@ -108,8 +108,8 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
           </span>
         </div>
       </div>
-      
-      <button 
+
+      <button
         onClick={handleDelete}
         style={{
           background: 'none',

@@ -83,7 +83,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
       )}
 
       {/* Composer Box */}
-      <CreatePostBox onPostCreated={() => {}} />
+      <CreatePostBox onPostCreated={() => { }} />
 
       {/* Trending Box */}
       <div className="trending-box">

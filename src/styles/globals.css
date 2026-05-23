@@ -17,11 +17,13 @@
   --primary-glow: rgba(99, 100, 255, 0.3);
   --primary-light: rgba(99, 100, 255, 0.1);
 
-  --like: #ca8f04; /* Mastodon Gold Star */
+  --like: #ca8f04;
+  /* Mastodon Gold Star */
   --like-hover: #e8a509;
   --like-light: rgba(202, 143, 4, 0.1);
 
-  --repost: #8c8dff; /* Mastodon Boost Purple/Blue */
+  --repost: #8c8dff;
+  /* Mastodon Boost Purple/Blue */
   --repost-hover: #a1a1ff;
   --repost-light: rgba(140, 141, 255, 0.1);
 
@@ -70,13 +72,16 @@ body {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--bg-app);
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
@@ -86,11 +91,15 @@ a {
   text-decoration: none;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 a:hover {
   color: var(--primary-hover);
 }
 
-button, input, textarea, select {
+button,
+input,
+textarea,
+select {
   font-family: inherit;
   color: inherit;
 }
@@ -124,7 +133,8 @@ button, input, textarea, select {
 @media (max-width: 688px) {
   .app-container {
     grid-template-columns: 1fr;
-    padding-bottom: 64px; /* Space for mobile nav bar */
+    padding-bottom: 64px;
+    /* Space for mobile nav bar */
   }
 }
 
@@ -271,9 +281,17 @@ button, input, textarea, select {
    MICRO-ANIMATIONS & SHIMMER
    ========================================== */
 @keyframes pulse-like {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.25); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.25);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .pulse-active {
@@ -281,8 +299,13 @@ button, input, textarea, select {
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .skeleton {
@@ -354,6 +377,7 @@ button, input, textarea, select {
   color: var(--primary);
   font-weight: 500;
 }
+
 .hashtag:hover {
   text-decoration: underline;
   cursor: pointer;
@@ -363,6 +387,7 @@ button, input, textarea, select {
   color: #a855f7;
   font-weight: 500;
 }
+
 .mention:hover {
   text-decoration: underline;
   cursor: pointer;
@@ -1244,7 +1269,8 @@ button, input, textarea, select {
   background-color: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 4px;
-  color: #f43f5e; /* Content warning highlighted in soft red */
+  color: #f43f5e;
+  /* Content warning highlighted in soft red */
   font-size: 14px;
   font-weight: 600;
   outline: none;
@@ -1387,7 +1413,8 @@ button, input, textarea, select {
 
 /* Content Warnings (CW) in Feed Posts */
 .cw-alert-banner {
-  background-color: var(--bg-form); /* Mastodon uses standard panel color for CW */
+  background-color: var(--bg-form);
+  /* Mastodon uses standard panel color for CW */
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 12px 16px;
@@ -1441,6 +1468,7 @@ button, input, textarea, select {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1491,4 +1519,3 @@ button, input, textarea, select {
   background: var(--bg-form);
   color: var(--text-main);
 }
-
