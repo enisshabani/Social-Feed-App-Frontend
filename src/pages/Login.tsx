@@ -5,6 +5,7 @@ import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import '../styles/globals.css';
+import '../styles/register.css';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -137,7 +138,9 @@ const Login: React.FC = () => {
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', width: '100%' }}>
       <div className="mastodon-panel" style={{ padding: '3rem 2.5rem', width: '100%', maxWidth: '420px' }}>
-        <div className="mastodon-logo">kaPak</div>
+        <div className="reg-logo" style={{ marginBottom: '2rem' }}>
+          <span className="reg-logo-text">kaPak</span>
+        </div>
         
         {requires2FA ? (
           <form onSubmit={handle2FASubmit}>
