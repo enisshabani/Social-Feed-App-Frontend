@@ -65,15 +65,8 @@ export const translations = {
     register_step2_title: "Let's get you set up on kaPak.",
     register_step2_subtitle: "With an account on this server, you'll be able to follow any other person on the Fediverse, regardless of where their account is hosted.",
     
-    register_step3_title: "Check your inbox",
-    register_step3_desc1: "Click the link we sent to ",
-    register_step3_desc2: " to begin using kaPak. We'll wait right here.",
-    register_step3_no_link: "Didn't get a link?",
-    register_step3_go_login: "Go to Login",
-    
     register_stepper_1: "Accept rules",
     register_stepper_2: "Your details",
-    register_stepper_3: "Confirm email",
 
     register_pass_very_weak: "Very weak",
     register_pass_weak: "Weak",
@@ -331,15 +324,8 @@ export const translations = {
     register_step2_title: "Le t'ju konfigurojmë në kaPak.",
     register_step2_subtitle: "Me një llogari në këtë server, do të mund të ndiqni çdo person tjetër në Fediverse, pavarësisht se ku është llogaria e tyre.",
     
-    register_step3_title: "Kontrolloni kutinë tuaj postare",
-    register_step3_desc1: "Klikoni lidhjen që ju dërguam te ",
-    register_step3_desc2: " për të filluar të përdorni kaPak. Do t'ju presim këtu.",
-    register_step3_no_link: "Nuk morët lidhjen?",
-    register_step3_go_login: "Shko tek Hyrja",
-    
     register_stepper_1: "Prano rregullat",
     register_stepper_2: "Të dhënat tuaja",
-    register_stepper_3: "Konfirmo email-in",
 
     register_pass_very_weak: "Shumë i dobët",
     register_pass_weak: "I dobët",

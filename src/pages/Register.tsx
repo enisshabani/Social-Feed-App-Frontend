@@ -38,7 +38,7 @@ const Register: React.FC = () => {
     },
   ];
 
-  const [step, setStep] = useState(0); // 0 = rules, 1 = details, 2 = confirm
+  const [step, setStep] = useState(0); // 0 = rules, 1 = details
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -106,7 +106,7 @@ const Register: React.FC = () => {
     }
     try {
       await api.post('/api/v1/auth/register', { email, username, password });
-      setStep(2);
+      navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.detail || t('register_error_generic'));
     }
@@ -163,26 +163,13 @@ const Register: React.FC = () => {
 
           <div className={`reg-stepper-line ${step > 0 ? 'filled' : ''}`} />
 
-          <div className={`reg-step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
+          <div className={`reg-step ${step >= 1 ? 'active' : ''}`}>
             <div className="reg-step-circle">
-              {step > 1 ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              ) : step === 1 ? (
+              {step === 1 ? (
                 <span className="reg-step-dot" />
               ) : null}
             </div>
             <span className="reg-step-label">{t('register_stepper_2')}</span>
-          </div>
-
-          <div className={`reg-stepper-line ${step > 1 ? 'filled' : ''}`} />
-
-          <div className={`reg-step ${step >= 2 ? 'active' : ''}`}>
-            <div className="reg-step-circle">
-              {step === 2 ? <span className="reg-step-dot" /> : null}
-            </div>
-            <span className="reg-step-label">{t('register_stepper_3')}</span>
           </div>
         </div>
 
@@ -407,21 +394,6 @@ const Register: React.FC = () => {
               <Link to="/login" style={{ color: 'var(--text-muted)' }}>{t('register_login_link')}</Link>
             </div>
           </>
-        )}
-
-        {/* ── STEP 2: Confirm Email ── */}
-        {step === 2 && (
-          <div className="reg-confirm">
-            <h2 className="reg-title">{t('register_step3_title')}</h2>
-            <p className="reg-subtitle">
-              {t('register_step3_desc1')}
-              <strong style={{ color: 'var(--text-main)' }}>{email}</strong>
-              {t('register_step3_desc2')}
-            </p>
-            <button className="reg-resend-btn" onClick={() => {}}>
-              ▶ {t('register_step3_no_link')}
-            </button>
-          </div>
         )}
       </div>
     </div>
