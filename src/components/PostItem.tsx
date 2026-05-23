@@ -2,15 +2,19 @@ import React, { useState } from 'react';
 import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import type { Comment } from '../services/post.service';
+import type { MatchContext } from '../services/search.service';
 import ActionBar from './ActionBar';
 import { getLoggedInUser } from './SidebarLeft';
+import { FollowButton } from '../modules/follows/components/FollowButton';
 
 interface PostItemProps {
   post: any; // Can be Post or PostBrief
   onPostUpdated: () => void;
+  matchContext?: MatchContext | null;
+  highlightQuery?: string;
 }
 
-const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
+const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, highlightQuery }) => {
   const currentUser = getLoggedInUser();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
@@ -285,6 +289,43 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
             )}
           </div>
 
+          {/* Search: matched comment indicators */}
+          {matchContext && !matchContext.post_match && matchContext.matched_comments.length > 0 && (
+            <div className="match-context-badge">
+              <MessageSquare size={13} />
+              <span>Përputhje në {matchContext.matched_comments.length} koment{matchContext.matched_comments.length > 1 ? 'e' : ''}</span>
+            </div>
+          )}
+          {matchContext && highlightQuery && matchContext.matched_comments.length > 0 && (
+            <div className="matched-comments-preview">
+              {matchContext.matched_comments.map((mc) => {
+                const escapedQuery = highlightQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const html = mc.snippet.replace(
+                  new RegExp(`(${escapedQuery})`, 'gi'),
+                  '<mark>$1</mark>'
+                );
+                return (
+                  <div key={mc.id} className="matched-comment-snippet">
+                    <div className="matched-comment-avatar">
+                      {mc.author.avatar_url ? (
+                        <img src={mc.author.avatar_url} alt={mc.author.username} />
+                      ) : (
+                        <User size={12} />
+                      )}
+                    </div>
+                    <div className="matched-comment-body">
+                      <span className="matched-comment-author">@{mc.author.username}</span>
+                      <span
+                        className="matched-comment-text"
+                        dangerouslySetInnerHTML={{ __html: html }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Action Bar (Only visible if not currently editing) */}
           {!isEditing && (
             <ActionBar
@@ -450,6 +491,82 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated }) => {
 
         .post-body-container {
           margin-top: 6px;
+        }
+
+        /* Match context (search result comment matches) */
+        .match-context-badge {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 8px;
+          padding: 6px 10px;
+          border-radius: var(--radius-sm);
+          background: rgba(59, 130, 246, 0.08);
+          color: var(--primary);
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .matched-comments-preview {
+          margin-top: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          padding: 8px;
+          border-radius: var(--radius-sm);
+          border: 1px solid var(--border);
+          background: rgba(255, 255, 255, 0.01);
+        }
+
+        .matched-comment-snippet {
+          display: flex;
+          gap: 8px;
+          align-items: flex-start;
+        }
+
+        .matched-comment-avatar {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.06);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          overflow: hidden;
+        }
+
+        .matched-comment-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .matched-comment-body {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .matched-comment-author {
+          font-size: 11px;
+          font-weight: 600;
+          color: var(--primary);
+        }
+
+        .matched-comment-text {
+          font-size: 13px;
+          color: var(--text-dimmed);
+          line-height: 1.4;
+          word-break: break-word;
+        }
+
+        .matched-comment-text mark {
+          background: rgba(59, 130, 246, 0.2);
+          color: var(--primary);
+          border-radius: 2px;
+          padding: 0 1px;
         }
 
         .post-text-content {

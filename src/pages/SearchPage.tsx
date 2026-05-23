@@ -5,7 +5,8 @@ import MainLayout from '../components/MainLayout';
 import SearchBar from '../components/search/SearchBar';
 import PostItem from '../components/PostItem';
 import { SearchService } from '../services/search.service';
-import type { Post, UserPublic, TrendingHashtag } from '../services/post.service';
+import type { SearchPostResult } from '../services/search.service';
+import type { UserPublic, TrendingHashtag } from '../services/post.service';
 
 type SearchTab = 'posts' | 'users' | 'hashtags';
 
@@ -28,7 +29,7 @@ const SearchPage: React.FC = () => {
   }, [searchParams]);
 
   // Results per tab
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<SearchPostResult[]>([]);
   const [users, setUsers] = useState<UserPublic[]>([]);
   const [hashtags, setHashtags] = useState<TrendingHashtag[]>([]);
 
@@ -73,7 +74,7 @@ const SearchPage: React.FC = () => {
       setError('');
       try {
         if (activeTab === 'posts') {
-          const res = await SearchService.searchPosts(searchQuery, 0, LIMIT);
+          const res = await SearchService.searchPosts(searchQuery, 0, LIMIT, true);
           setPosts(res.items);
           setPostsTotal(res.total);
           setUsers([]);
@@ -105,7 +106,7 @@ const SearchPage: React.FC = () => {
     setLoadingMore(true);
     try {
       if (activeTab === 'posts') {
-        const res = await SearchService.searchPosts(searchQuery, posts.length, LIMIT);
+        const res = await SearchService.searchPosts(searchQuery, posts.length, LIMIT, true);
         setPosts((prev) => [...prev, ...res.items]);
         setPostsTotal(res.total);
       } else if (activeTab === 'users') {
@@ -149,6 +150,7 @@ const SearchPage: React.FC = () => {
           value={query}
           onChange={handleSearch}
           onClear={handleClear}
+          debounceMs={800}
         />
 
         {/* Tabs */}
@@ -195,7 +197,7 @@ const SearchPage: React.FC = () => {
               <>
                 <div className="search-meta">{postsTotal} postime</div>
                 {posts.map((post) => (
-                  <PostItem key={post.id} post={post} onPostUpdated={() => {}} />
+                  <PostItem key={post.id} post={post} onPostUpdated={() => {}} matchContext={post.match_context} highlightQuery={searchQuery} />
                 ))}
               </>
             )

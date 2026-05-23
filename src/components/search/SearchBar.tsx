@@ -6,6 +6,7 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   onClear: () => void;
   placeholder?: string;
+  debounceMs?: number;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -13,6 +14,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   onChange,
   onClear,
   placeholder = 'Kërko postime, përdorues, hashtags...',
+  debounceMs = 300,
 }) => {
   const [localValue, setLocalValue] = useState(value);
 
@@ -21,15 +23,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setLocalValue(value);
   }, [value]);
 
-  // Debounce: fire onChange 300ms after the user stops typing
+  // Debounce: fire onChange after debounceMs ms of inactivity
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localValue !== value) {
         onChange(localValue);
       }
-    }, 300);
+    }, debounceMs);
     return () => clearTimeout(timer);
-  }, [localValue]);
+  }, [localValue, debounceMs]);
 
   const handleClear = useCallback(() => {
     setLocalValue('');

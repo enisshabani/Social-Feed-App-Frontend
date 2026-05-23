@@ -8,14 +8,30 @@ export interface PaginatedResponse<T> {
   limit: number;
 }
 
+export interface MatchedComment {
+  id: number;
+  snippet: string;
+  author: UserPublic;
+}
+
+export interface MatchContext {
+  post_match: boolean;
+  matched_comments: MatchedComment[];
+}
+
+export interface SearchPostResult extends Post {
+  match_context?: MatchContext | null;
+}
+
 export class SearchService {
   static async searchPosts(
     q: string,
     offset = 0,
-    limit = 20
-  ): Promise<PaginatedResponse<Post>> {
-    const response = await api.get<PaginatedResponse<Post>>('/api/v1/search/posts', {
-      params: { q, offset, limit },
+    limit = 20,
+    includeComments = false
+  ): Promise<PaginatedResponse<SearchPostResult>> {
+    const response = await api.get<PaginatedResponse<SearchPostResult>>('/api/v1/search/posts', {
+      params: { q, offset, limit, include_comments: includeComments },
     });
     return response.data;
   }
