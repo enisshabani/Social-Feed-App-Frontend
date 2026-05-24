@@ -247,8 +247,8 @@ export class PostService {
   /**
    * Edit post content. Matches backend's PostUpdate schema.
    */
-  static async updatePost(postId: number, content: string, visibility?: string): Promise<Post> {
-    const payload = { content, visibility };
+  static async updatePost(postId: number, content: string, visibility?: string, media?: MediaInput[]): Promise<Post> {
+    const payload = { content, visibility, ...(media !== undefined ? { media } : {}) };
     const response = await api.put<Post>(`/api/v1/posts/${postId}`, payload);
     return response.data;
   }

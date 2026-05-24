@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Star, Repeat2, MessageSquare, Bookmark } from 'lucide-react';
 
 interface ActionBarProps {
+  postId: number;
   likeCount: number;
   repostCount: number;
   replyCount: number;
@@ -15,6 +16,7 @@ interface ActionBarProps {
 }
 
 const ActionBar: React.FC<ActionBarProps> = ({
+  postId,
   likeCount,
   repostCount,
   replyCount,
@@ -31,16 +33,25 @@ const ActionBar: React.FC<ActionBarProps> = ({
   const [reposted, setReposted] = useState(isRepostedInitially);
   const [reposts, setReposts] = useState(repostCount);
   const [bookmarked, setBookmarked] = useState(isBookmarkedInitially);
+  const [reactionEmoji, setReactionEmoji] = useState<string | null>(null);
 
   const [likePulse, setLikePulse] = useState(false);
   const [repostPulse, setRepostPulse] = useState(false);
   const [bookmarkPulse, setBookmarkPulse] = useState(false);
   const [busyAction, setBusyAction] = useState<'like' | 'repost' | 'bookmark' | null>(null);
+  const reactionOptions = ['⭐', '😂', '😍', '😮', '😢', '😡'];
+  const reactionStorageKey = `kapak:post-reaction:${postId}`;
 
   useEffect(() => {
     setLiked(isLikedInitially);
     setLikes(likeCount);
-  }, [isLikedInitially, likeCount]);
+    if (isLikedInitially) {
+      setReactionEmoji(localStorage.getItem(reactionStorageKey) || '⭐');
+    } else {
+      setReactionEmoji(null);
+      localStorage.removeItem(reactionStorageKey);
+    }
+  }, [isLikedInitially, likeCount, reactionStorageKey]);
 
   useEffect(() => {
     setReposted(isRepostedInitially);
@@ -51,22 +62,40 @@ const ActionBar: React.FC<ActionBarProps> = ({
     setBookmarked(isBookmarkedInitially);
   }, [isBookmarkedInitially]);
 
-  const handleLikeClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const applyReaction = async (emoji: string) => {
     if (busyAction) return;
     setLikePulse(true);
     setBusyAction('like');
     setTimeout(() => setLikePulse(false), 300);
 
     try {
-      const isNowLiked = await onLike();
+      let isNowLiked = liked;
+      if (!liked || reactionEmoji === emoji) {
+        isNowLiked = await onLike();
+        setLikes((prev) => (isNowLiked ? prev + 1 : Math.max(0, prev - 1)));
+      }
       setLiked(isNowLiked);
-      setLikes((prev) => (isNowLiked ? prev + 1 : Math.max(0, prev - 1)));
+      setReactionEmoji(isNowLiked ? emoji : null);
+      if (isNowLiked) {
+        localStorage.setItem(reactionStorageKey, emoji);
+      } else {
+        localStorage.removeItem(reactionStorageKey);
+      }
     } catch (e) {
       console.error(e);
     } finally {
       setBusyAction(null);
     }
+  };
+
+  const handleLikeClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    await applyReaction(reactionEmoji || '⭐');
+  };
+
+  const handleReactionClick = async (e: React.MouseEvent, emoji: string) => {
+    e.stopPropagation();
+    await applyReaction(emoji);
   };
 
   const handleRepostClick = async (e: React.MouseEvent) => {
@@ -128,6 +157,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       </button>
 
       {/* Like Action */}
+      <div className="reaction-shell">
       <button
         className={`action-btn like-action ${liked ? 'active' : ''}`}
         onClick={handleLikeClick}
@@ -135,10 +165,25 @@ const ActionBar: React.FC<ActionBarProps> = ({
         title="Pëlqe"
       >
         <div className={`icon-wrapper ${likePulse ? 'pulse-active' : ''}`}>
-          <Star size={18} fill={liked ? 'currentColor' : 'none'} />
+          {reactionEmoji ? <span className="reaction-main-emoji">{reactionEmoji}</span> : <Star size={18} />}
         </div>
         <span className="action-count">{likes}</span>
       </button>
+        <div className="reaction-picker" role="menu" aria-label="Choose reaction">
+          {reactionOptions.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              className={`reaction-option ${reactionEmoji === emoji ? 'selected' : ''}`}
+              onClick={(e) => handleReactionClick(e, emoji)}
+              disabled={busyAction !== null}
+              title={`React ${emoji}`}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Bookmark Action */}
       <button
@@ -181,6 +226,58 @@ const ActionBar: React.FC<ActionBarProps> = ({
         .action-btn:disabled {
           cursor: wait;
           opacity: 0.65;
+        }
+
+        .reaction-shell {
+          position: relative;
+        }
+
+        .reaction-picker {
+          position: absolute;
+          left: 0;
+          bottom: calc(100% + 6px);
+          display: flex;
+          gap: 4px;
+          padding: 6px;
+          border: 1px solid var(--border);
+          border-radius: 999px;
+          background: var(--bg-panel-solid);
+          box-shadow: var(--shadow);
+          opacity: 0;
+          transform: translateY(4px) scale(0.98);
+          pointer-events: none;
+          transition: opacity 0.18s ease, transform 0.18s ease;
+          z-index: 5;
+        }
+
+        .reaction-shell:hover .reaction-picker,
+        .reaction-shell:focus-within .reaction-picker {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+          pointer-events: auto;
+        }
+
+        .reaction-option {
+          width: 30px;
+          height: 30px;
+          border: none;
+          border-radius: 50%;
+          background: transparent;
+          cursor: pointer;
+          font-size: 18px;
+          line-height: 1;
+          transition: transform 0.16s ease, background-color 0.16s ease;
+        }
+
+        .reaction-option:hover,
+        .reaction-option.selected {
+          background: rgba(242, 140, 40, 0.16);
+          transform: translateY(-2px) scale(1.12);
+        }
+
+        .reaction-main-emoji {
+          font-size: 17px;
+          line-height: 1;
         }
 
         .icon-wrapper {

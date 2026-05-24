@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { NotificationItem as INotificationItem } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
 import { User, UserPlus, Heart, Repeat, AtSign, MessageCircle, Bell } from 'lucide-react';
@@ -52,6 +53,7 @@ const getMessageForType = (type: string): string => {
 
 export const NotificationItem: React.FC<Props> = ({ notification }) => {
   const { markAsReadById, deleteNotificationById } = useNotifications();
+  const navigate = useNavigate();
 
   const getIcon = () => {
     switch (notification.type) {
@@ -80,6 +82,13 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     deleteNotificationById(notification.id);
+  };
+
+  const handleActorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (notification.actor?.username) {
+      navigate(`/profile/${encodeURIComponent(notification.actor.username)}`);
+    }
   };
 
   return (
@@ -113,10 +122,17 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
               <img
                 src={resolveAssetUrl(notification.actor.avatar_url)}
                 alt={notification.actor.username}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onClick={handleActorClick}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
               />
             ) : (
-              <User size={18} />
+              <button
+                type="button"
+                onClick={handleActorClick}
+                style={{ border: 'none', background: 'transparent', color: 'inherit', cursor: 'pointer' }}
+              >
+                <User size={18} />
+              </button>
             )}
           </div>
           <span style={{
@@ -136,7 +152,7 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
         </div>
         <div>
           <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>
-            <strong>{notification.actor?.display_name || notification.actor?.username || `User ${notification.actor_id}`}</strong> {getMessageForType(notification.type)}
+            <strong onClick={handleActorClick} style={{ cursor: 'pointer' }}>{notification.actor?.display_name || notification.actor?.username || `User ${notification.actor_id}`}</strong> {getMessageForType(notification.type)}
           </p>
           <span style={{ fontSize: '12px', color: '#888' }}>
             {getRelativeTime(notification.created_at)}

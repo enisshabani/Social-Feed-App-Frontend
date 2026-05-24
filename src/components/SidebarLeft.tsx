@@ -256,7 +256,8 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
         }
 
         .nav-item:hover {
-          background-color: rgba(255, 255, 255, 0.08);
+          background-color: var(--garfield-orange-light, rgba(242, 140, 40, 0.14));
+          color: var(--garfield-orange, #f28c28);
         }
 
         .nav-item.active {
@@ -329,7 +330,8 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
         }
 
         .sidebar-user-card:hover {
-          background-color: rgba(255, 255, 255, 0.06);
+          background-color: var(--garfield-orange-light, rgba(242, 140, 40, 0.14));
+          border-color: rgba(242, 140, 40, 0.35);
         }
 
         .user-info-wrapper {

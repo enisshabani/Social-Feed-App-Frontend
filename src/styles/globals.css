@@ -16,6 +16,8 @@
   --primary-hover: #563acc;
   --primary-glow: rgba(99, 100, 255, 0.3);
   --primary-light: rgba(99, 100, 255, 0.1);
+  --garfield-orange: #f28c28;
+  --garfield-orange-light: rgba(242, 140, 40, 0.14);
 
   --like: #ca8f04;
   /* Mastodon Gold Star */

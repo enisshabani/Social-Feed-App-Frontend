@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash } from 'lucide-react';
+import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash, Image as ImageIcon, Upload } from 'lucide-react';
 import { PostService } from '../services/post.service';
-import type { Comment, Poll } from '../services/post.service';
+import type { Comment, MediaInput, Poll } from '../services/post.service';
 import type { MatchContext } from '../services/search.service';
 import ActionBar from './ActionBar';
 import SentimentBadge from './SentimentBadge';
@@ -28,7 +28,16 @@ const PostItem: React.FC<PostItemProps> = ({
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
+  const [editMedia, setEditMedia] = useState<MediaInput[]>(
+    (post.media || []).map((media: any) => ({
+      url: media.url,
+      media_type: media.media_type || 'image',
+      meta: media.meta || {},
+    }))
+  );
   const [updating, setUpdating] = useState(false);
+  const [uploadingEditMedia, setUploadingEditMedia] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   
   // Comments state (on-demand loading)
   const [showComments, setShowComments] = useState(false);
@@ -46,10 +55,15 @@ const PostItem: React.FC<PostItemProps> = ({
 
   useEffect(() => {
     setEditContent(post.content);
+    setEditMedia((post.media || []).map((media: any) => ({
+      url: media.url,
+      media_type: media.media_type || 'image',
+      meta: media.meta || {},
+    })));
     setReplyCount(post.reply_count || 0);
     setLocalPoll(post.poll);
     setSelectedPollOption(null);
-  }, [post.content, post.reply_count, post.poll]);
+  }, [post.content, post.media, post.reply_count, post.poll]);
 
   // Check if current user is the author (safely convert both to string)
   const isAuthor = currentUser && String(currentUser.id) === String(post.author_id);
@@ -76,12 +90,28 @@ const PostItem: React.FC<PostItemProps> = ({
       .replace(/\/api\/v1$/i, '');
     return `${apiRoot}${value}`;
   };
+  const getMediaCrop = (media: any) => ({
+    x: Number(media?.meta?.cropX ?? 50),
+    y: Number(media?.meta?.cropY ?? 50),
+  });
+  const mediaSignature = (items: any[] = []) => JSON.stringify(items.map((media) => ({
+    url: media.url,
+    media_type: media.media_type || 'image',
+    meta: {
+      cropX: Number(media?.meta?.cropX ?? 50),
+      cropY: Number(media?.meta?.cropY ?? 50),
+    },
+  })));
 
   const handleAuthorProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (authorProfilePath) {
       navigate(authorProfilePath);
     }
+  };
+  const goToProfile = (e: React.MouseEvent, username?: string) => {
+    e.stopPropagation();
+    if (username) navigate(`/profile/${encodeURIComponent(username)}`);
   };
 
   // CW parsing
@@ -103,14 +133,21 @@ const PostItem: React.FC<PostItemProps> = ({
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editContent.trim() || editContent === post.content) {
+    const originalMediaSignature = mediaSignature(post.media || []);
+    const nextMediaSignature = mediaSignature(editMedia);
+
+    if (!editContent.trim()) {
+      return;
+    }
+
+    if (editContent === post.content && nextMediaSignature === originalMediaSignature) {
       setIsEditing(false);
       return;
     }
 
     setUpdating(true);
     try {
-      await PostService.updatePost(post.id, editContent);
+      await PostService.updatePost(post.id, editContent, post.visibility, editMedia);
       setIsEditing(false);
       onPostUpdated();
     } catch (err) {
@@ -213,6 +250,22 @@ const PostItem: React.FC<PostItemProps> = ({
   const displayName = post.author?.display_name || post.author?.username || `User ${post.author_id}`;
   const handleTagClick = (tagName: string) => {
     navigate(`/hashtag/${encodeURIComponent(tagName)}`);
+  };
+
+  const handleEditFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingEditMedia(true);
+    try {
+      const uploaded = await PostService.uploadPostMedia(file);
+      setEditMedia([{ ...uploaded, meta: { cropX: 50, cropY: 50 } }]);
+    } catch {
+      alert('Gabim gjate ngarkimit te imazhit.');
+    } finally {
+      setUploadingEditMedia(false);
+      e.target.value = '';
+    }
   };
 
   const handlePollVote = async (optionId: number) => {
@@ -337,14 +390,129 @@ const PostItem: React.FC<PostItemProps> = ({
                   disabled={updating}
                   required
                 />
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleEditFileSelected}
+                  style={{ display: 'none' }}
+                />
+                <div className="inline-edit-media-panel">
+                  <div className="inline-edit-media-header">
+                    <span><ImageIcon size={14} /> Media</span>
+                    <div className="inline-edit-media-actions">
+                      <button
+                        type="button"
+                        className="btn btn-secondary edit-media-btn"
+                        onClick={() => editFileInputRef.current?.click()}
+                        disabled={updating || uploadingEditMedia}
+                      >
+                        <Upload size={14} /> {uploadingEditMedia ? '...' : 'Change'}
+                      </button>
+                      {editMedia.length > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary edit-media-btn danger"
+                          onClick={() => setEditMedia([])}
+                          disabled={updating}
+                        >
+                          <Trash2 size={14} /> Delete image
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {editMedia.length > 0 ? (
+                    editMedia.slice(0, 1).map((media, index) => {
+                      const crop = getMediaCrop(media);
+                      return (
+                        <div key={`${media.url}-${index}`} className="inline-edit-media-editor">
+                          <div className="inline-edit-media-preview">
+                            {media.media_type === 'video' ? (
+                              <video src={resolveMediaUrl(media.url)} controls />
+                            ) : (
+                              <img
+                                src={resolveMediaUrl(media.url)}
+                                alt=""
+                                style={{ objectPosition: `${crop.x}% ${crop.y}%` }}
+                              />
+                            )}
+                          </div>
+                          {media.media_type !== 'video' && (
+                            <div className="crop-controls">
+                              <label>
+                                Horizontal crop
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="100"
+                                  value={crop.x}
+                                  onChange={(e) => {
+                                    const value = Number(e.target.value);
+                                    setEditMedia((prev) => prev.map((item, itemIndex) => (
+                                      itemIndex === index
+                                        ? { ...item, meta: { ...(item.meta || {}), cropX: value, cropY: crop.y } }
+                                        : item
+                                    )));
+                                  }}
+                                />
+                              </label>
+                              <label>
+                                Vertical crop
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="100"
+                                  value={crop.y}
+                                  onChange={(e) => {
+                                    const value = Number(e.target.value);
+                                    setEditMedia((prev) => prev.map((item, itemIndex) => (
+                                      itemIndex === index
+                                        ? { ...item, meta: { ...(item.meta || {}), cropX: crop.x, cropY: value } }
+                                        : item
+                                    )));
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <button
+                      type="button"
+                      className="inline-edit-media-empty"
+                      onClick={() => editFileInputRef.current?.click()}
+                      disabled={updating || uploadingEditMedia}
+                    >
+                      <ImageIcon size={16} /> Add image or video
+                    </button>
+                  )}
+                </div>
                 <div className="inline-edit-buttons">
                   <button
                     type="button"
                     className="btn btn-secondary edit-cancel"
-                    onClick={() => setIsEditing(false)}
+                    onClick={() => {
+                      setEditContent(post.content);
+                      setEditMedia((post.media || []).map((media: any) => ({
+                        url: media.url,
+                        media_type: media.media_type || 'image',
+                        meta: media.meta || {},
+                      })));
+                      setIsEditing(false);
+                    }}
                     disabled={updating}
                   >
                     <X size={14} style={{ marginRight: '4px' }} /> Anulo
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary edit-delete-post"
+                    onClick={handleDelete}
+                    disabled={updating}
+                  >
+                    <Trash2 size={14} style={{ marginRight: '4px' }} /> Delete post
                   </button>
                   <button type="submit" className="btn btn-primary edit-save" disabled={updating}>
                     <Check size={14} style={{ marginRight: '4px' }} /> Ruaj
@@ -396,7 +564,12 @@ const PostItem: React.FC<PostItemProps> = ({
                   {media.media_type === 'video' ? (
                     <video src={resolveMediaUrl(media.url)} controls />
                   ) : (
-                    <img src={resolveMediaUrl(media.url)} alt="" loading="lazy" />
+                    <img
+                      src={resolveMediaUrl(media.url)}
+                      alt=""
+                      loading="lazy"
+                      style={{ objectPosition: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%` }}
+                    />
                   )}
                 </a>
               ))}
@@ -467,13 +640,26 @@ const PostItem: React.FC<PostItemProps> = ({
                   <div key={mc.id} className="matched-comment-snippet">
                     <div className="matched-comment-avatar">
                       {mc.author.avatar_url ? (
-                        <img src={resolveAssetUrl(mc.author.avatar_url)} alt={mc.author.username} />
+                        <img
+                          src={resolveAssetUrl(mc.author.avatar_url)}
+                          alt={mc.author.username}
+                          onClick={(e) => goToProfile(e, mc.author.username)}
+                        />
                       ) : (
-                        <User size={12} />
+                        <button
+                          type="button"
+                          className="mini-profile-button"
+                          onClick={(e) => goToProfile(e, mc.author.username)}
+                        >
+                          <User size={12} />
+                        </button>
                       )}
                     </div>
                     <div className="matched-comment-body">
-                      <span className="matched-comment-author">@{mc.author.username}</span>
+                      <span
+                        className="matched-comment-author clickable-author"
+                        onClick={(e) => goToProfile(e, mc.author.username)}
+                      >@{mc.author.username}</span>
                       <span
                         className="matched-comment-text"
                         dangerouslySetInnerHTML={{ __html: html }}
@@ -495,6 +681,7 @@ const PostItem: React.FC<PostItemProps> = ({
           {/* Action Bar (Only visible if not currently editing) */}
           {!isEditing && (
             <ActionBar
+              postId={post.id}
               likeCount={post.like_count || 0}
               repostCount={post.repost_count || 0}
               replyCount={replyCount}
@@ -527,14 +714,27 @@ const PostItem: React.FC<PostItemProps> = ({
                     <div key={comment.id} className="comment-item">
                       <div className="comment-avatar">
                         {comment.author?.avatar_url ? (
-                          <img src={resolveAssetUrl(comment.author.avatar_url)} alt={comment.author.username} />
+                          <img
+                            src={resolveAssetUrl(comment.author.avatar_url)}
+                            alt={comment.author.username}
+                            onClick={(e) => goToProfile(e, comment.author?.username)}
+                          />
                         ) : (
-                          <User size={14} />
+                          <button
+                            type="button"
+                            className="mini-profile-button"
+                            onClick={(e) => goToProfile(e, comment.author?.username)}
+                          >
+                            <User size={14} />
+                          </button>
                         )}
                       </div>
                       <div className="comment-details">
                         <div className="comment-header">
-                          <span className="comment-author">@{comment.author?.username || `user_${comment.author_id}`}</span>
+                          <span
+                            className="comment-author clickable-author"
+                            onClick={(e) => goToProfile(e, comment.author?.username)}
+                          >@{comment.author?.username || `user_${comment.author_id}`}</span>
                           <span className="comment-time">• {formatPostDate(comment.created_at)}</span>
                         </div>
                           {canDeleteComment && (
@@ -725,6 +925,7 @@ const PostItem: React.FC<PostItemProps> = ({
           width: 100%;
           height: 100%;
           object-fit: cover;
+          cursor: pointer;
         }
 
         .matched-comment-body {
@@ -738,6 +939,27 @@ const PostItem: React.FC<PostItemProps> = ({
           font-size: 11px;
           font-weight: 600;
           color: var(--primary);
+        }
+
+        .clickable-author {
+          cursor: pointer;
+        }
+
+        .clickable-author:hover {
+          color: var(--garfield-orange, #f28c28);
+          text-decoration: underline;
+        }
+
+        .mini-profile-button {
+          width: 100%;
+          height: 100%;
+          border: none;
+          background: transparent;
+          color: inherit;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
         }
 
         .matched-comment-text {
@@ -942,6 +1164,111 @@ const PostItem: React.FC<PostItemProps> = ({
           display: flex;
           justify-content: flex-end;
           gap: 8px;
+          flex-wrap: wrap;
+        }
+
+        .inline-edit-media-panel {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          padding: 10px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.025);
+        }
+
+        .inline-edit-media-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          color: var(--text-muted);
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .inline-edit-media-header span,
+        .inline-edit-media-actions,
+        .edit-media-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .inline-edit-media-actions {
+          flex-wrap: wrap;
+          justify-content: flex-end;
+        }
+
+        .edit-media-btn {
+          padding: 6px 10px;
+          font-size: 12px;
+        }
+
+        .edit-media-btn.danger,
+        .edit-delete-post {
+          color: var(--error);
+        }
+
+        .inline-edit-media-editor {
+          display: grid;
+          grid-template-columns: minmax(160px, 240px) 1fr;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .inline-edit-media-preview {
+          height: 150px;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid var(--border);
+          background: var(--bg-dark);
+        }
+
+        .inline-edit-media-preview img,
+        .inline-edit-media-preview video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .crop-controls {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .crop-controls label {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          color: var(--text-muted);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .crop-controls input {
+          accent-color: var(--garfield-orange, #f28c28);
+        }
+
+        .inline-edit-media-empty {
+          min-height: 54px;
+          border: 1px dashed var(--border);
+          border-radius: 8px;
+          background: transparent;
+          color: var(--text-muted);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          cursor: pointer;
+          font-weight: 700;
+        }
+
+        .inline-edit-media-empty:hover {
+          border-color: var(--garfield-orange, #f28c28);
+          color: var(--garfield-orange, #f28c28);
         }
 
         .edit-cancel {
@@ -1014,6 +1341,7 @@ const PostItem: React.FC<PostItemProps> = ({
           width: 100%;
           height: 100%;
           object-fit: cover;
+          cursor: pointer;
         }
 
         .comment-details {
@@ -1086,6 +1414,12 @@ const PostItem: React.FC<PostItemProps> = ({
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        @media (max-width: 640px) {
+          .inline-edit-media-editor {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
     </article>

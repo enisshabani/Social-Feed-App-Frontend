@@ -75,7 +75,15 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
 
       {/* Profile Card */}
       {currentUser && (
-        <div className="mastodon-profile-card">
+        <div
+          className="mastodon-profile-card"
+          onClick={() => navigate('/profile')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') navigate('/profile');
+          }}
+        >
           <div className="profile-card-header">
             {user?.avatar_url ? (
               <img className="profile-card-avatar profile-card-avatar-img" src={resolveAssetUrl(user.avatar_url)} alt={currentUser.username} />
@@ -209,6 +217,13 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
           border-radius: var(--radius-md);
           border: 1px solid var(--border);
           padding: 16px;
+          cursor: pointer;
+          transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .mastodon-profile-card:hover {
+          background-color: var(--garfield-orange-light, rgba(242, 140, 40, 0.14));
+          border-color: rgba(242, 140, 40, 0.35);
         }
 
         .profile-card-header {
