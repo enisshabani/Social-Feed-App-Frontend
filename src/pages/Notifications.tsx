@@ -159,9 +159,11 @@ const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boo
 };
 
 type TabType = 'all' | 'mentions';
+type NotificationRuleAction = 'accept' | 'ignore';
+type ActivePreferenceKey = 'filter_not_following' | 'filter_not_followed_by' | 'filter_new_accounts';
 
 const Notifications: React.FC = () => {
-  const { notifications, isLoading, fetchNotifications, markAllAsReadBulk, unreadCount } = useNotifications();
+  const { notifications, isLoading, fetchNotifications, markAllAsReadBulk, clearAllNotifications, unreadCount } = useNotifications();
   const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
@@ -173,22 +175,57 @@ const Notifications: React.FC = () => {
     notificationsApi.getPreferences().then(setPreferences).catch(console.error);
   }, [fetchNotifications]);
 
-  const handleTogglePreference = async (key: keyof NotificationPreference) => {
+  const updatePreferences = async (nextPreferences: NotificationPreference) => {
     if (!preferences) return;
-    const newPrefs = { ...preferences, [key]: !preferences[key] };
-    setPreferences(newPrefs);
+    setPreferences(nextPreferences);
     try {
-      await notificationsApi.updatePreferences(newPrefs);
+      await notificationsApi.updatePreferences(nextPreferences);
     } catch (e) {
       console.error(e);
-      // Revert on error
       setPreferences(preferences);
     }
+  };
+
+  const handleTogglePreference = async (key: keyof NotificationPreference) => {
+    if (!preferences) return;
+    updatePreferences({ ...preferences, [key]: !preferences[key] });
+  };
+
+  const handleRuleActionChange = async (key: ActivePreferenceKey, action: NotificationRuleAction) => {
+    if (!preferences) return;
+    updatePreferences({ ...preferences, [key]: action === 'ignore' });
+  };
+
+  const handleClearNotifications = async () => {
+    if (notifications.length === 0) return;
+    await clearAllNotifications();
   };
 
   const filteredNotifications = activeTab === 'mentions'
     ? notifications.filter(n => n.type === 'MENTION' || n.type === 'COMMENT')
     : notifications;
+
+  const manageNotificationRules: Array<{
+    key: ActivePreferenceKey;
+    title: string;
+    description: string;
+  }> = [
+    {
+      key: 'filter_not_following',
+      title: "Njerëzit që nuk i ndjek",
+      description: 'Derisa t’i pranosh vetë.',
+    },
+    {
+      key: 'filter_not_followed_by',
+      title: 'Njerëzit që nuk të ndjekin',
+      description: 'Përfshin llogaritë që nuk janë ndjekësit e tu.',
+    },
+    {
+      key: 'filter_new_accounts',
+      title: 'Llogaritë e reja',
+      description: 'Të krijuara së fundmi.',
+    },
+  ];
 
   return (
     <MainLayout
@@ -284,8 +321,54 @@ const Notifications: React.FC = () => {
               </button>
             </div>
             <div className="notif-settings-body">
+              <button
+                className="clear-notifications-btn"
+                onClick={handleClearNotifications}
+                disabled={notifications.length === 0}
+              >
+                <Trash2 size={16} />
+                <span>Fshi te gjitha njoftimet</span>
+              </button>
               <div className="settings-section">
                 <h4>Menaxho njoftimet nga...</h4>
+                {manageNotificationRules.map(rule => (
+                  <div className="notification-rule-row" key={rule.key}>
+                    <div className="rule-copy">
+                      <span>{rule.title}</span>
+                      <small>{rule.description}</small>
+                    </div>
+                    <select
+                      className="rule-select"
+                      value={preferences[rule.key] ? 'ignore' : 'accept'}
+                      onChange={(event) => handleRuleActionChange(rule.key, event.target.value as NotificationRuleAction)}
+                    >
+                      <option value="accept">Accept</option>
+                      <option value="ignore">Ignore</option>
+                    </select>
+                  </div>
+                ))}
+
+                <div className="notification-rule-row muted">
+                  <div className="rule-copy">
+                    <span>Permendjet private te padeshiruara</span>
+                    <small>Do lidhet kur te kete njoftime private ne backend.</small>
+                  </div>
+                  <select className="rule-select" value="accept" disabled>
+                    <option value="accept">Accept</option>
+                    <option value="ignore">Ignore</option>
+                  </select>
+                </div>
+
+                <div className="notification-rule-row muted">
+                  <div className="rule-copy">
+                    <span>Llogarite e moderuara</span>
+                    <small>Do lidhet kur backend te ruaje status moderimi per user-at.</small>
+                  </div>
+                  <select className="rule-select" value="accept" disabled>
+                    <option value="accept">Accept</option>
+                    <option value="ignore">Ignore</option>
+                  </select>
+                </div>
                 
                 <label className="settings-toggle">
                   <div className="toggle-info">
@@ -733,6 +816,32 @@ const Notifications: React.FC = () => {
           gap: 24px;
         }
 
+        .clear-notifications-btn {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 0;
+          border: none;
+          border-bottom: 1px solid var(--border);
+          background: transparent;
+          color: var(--text-muted);
+          font-family: var(--font-family);
+          font-size: 15px;
+          font-weight: 600;
+          text-align: left;
+          cursor: pointer;
+        }
+
+        .clear-notifications-btn:hover:not(:disabled) {
+          color: var(--text-main);
+        }
+
+        .clear-notifications-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
         .settings-section h4 {
           margin: 0 0 16px 0;
           font-size: 15px;
@@ -740,6 +849,71 @@ const Notifications: React.FC = () => {
           color: var(--text-main);
           text-transform: uppercase;
           letter-spacing: 0.5px;
+        }
+
+        .notif-settings-body .settings-section:first-of-type > .settings-toggle {
+          display: none;
+        }
+
+        .notification-rule-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 18px;
+          margin-bottom: 18px;
+        }
+
+        .notification-rule-row:last-child {
+          margin-bottom: 0;
+        }
+
+        .notification-rule-row.muted {
+          opacity: 0.55;
+        }
+
+        .rule-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          min-width: 0;
+        }
+
+        .rule-copy span {
+          color: var(--text-main);
+          font-size: 15px;
+          font-weight: 800;
+        }
+
+        .rule-copy small {
+          color: var(--text-muted);
+          font-size: 14px;
+          line-height: 1.35;
+        }
+
+        .rule-select {
+          min-width: 112px;
+          height: 38px;
+          padding: 0 34px 0 14px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: var(--primary);
+          color: #fff;
+          font-family: var(--font-family);
+          font-size: 14px;
+          font-weight: 800;
+          cursor: pointer;
+        }
+
+        .rule-select:hover:not(:disabled),
+        .rule-select:focus {
+          border-color: rgba(255, 255, 255, 0.28);
+          outline: none;
+        }
+
+        .rule-select:disabled {
+          background: transparent;
+          color: var(--text-muted);
+          cursor: not-allowed;
         }
 
         .settings-toggle {

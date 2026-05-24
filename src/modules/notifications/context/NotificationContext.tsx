@@ -1,6 +1,6 @@
 import React, { createContext, useState, useCallback, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { getNotifications, markAsRead, markAllAsRead, deleteNotification, getUnreadCount } from '../api/notificationsApi';
+import { getNotifications, markAsRead, markAllAsRead, deleteNotification, clearNotifications, getUnreadCount } from '../api/notificationsApi';
 import type { NotificationItem, NotificationType } from '../types';
 
 interface NotificationContextState {
@@ -11,6 +11,7 @@ interface NotificationContextState {
   markAsReadById: (id: string) => Promise<void>;
   markAllAsReadBulk: () => Promise<void>;
   deleteNotificationById: (id: string) => Promise<void>;
+  clearAllNotifications: () => Promise<void>;
 }
 
 export const NotificationContext = createContext<NotificationContextState | undefined>(undefined);
@@ -75,6 +76,22 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   }, [notifications, fetchNotifications]);
 
+  const clearAllNotifications = useCallback(async () => {
+    const previousNotifications = notifications;
+    const previousUnreadCount = unreadCount;
+    setNotifications([]);
+    setUnreadCount(0);
+
+    try {
+      await clearNotifications();
+    } catch (error) {
+      console.error("Failed to clear notifications", error);
+      setNotifications(previousNotifications);
+      setUnreadCount(previousUnreadCount);
+      fetchNotifications();
+    }
+  }, [notifications, unreadCount, fetchNotifications]);
+
   // Auto-polling every 30 seconds for unread count
   useEffect(() => {
     const fetchCount = async () => {
@@ -102,7 +119,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
       fetchNotifications,
       markAsReadById,
       markAllAsReadBulk,
-      deleteNotificationById
+      deleteNotificationById,
+      clearAllNotifications
     }}>
       {children}
     </NotificationContext.Provider>

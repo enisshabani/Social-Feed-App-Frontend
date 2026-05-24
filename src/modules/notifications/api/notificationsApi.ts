@@ -29,6 +29,11 @@ export const deleteNotification = async (notificationId: string): Promise<void> 
   await apiClient.delete(`${BASE}/${notificationId}`);
 };
 
+export const clearNotifications = async (): Promise<MarkReadResponse> => {
+  const response = await apiClient.delete<MarkReadResponse>(`${BASE}/clear-all`);
+  return response.data;
+};
+
 export const getUnreadCount = async (): Promise<UnreadCountResponse> => {
   const response = await apiClient.get<UnreadCountResponse>(`${BASE}/unread-count`);
   return response.data;
@@ -49,6 +54,7 @@ export default {
   markAsRead,
   markAllAsRead,
   deleteNotification,
+  clearNotifications,
   getUnreadCount,
   getPreferences,
   updatePreferences,
