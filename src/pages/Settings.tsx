@@ -1,33 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
 import { useLanguage } from '../context/LanguageContext';
+import notificationsApi from '../modules/notifications/api/notificationsApi';
+import type { NotificationPreference } from '../modules/notifications/types';
 import '../styles/globals.css';
 
-type Tab = 'account-settings' | 'appearance' | 'posting-defaults' | 'email-notifications' | 'two-factor-auth';
+type Tab = 'account-settings' | 'appearance' | 'posting-defaults' | 'notifications' | 'two-factor-auth';
 
-type EmailNotificationKey =
-  | 'followed'
-  | 'followRequest'
-  | 'boosted'
-  | 'favourited'
-  | 'mentioned'
-  | 'quoted'
-  | 'alwaysSend';
-
-type EmailNotificationPrefs = Record<EmailNotificationKey, boolean>;
-
-const DEFAULT_EMAIL_NOTIFICATION_PREFS: EmailNotificationPrefs = {
-  followed: true,
-  followRequest: true,
-  boosted: false,
-  favourited: false,
-  mentioned: true,
-  quoted: true,
-  alwaysSend: false,
-};
+type NotificationRuleAction = 'accept' | 'ignore';
+type NotificationPreferenceKey = 'filter_not_following' | 'filter_not_followed_by' | 'filter_new_accounts';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -54,19 +38,16 @@ const Settings: React.FC = () => {
   const [showDisableModal, setShowDisableModal] = useState(false);
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showRecoveryGenModal, setShowRecoveryGenModal] = useState(false);
-  const [emailNotificationPrefs, setEmailNotificationPrefs] = useState<EmailNotificationPrefs>(() => {
-    const savedPrefs = localStorage.getItem('kapak_email_notification_prefs');
-    if (!savedPrefs) return DEFAULT_EMAIL_NOTIFICATION_PREFS;
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference | null>(null);
+  const [isSavingNotificationSettings, setIsSavingNotificationSettings] = useState(false);
 
-    try {
-      return {
-        ...DEFAULT_EMAIL_NOTIFICATION_PREFS,
-        ...JSON.parse(savedPrefs),
-      };
-    } catch {
-      return DEFAULT_EMAIL_NOTIFICATION_PREFS;
-    }
-  });
+  useEffect(() => {
+    notificationsApi.getPreferences()
+      .then(setNotificationPreferences)
+      .catch((error) => {
+        console.error('Failed to load notification preferences', error);
+      });
+  }, []);
 
   const handleDeleteAccount = async () => {
     if (window.confirm('Jeni të sigurt që dëshironi të fshini llogarinë tuaj plotësisht? Ky veprim nuk mund të anulohet!')) {
@@ -173,17 +154,36 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleEmailNotificationChange = (key: EmailNotificationKey) => {
-    setEmailNotificationPrefs((prev) => ({
+  const handleNotificationRuleChange = (key: NotificationPreferenceKey, action: NotificationRuleAction) => {
+    setNotificationPreferences((prev) => prev ? {
       ...prev,
-      [key]: !prev[key],
-    }));
+      [key]: action === 'ignore',
+    } : prev);
   };
 
-  const handleSaveEmailNotifications = () => {
-    localStorage.setItem('kapak_email_notification_prefs', JSON.stringify(emailNotificationPrefs));
+  const handleToggleNotificationPreference = (key: 'highlight_unread' | 'display_all_categories') => {
+    setNotificationPreferences((prev) => prev ? {
+      ...prev,
+      [key]: !prev[key],
+    } : prev);
+  };
+
+  const handleSaveNotificationSettings = async () => {
+    if (!notificationPreferences) return;
     setErrorMsg('');
-    setSuccessMsg(t('settings_email_saved'));
+    setSuccessMsg('');
+    setIsSavingNotificationSettings(true);
+
+    try {
+      const updatedPreferences = await notificationsApi.updatePreferences(notificationPreferences);
+      setNotificationPreferences(updatedPreferences);
+      setSuccessMsg('Cilesimet e njoftimeve u ruajten.');
+    } catch (error) {
+      console.error('Failed to save notification preferences', error);
+      setErrorMsg('Gabim gjate ruajtjes se cilesimeve te njoftimeve.');
+    } finally {
+      setIsSavingNotificationSettings(false);
+    }
   };
 
 
@@ -231,10 +231,10 @@ const Settings: React.FC = () => {
               {t('settings_sidebar_posting_defaults')}
             </div>
             <div
-              className={`settings-nav-item ${activeTab === 'email-notifications' ? 'active' : ''}`}
-              onClick={() => setActiveTab('email-notifications')}
+              className={`settings-nav-item ${activeTab === 'notifications' ? 'active' : ''}`}
+              onClick={() => setActiveTab('notifications')}
             >
-              {t('settings_sidebar_email_notif')}
+              Njoftimet
             </div>
           </div>
         )}
@@ -520,28 +520,38 @@ const Settings: React.FC = () => {
     </>
   );
 
-  const renderEmailNotifications = () => {
-    const notificationEvents: { key: EmailNotificationKey; label: string }[] = [
-      { key: 'followed', label: t('settings_email_followed') },
-      { key: 'followRequest', label: t('settings_email_follow_request') },
-      { key: 'boosted', label: t('settings_email_boosted') },
-      { key: 'favourited', label: t('settings_email_favourited') },
-      { key: 'mentioned', label: t('settings_email_mentioned') },
-      { key: 'quoted', label: t('settings_email_quoted') },
+  const renderNotificationSettings = () => {
+    const notificationRules: Array<{ key: NotificationPreferenceKey; title: string; description: string }> = [
+      {
+        key: 'filter_not_following',
+        title: 'Njerezit qe nuk i ndjek',
+        description: 'Derisa t\'i pranosh vete.',
+      },
+      {
+        key: 'filter_not_followed_by',
+        title: 'Njerezit qe nuk te ndjekin',
+        description: 'Perfshin llogarite qe nuk jane ndjekesit e tu.',
+      },
+      {
+        key: 'filter_new_accounts',
+        title: 'Llogarite e reja',
+        description: 'Te krijuara se fundmi.',
+      },
     ];
 
     return (
       <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4rem' }}>
+        <div className="notification-settings-header">
           <div className="settings-content-header" style={{ marginBottom: 0, fontSize: '2rem' }}>
-            {t('settings_sidebar_email_notif')}
+            Cilesimet e njoftimeve
           </div>
           <button
             className="settings-btn-save"
             style={{ width: 'auto', marginTop: 0, padding: '0.85rem 1.5rem' }}
-            onClick={handleSaveEmailNotifications}
+            onClick={handleSaveNotificationSettings}
+            disabled={isSavingNotificationSettings || !notificationPreferences}
           >
-            {t('settings_btn_save')}
+            {isSavingNotificationSettings ? t('settings_btn_saving') : t('settings_btn_save')}
           </button>
         </div>
 
@@ -551,45 +561,219 @@ const Settings: React.FC = () => {
           </div>
         )}
 
-        <div style={{ borderTop: '1px solid var(--border-input)', paddingTop: '2rem' }}>
-          <div className="settings-section-title" style={{ textTransform: 'uppercase', color: 'var(--text-muted)', fontSize: '0.95rem', fontWeight: 700 }}>
-            {t('settings_email_events_title')}
+        {errorMsg && (
+          <div style={{ padding: '1rem', backgroundColor: 'rgba(244, 67, 54, 0.1)', color: '#F44336', borderRadius: '4px', marginBottom: '1.5rem', border: '1px solid #F44336' }}>
+            {errorMsg}
           </div>
-          <p style={{ color: 'var(--text-muted)', fontWeight: 600, marginBottom: '1.75rem' }}>
-            {t('settings_email_events_desc')}
-          </p>
+        )}
 
-          <div className="settings-checkbox-list" style={{ gap: '1.4rem' }}>
-            {notificationEvents.map((event) => (
-              <label key={event.key} className="settings-checkbox-item" style={{ alignItems: 'center', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={emailNotificationPrefs[event.key]}
-                  onChange={() => handleEmailNotificationChange(event.key)}
-                />
-                <span className="settings-checkbox-title" style={{ fontSize: '1rem', fontWeight: 700 }}>
-                  {event.label}
-                </span>
-              </label>
-            ))}
-          </div>
+        <div className="notification-settings-panel">
+          {!notificationPreferences ? (
+            <div className="notification-settings-loading">Duke ngarkuar cilesimet...</div>
+          ) : (
+            <>
+              <div className="notification-settings-section">
+                <div className="notification-settings-title">Menaxho njoftimet nga...</div>
 
-          <label className="settings-checkbox-item" style={{ marginTop: '3rem', alignItems: 'flex-start', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={emailNotificationPrefs.alwaysSend}
-              onChange={() => handleEmailNotificationChange('alwaysSend')}
-            />
-            <div className="settings-checkbox-text">
-              <span className="settings-checkbox-title" style={{ fontSize: '1rem', fontWeight: 700 }}>
-                {t('settings_email_always_send')}
-              </span>
-              <span className="settings-checkbox-desc" style={{ fontSize: '0.92rem' }}>
-                {t('settings_email_always_send_desc')}
-              </span>
-            </div>
-          </label>
+                {notificationRules.map((rule) => (
+                  <div className="notification-rule-row" key={rule.key}>
+                    <div className="notification-rule-copy">
+                      <span>{rule.title}</span>
+                      <small>{rule.description}</small>
+                    </div>
+                    <select
+                      className="notification-rule-select"
+                      value={notificationPreferences[rule.key] ? 'ignore' : 'accept'}
+                      onChange={(e) => handleNotificationRuleChange(rule.key, e.target.value as NotificationRuleAction)}
+                    >
+                      <option value="accept">Accept</option>
+                      <option value="ignore">Ignore</option>
+                    </select>
+                  </div>
+                ))}
+
+                <div className="notification-rule-row muted">
+                  <div className="notification-rule-copy">
+                    <span>Permendjet private te padeshiruara</span>
+                    <small>Do lidhet kur te kete njoftime private ne backend.</small>
+                  </div>
+                  <select className="notification-rule-select" value="accept" disabled>
+                    <option value="accept">Accept</option>
+                    <option value="ignore">Ignore</option>
+                  </select>
+                </div>
+
+                <div className="notification-rule-row muted">
+                  <div className="notification-rule-copy">
+                    <span>Llogarite e moderuara</span>
+                    <small>Do lidhet kur backend te ruaje status moderimi per user-at.</small>
+                  </div>
+                  <select className="notification-rule-select" value="accept" disabled>
+                    <option value="accept">Accept</option>
+                    <option value="ignore">Ignore</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="notification-settings-section notification-settings-section-separated">
+                <div className="notification-settings-title">Njoftimet e palexuara</div>
+                <label className="notification-toggle-row">
+                  <div className="notification-rule-copy">
+                    <span>Thekso njoftimet e palexuara</span>
+                    <small>Trego nje pike per te dalluar njoftimet e palexuara.</small>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notificationPreferences.highlight_unread}
+                    onChange={() => handleToggleNotificationPreference('highlight_unread')}
+                  />
+                </label>
+              </div>
+
+              <div className="notification-settings-section notification-settings-section-separated">
+                <div className="notification-settings-title">Shiriti i shpejte i filtrave</div>
+                <label className="notification-toggle-row">
+                  <div className="notification-rule-copy">
+                    <span>Shfaq te gjitha kategorite</span>
+                    <small>Shfaq tab-at e kategorive ne faqen e njoftimeve.</small>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={notificationPreferences.display_all_categories}
+                    onChange={() => handleToggleNotificationPreference('display_all_categories')}
+                  />
+                </label>
+              </div>
+            </>
+          )}
         </div>
+
+        <style>{`
+          .notification-settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+          }
+
+          .notification-settings-panel {
+            border-top: 1px solid var(--border-input);
+            padding-top: 2rem;
+          }
+
+          .notification-settings-loading {
+            color: var(--text-muted);
+            font-weight: 700;
+          }
+
+          .notification-settings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+          }
+
+          .notification-settings-section-separated {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-input);
+          }
+
+          .notification-settings-title {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+          }
+
+          .notification-rule-row,
+          .notification-toggle-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 1.5rem;
+            min-height: 58px;
+          }
+
+          .notification-rule-row.muted {
+            opacity: 0.55;
+          }
+
+          .notification-toggle-row {
+            cursor: pointer;
+          }
+
+          .notification-rule-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 0;
+          }
+
+          .notification-rule-copy span {
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 800;
+          }
+
+          .notification-rule-copy small {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            line-height: 1.35;
+          }
+
+          .notification-rule-select {
+            min-width: 156px;
+            height: 52px;
+            padding: 0 44px 0 24px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-family: var(--font-family);
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+          }
+
+          .notification-rule-select:hover:not(:disabled),
+          .notification-rule-select:focus {
+            border-color: rgba(255, 255, 255, 0.28);
+            outline: none;
+          }
+
+          .notification-rule-select:disabled {
+            background: transparent;
+            border-color: var(--border-input);
+            color: var(--text-muted);
+            cursor: not-allowed;
+          }
+
+          .notification-toggle-row input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+          }
+
+          @media (max-width: 768px) {
+            .notification-settings-header {
+              align-items: flex-start;
+              flex-direction: column;
+              margin-bottom: 2rem;
+            }
+
+            .notification-rule-row,
+            .notification-toggle-row {
+              grid-template-columns: 1fr;
+              gap: 0.75rem;
+            }
+
+            .notification-rule-select {
+              width: 100%;
+            }
+          }
+        `}</style>
       </>
     );
   };
@@ -741,7 +925,7 @@ const Settings: React.FC = () => {
         {activeTab === 'account-settings' && renderAccountSettings()}
         {activeTab === 'appearance' && renderAppearance()}
         {activeTab === 'posting-defaults' && renderPostingDefaults()}
-        {activeTab === 'email-notifications' && renderEmailNotifications()}
+        {activeTab === 'notifications' && renderNotificationSettings()}
         {activeTab === 'two-factor-auth' && renderTwoFactorAuth()}
       </div>
     </div>
