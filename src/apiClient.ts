@@ -2,7 +2,8 @@ import axios from 'axios';
 import { getCurrentTenantId } from './utils/tenant';
 
 const getBaseUrl = () => {
-  const normalizeApiRoot = (url: string) => `${url.replace(/\/$/, '')}/api/v1`;
+  const normalizeApiRoot = (url: string) =>
+    `${url.replace(/\/+$/, '').replace(/\/api\/v1$/i, '')}/api/v1`;
 
   if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) {
     return normalizeApiRoot(process.env.REACT_APP_API_URL);

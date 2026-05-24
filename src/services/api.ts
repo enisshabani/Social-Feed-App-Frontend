@@ -2,8 +2,11 @@ import axios from 'axios';
 import { getCurrentTenantId } from '../utils/tenant';
 
 const getBaseUrl = () => {
+  const normalizeApiRoot = (url: string) =>
+    url.replace(/\/+$/, '').replace(/\/api\/v1$/i, '');
+
   if (import.meta.env?.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+    return normalizeApiRoot(import.meta.env.VITE_API_URL);
   }
   return '';
 };

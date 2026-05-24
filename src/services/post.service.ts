@@ -25,6 +25,12 @@ export interface Media {
   created_at: string;
 }
 
+export interface MediaInput {
+  url: string;
+  media_type: 'image' | 'video';
+  meta?: any;
+}
+
 export interface Tag {
   id: number;
   name: string;
@@ -80,6 +86,7 @@ export interface Post {
 export interface PostBrief {
   id: number;
   content: string;
+  content_html?: string;
   author_id: number;
   author?: UserPublic;
   visibility: string;
@@ -89,6 +96,10 @@ export interface PostBrief {
   reply_count: number;
   repost_count: number;
   created_at: string;
+  likes?: Like[];
+  reposts?: Repost[];
+  media?: Media[];
+  tags?: Tag[];
 }
 
 export interface FeedResponse {
@@ -175,13 +186,29 @@ export class PostService {
   /**
    * Create a new post. Matches the backend's PostCreate schema.
    */
-  static async createPost(content: string, visibility = 'public', replyToPostId?: number): Promise<Post> {
+  static async createPost(
+    content: string,
+    visibility = 'public',
+    replyToPostId?: number,
+    media: MediaInput[] = []
+  ): Promise<Post> {
     const payload = {
       content,
       visibility,
-      reply_to_post_id: replyToPostId
+      reply_to_post_id: replyToPostId,
+      media
     };
     const response = await api.post<Post>('/api/v1/posts/', payload);
+    return response.data;
+  }
+
+  static async uploadPostMedia(file: File): Promise<MediaInput> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post<MediaInput>('/api/v1/posts/media-upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   }
 

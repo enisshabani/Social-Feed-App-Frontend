@@ -211,7 +211,11 @@ const SearchPage: React.FC = () => {
               <>
                 <div className="search-meta">{usersTotal} përdorues</div>
                 {users.map((u) => (
-                  <div key={u.id} className="user-result-card">
+                  <div
+                    key={u.id}
+                    className="user-result-card"
+                    onClick={() => navigate(`/profile/${encodeURIComponent(u.username)}`)}
+                  >
                     <div className="user-result-avatar">
                       {u.avatar_url ? (
                         <img src={u.avatar_url} alt={u.username} />

@@ -1,7 +1,8 @@
-import React from 'react';
+﻿import React from 'react';
 import { Home, Hash, Bookmark, LogOut, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { NotificationBell } from '../modules/notifications/components/NotificationBell';
 
 interface SidebarLeftProps {
@@ -18,7 +19,7 @@ const NAV_ROUTES: Record<'home' | 'explore' | 'bookmarks', string> = {
 
 // Client-side JWT decoder to fetch details of logged-in user
 export const getLoggedInUser = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
   if (!token) return null;
   try {
     const parts = token.split('.');
@@ -48,6 +49,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const user = getLoggedInUser();
 
   const handleLogout = () => {
@@ -73,9 +75,9 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
   };
 
   const navItems = [
-    { id: 'home', label: 'Ballina', icon: Home },
-    { id: 'explore', label: 'Eksploro', icon: Hash },
-    { id: 'bookmarks', label: 'Të ruajtura', icon: Bookmark },
+    { id: 'home', label: t('feed_home'), icon: Home },
+    { id: 'explore', label: t('feed_explore'), icon: Hash },
+    { id: 'bookmarks', label: t('feed_bookmarks'), icon: Bookmark },
   ] as const;
 
   return (
@@ -105,6 +107,23 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
             );
           })}
         </nav>
+
+        <div className="sidebar-language-switch" title="Change language">
+          <button
+            type="button"
+            className={`language-chip ${language === 'en' ? 'active' : ''}`}
+            onClick={() => setLanguage('en')}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            className={`language-chip ${language === 'sq' ? 'active' : ''}`}
+            onClick={() => setLanguage('sq')}
+          >
+            SQ
+          </button>
+        </div>
 
 
 
@@ -176,7 +195,40 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
           display: flex;
           flex-direction: column;
           gap: 8px;
-          margin-bottom: 24px;
+          margin-bottom: 14px;
+        }
+
+        .sidebar-language-switch {
+          display: inline-flex;
+          width: max-content;
+          gap: 4px;
+          padding: 4px;
+          margin: 0 0 20px 16px;
+          border: 1px solid var(--border);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.03);
+        }
+
+        .language-chip {
+          border: none;
+          border-radius: 999px;
+          background: transparent;
+          color: var(--text-muted);
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 800;
+          height: 28px;
+          min-width: 38px;
+        }
+
+        .language-chip.active {
+          color: white;
+          background: var(--primary);
+        }
+
+        .language-chip:hover:not(.active) {
+          color: var(--text-main);
+          background: rgba(255, 255, 255, 0.08);
         }
 
         .nav-item {
@@ -333,6 +385,15 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
             display: none;
           }
 
+          .sidebar-language-switch {
+            margin-left: 0;
+          }
+
+          .language-chip {
+            min-width: 30px;
+            font-size: 11px;
+          }
+
           .sidebar-logo {
             padding: 12px 0;
             margin-bottom: 24px;
@@ -398,7 +459,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
             align-items: center;
           }
 
-          .sidebar-logo, .cta-post-btn, .sidebar-user-card {
+          .sidebar-logo, .cta-post-btn, .sidebar-user-card, .sidebar-language-switch {
             display: none;
           }
 
@@ -425,3 +486,4 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
 };
 
 export default SidebarLeft;
+

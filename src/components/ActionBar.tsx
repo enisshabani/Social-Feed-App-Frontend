@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Star, Repeat2, MessageSquare, Bookmark } from 'lucide-react';
 
 interface ActionBarProps {
@@ -35,10 +35,27 @@ const ActionBar: React.FC<ActionBarProps> = ({
   const [likePulse, setLikePulse] = useState(false);
   const [repostPulse, setRepostPulse] = useState(false);
   const [bookmarkPulse, setBookmarkPulse] = useState(false);
+  const [busyAction, setBusyAction] = useState<'like' | 'repost' | 'bookmark' | null>(null);
+
+  useEffect(() => {
+    setLiked(isLikedInitially);
+    setLikes(likeCount);
+  }, [isLikedInitially, likeCount]);
+
+  useEffect(() => {
+    setReposted(isRepostedInitially);
+    setReposts(repostCount);
+  }, [isRepostedInitially, repostCount]);
+
+  useEffect(() => {
+    setBookmarked(isBookmarkedInitially);
+  }, [isBookmarkedInitially]);
 
   const handleLikeClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (busyAction) return;
     setLikePulse(true);
+    setBusyAction('like');
     setTimeout(() => setLikePulse(false), 300);
 
     try {
@@ -47,12 +64,16 @@ const ActionBar: React.FC<ActionBarProps> = ({
       setLikes((prev) => (isNowLiked ? prev + 1 : Math.max(0, prev - 1)));
     } catch (e) {
       console.error(e);
+    } finally {
+      setBusyAction(null);
     }
   };
 
   const handleRepostClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (busyAction) return;
     setRepostPulse(true);
+    setBusyAction('repost');
     setTimeout(() => setRepostPulse(false), 300);
 
     try {
@@ -61,12 +82,16 @@ const ActionBar: React.FC<ActionBarProps> = ({
       setReposts((prev) => (isNowReposted ? prev + 1 : Math.max(0, prev - 1)));
     } catch (e) {
       console.error(e);
+    } finally {
+      setBusyAction(null);
     }
   };
 
   const handleBookmarkClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (busyAction) return;
     setBookmarkPulse(true);
+    setBusyAction('bookmark');
     setTimeout(() => setBookmarkPulse(false), 300);
 
     try {
@@ -74,6 +99,8 @@ const ActionBar: React.FC<ActionBarProps> = ({
       setBookmarked(isNowBookmarked);
     } catch (e) {
       console.error(e);
+    } finally {
+      setBusyAction(null);
     }
   };
 
@@ -91,6 +118,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       <button
         className={`action-btn repost-action ${reposted ? 'active' : ''}`}
         onClick={handleRepostClick}
+        disabled={busyAction !== null}
         title="Riposto"
       >
         <div className={`icon-wrapper ${repostPulse ? 'spin-anim' : ''}`}>
@@ -103,6 +131,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       <button
         className={`action-btn like-action ${liked ? 'active' : ''}`}
         onClick={handleLikeClick}
+        disabled={busyAction !== null}
         title="Pëlqe"
       >
         <div className={`icon-wrapper ${likePulse ? 'pulse-active' : ''}`}>
@@ -115,6 +144,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       <button
         className={`action-btn bookmark-action ${bookmarked ? 'active' : ''}`}
         onClick={handleBookmarkClick}
+        disabled={busyAction !== null}
         title="Ruaj"
       >
         <div className={`icon-wrapper ${bookmarkPulse ? 'pulse-active' : ''}`}>
@@ -146,6 +176,11 @@ const ActionBar: React.FC<ActionBarProps> = ({
           font-weight: 500;
           transition: all 0.2s ease;
           outline: none;
+        }
+
+        .action-btn:disabled {
+          cursor: wait;
+          opacity: 0.65;
         }
 
         .icon-wrapper {
