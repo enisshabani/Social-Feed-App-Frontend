@@ -4,7 +4,8 @@ import MainLayout from '../components/MainLayout';
 import { useNotifications } from '../modules/notifications/hooks/useNotifications';
 import type { NotificationItem as INotificationItem } from '../modules/notifications/types';
 import { UserPlus, Heart, Repeat2, AtSign, MessageCircle, Bell, Check, Trash2, User, Settings, X } from 'lucide-react';
-import { followUser, unfollowUser, checkIsFollowing } from '../modules/follows/api/followsApi';
+import { followUser, unfollowUser, checkIsFollowing, getPendingFollowBacks } from '../modules/follows/api/followsApi';
+import type { FollowResponse } from '../modules/follows/types';
 import notificationsApi from '../modules/notifications/api/notificationsApi';
 import type { NotificationPreference } from '../modules/notifications/types';
 import '../styles/globals.css';
@@ -158,6 +159,49 @@ const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boo
   );
 };
 
+const FollowBackReminderRow: React.FC<{ follow: FollowResponse }> = ({ follow }) => {
+  const navigate = useNavigate();
+  const targetUser = follow.followee;
+  const targetName = targetUser?.display_name || targetUser?.username || `User ${follow.followee_id}`;
+  const targetHandle = targetUser?.username ? `@${targetUser.username}` : '';
+
+  const handleClick = () => {
+    if (targetUser?.username) {
+      navigate(`/profile/${encodeURIComponent(targetUser.username)}`);
+    }
+  };
+
+  return (
+    <div className="notif-row follow-reminder-row" onClick={handleClick}>
+      <div className="notif-type-icon">
+        <UserPlus size={20} color="var(--primary)" />
+      </div>
+
+      <div className="notif-avatar">
+        {targetUser?.avatar_url ? (
+          <img src={targetUser.avatar_url} alt={targetName} className="notif-avatar-img" />
+        ) : (
+          <div className="notif-avatar-placeholder">
+            <User size={20} />
+          </div>
+        )}
+      </div>
+
+      <div className="notif-content">
+        <div className="notif-text">
+          <span className="notif-actor-name">{targetName}</span>
+          {' '}
+          <span className="notif-action">ende nuk ta ka kthyer follow-in</span>
+          {targetHandle && <span className="notif-handle"> · {targetHandle}</span>}
+        </div>
+        <div className="notif-meta">
+          <span className="notif-time">Reminder deri sa te ndjek mbrapsht</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 type TabType = 'all' | 'mentions';
 type NotificationRuleAction = 'accept' | 'ignore';
 type ActivePreferenceKey = 'filter_not_following' | 'filter_not_followed_by' | 'filter_new_accounts';
@@ -169,11 +213,24 @@ const Notifications: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [preferences, setPreferences] = useState<NotificationPreference | null>(null);
+  const [followBackReminders, setFollowBackReminders] = useState<FollowResponse[]>([]);
 
   useEffect(() => {
     fetchNotifications();
     notificationsApi.getPreferences().then(setPreferences).catch(console.error);
   }, [fetchNotifications]);
+
+  useEffect(() => {
+    const fetchFollowBackReminders = () => {
+      getPendingFollowBacks()
+        .then(setFollowBackReminders)
+        .catch(error => console.error('Failed to fetch follow-back reminders', error));
+    };
+
+    fetchFollowBackReminders();
+    const intervalId = window.setInterval(fetchFollowBackReminders, 30000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const updatePreferences = async (nextPreferences: NotificationPreference) => {
     if (!preferences) return;
@@ -204,6 +261,7 @@ const Notifications: React.FC = () => {
   const filteredNotifications = activeTab === 'mentions'
     ? notifications.filter(n => n.type === 'MENTION' || n.type === 'COMMENT')
     : notifications;
+  const visibleFollowBackReminders = activeTab === 'all' ? followBackReminders : [];
 
   const manageNotificationRules: Array<{
     key: ActivePreferenceKey;
@@ -283,7 +341,7 @@ const Notifications: React.FC = () => {
 
         {/* Body */}
         <div className="notif-list">
-          {isLoading && notifications.length === 0 ? (
+          {isLoading && notifications.length === 0 && visibleFollowBackReminders.length === 0 ? (
             /* Skeleton */
             Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="notif-skeleton">
@@ -295,7 +353,7 @@ const Notifications: React.FC = () => {
                 </div>
               </div>
             ))
-          ) : filteredNotifications.length === 0 ? (
+          ) : filteredNotifications.length === 0 && visibleFollowBackReminders.length === 0 ? (
             <div className="notif-empty">
               <Bell size={40} style={{ color: 'var(--text-dimmed)', marginBottom: '12px' }} />
               <p style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '18px' }}>Asnjë njoftim</p>
@@ -304,9 +362,14 @@ const Notifications: React.FC = () => {
               </p>
             </div>
           ) : (
-            filteredNotifications.map(notif => (
-              <NotificationRow key={notif.id} notif={notif} highlightUnread={preferences?.highlight_unread ?? true} />
-            ))
+            <>
+              {visibleFollowBackReminders.map(follow => (
+                <FollowBackReminderRow key={follow.id} follow={follow} />
+              ))}
+              {filteredNotifications.map(notif => (
+                <NotificationRow key={notif.id} notif={notif} highlightUnread={preferences?.highlight_unread ?? true} />
+              ))}
+            </>
           )}
         </div>
       </div>
@@ -474,6 +537,14 @@ const Notifications: React.FC = () => {
 
         .notif-unread {
           background-color: rgba(99, 100, 255, 0.04);
+        }
+
+        .follow-reminder-row {
+          background: rgba(99, 100, 255, 0.06);
+        }
+
+        .follow-reminder-row:hover {
+          background: rgba(99, 100, 255, 0.1);
         }
 
         .notif-unread-dot {

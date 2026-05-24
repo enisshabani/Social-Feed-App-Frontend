@@ -22,6 +22,11 @@ export const getFollowing = async (userId: number, skip = 0, limit = 50): Promis
   return response.data;
 };
 
+export const getPendingFollowBacks = async (skip = 0, limit = 50): Promise<FollowResponse[]> => {
+  const response = await apiClient.get<FollowResponse[]>(`${BASE}/pending-follow-backs`, { params: { skip, limit } });
+  return response.data;
+};
+
 export const getFollowCounts = async (userId: number): Promise<FollowCountResponse> => {
   const response = await apiClient.get<FollowCountResponse>(`${BASE}/counts/${userId}`);
   return response.data;
@@ -37,6 +42,7 @@ export default {
   unfollowUser,
   getFollowers,
   getFollowing,
+  getPendingFollowBacks,
   getFollowCounts,
   checkIsFollowing,
 };
