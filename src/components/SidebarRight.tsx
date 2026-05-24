@@ -4,6 +4,7 @@ import { Search, Flame, TrendingUp } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import type { TrendingHashtag } from '../services/post.service';
 import CreatePostBox from './CreatePostBox';
+import { useLanguage } from '../context/LanguageContext';
 import { getLoggedInUser } from './SidebarLeft';
 
 interface SidebarRightProps {
@@ -28,13 +29,14 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
   }, []);
 
   const currentUser = getLoggedInUser();
+  const { t } = useLanguage();
 
   const fetchTrendingTags = async () => {
     try {
       const trending = await PostService.getTrendingHashtags(7);
       setTrends(trending);
     } catch (e) {
-      console.error('Gabim gjatë marrjes së hashtags trending:', e);
+      console.error(t('error_fetch_trends'), e);
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
           <Search size={18} className="search-icon" />
           <input
             type="text"
-            placeholder="Kërko postime..."
+            placeholder={t('sidebar_search')}
             value={localQuery}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
@@ -92,7 +94,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
       <div className="trending-box">
         <div className="trending-header">
           <Flame size={20} className="trending-icon" />
-          <h3>Çfarë po ndodh</h3>
+          <h3>{t('sidebar_trending_title')}</h3>
         </div>
 
         <div className="trending-list">
@@ -106,7 +108,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
             ))
           ) : trends.length === 0 ? (
             <div className="trending-empty">
-              Nuk ka asnjë hashtag trending momentalisht.
+              {t('sidebar_trending_empty')}
             </div>
           ) : (
             trends.map((trend) => {
@@ -118,11 +120,11 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
                   className="trending-item"
                   onClick={() => navigate(`/hashtag/${trend.name}`)}
                 >
-                  <div className="trend-meta">Më të përdorur këtë javë</div>
+                  <div className="trend-meta">{t('sidebar_trend_meta')}</div>
                   <div className="trend-name">#{trend.name}</div>
                   <div className="trend-count">
                     <TrendingUp size={12} style={{ marginRight: '4px' }} />
-                    {totalUses} postime në 7 ditët e fundit
+                    {totalUses} {t('sidebar_trend_count')}
                   </div>
                   <div className="trend-dots">
                     {trend.history.slice(-5).map((h, i) => (

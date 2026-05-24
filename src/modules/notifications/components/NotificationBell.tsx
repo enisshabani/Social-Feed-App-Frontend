@@ -2,11 +2,13 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
+import { useLanguage } from '../../../context/LanguageContext';
 
 export const NotificationBell: React.FC = () => {
   const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const isActive = location.pathname === '/notifications';
 
@@ -14,9 +16,9 @@ export const NotificationBell: React.FC = () => {
     <button
       className={`nav-item ${isActive ? 'active' : ''}`}
       onClick={() => navigate('/notifications')}
-      title="Njoftime"
+      title={t("nav_notifications")}
     >
-      <span className="nav-icon-box">
+      <span className="nav-icon-box" style={{ position: 'relative' }}>
         <Bell size={24} strokeWidth={2.3} className="nav-icon" />
         {unreadCount > 0 && (
           <span className="notification-badge">
@@ -24,7 +26,7 @@ export const NotificationBell: React.FC = () => {
           </span>
         )}
       </span>
-      <span className="nav-label" style={isActive ? { fontWeight: 700 } : {}}>Njoftime</span>
+      <span className="nav-label" style={isActive ? { fontWeight: 700 } : {}}>{t("nav_notifications")}</span>
     </button>
   );
 };

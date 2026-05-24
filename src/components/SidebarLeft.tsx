@@ -136,7 +136,7 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
           <span className="nav-icon-box">
             <User size={24} strokeWidth={2.3} className="nav-icon" />
           </span>
-          <span className="nav-label">Profili</span>
+          <span className="nav-label">{t("nav_profile")}</span>
         </button>
 
         {/* Notification Bell */}
