@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash } from 'lucide-react';
 import { PostService } from '../services/post.service';
@@ -35,9 +35,15 @@ const PostItem: React.FC<PostItemProps> = ({
   const [loadingComments, setLoadingComments] = useState(false);
   const [newCommentText, setNewCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [replyCount, setReplyCount] = useState(post.reply_count || 0);
 
   // Content Warning Expanded state
   const [cwExpanded, setCwExpanded] = useState(false);
+
+  useEffect(() => {
+    setEditContent(post.content);
+    setReplyCount(post.reply_count || 0);
+  }, [post.content, post.reply_count]);
 
   // Check if current user is the author (safely convert both to string)
   const isAuthor = currentUser && String(currentUser.id) === String(post.author_id);
@@ -146,9 +152,8 @@ const PostItem: React.FC<PostItemProps> = ({
     try {
       const addedComment = await PostService.addComment(post.id, newCommentText);
       setCommentsList((prev) => [...prev, addedComment]);
+      setReplyCount((prev: number) => prev + 1);
       setNewCommentText('');
-      // Notify parent to increment comment count in list view
-      onPostUpdated();
     } catch (err) {
       alert('Gabim gjatë shtimit të komentit.');
     } finally {
@@ -162,7 +167,7 @@ const PostItem: React.FC<PostItemProps> = ({
     try {
       await PostService.removeComment(commentId);
       setCommentsList((prev) => prev.filter((comment) => comment.id !== commentId));
-      onPostUpdated();
+      setReplyCount((prev: number) => Math.max(0, prev - 1));
     } catch (err) {
       alert('Gabim gjate fshirjes se komentit.');
     }
@@ -441,7 +446,7 @@ const PostItem: React.FC<PostItemProps> = ({
             <ActionBar
               likeCount={post.like_count || 0}
               repostCount={post.repost_count || 0}
-              replyCount={post.reply_count || 0}
+              replyCount={replyCount}
               isLikedInitially={post.likes?.some((l: any) => l.user_id === currentUser?.id)}
               isRepostedInitially={post.reposts?.some((r: any) => r.user_id === currentUser?.id)}
               isBookmarkedInitially={isBookmarkedInitially}

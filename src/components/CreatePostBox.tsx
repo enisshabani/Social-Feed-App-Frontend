@@ -20,7 +20,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   autoFocus = false,
 }) => {
   const currentUser = getLoggedInUser();
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [cwActive, setCwActive] = useState(false);
@@ -30,6 +30,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [showMediaInput, setShowMediaInput] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const characterLimit = 500;
@@ -63,6 +64,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const handlePostSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canPost) return;
+    setErrorMessage('');
     setSubmitting(true);
 
     const finalContent = cwActive && warningText.trim()
@@ -71,7 +73,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     const media: MediaInput[] = hasMedia ? [{ url: normalizedMediaUrl, media_type: mediaType }] : [];
 
     if (hasMedia && !isValidMediaUrl(normalizedMediaUrl)) {
-      alert(t('create_post_alert_invalid_url'));
+      setErrorMessage(t('create_post_alert_invalid_url'));
       setSubmitting(false);
       return;
     }
@@ -96,7 +98,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         window.dispatchEvent(new Event('postCreated'));
       }
     } catch (err) {
-      alert(t('create_post_alert_error'));
+      setErrorMessage(t('create_post_alert_error'));
     } finally {
       setSubmitting(false);
     }
@@ -115,13 +117,14 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     if (!file) return;
 
     setUploadingMedia(true);
+    setErrorMessage('');
     try {
       const uploaded = await PostService.uploadPostMedia(file);
       setMediaUrl(uploaded.url);
       setMediaType(uploaded.media_type);
       setShowMediaInput(true);
     } catch {
-      alert(t('create_post_alert_upload_error'));
+      setErrorMessage(t('create_post_alert_upload_error'));
     } finally {
       setUploadingMedia(false);
       e.target.value = '';
@@ -240,6 +243,12 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
           </div>
         </div>
 
+        {errorMessage && (
+          <div className="compose-error" role="alert">
+            {errorMessage}
+          </div>
+        )}
+
         {/* Toolbar */}
         <div className="mastodon-toolbar">
           <input
@@ -258,6 +267,15 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
               onClick={() => setShowMediaInput((value) => !value)}
             >
               <Paperclip size={18} />
+            </button>
+            <button
+              type="button"
+              className="btn-mastodon-tool"
+              title={uploadingMedia ? t('create_post_uploading') : t('create_post_media_upload')}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingMedia}
+            >
+              <Image size={18} />
             </button>
 
             {/* Poll */}
