@@ -266,8 +266,7 @@
     search_loading_more: "Loading...",
     search_error: "Error during search. Please try again.",
     search_error_more: "Error loading more results.",
-  },
-    nav_profile: "Profile",
+  nav_profile: "Profile",
     nav_notifications: "Notifications",
     create_post_placeholder: "What are you thinking?",
     create_post_publish: "Post",
@@ -290,6 +289,8 @@
     sidebar_trend_meta: "Trending this week",
     sidebar_trend_count: "posts in the last 7 days",
     error_fetch_trends: "Error fetching trending hashtags:",
+
+    },
 
   sq: {
     // --- Login Page ---
