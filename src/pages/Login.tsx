@@ -5,6 +5,7 @@ import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getCurrentTenantId } from '../utils/tenant';
 import '../styles/globals.css';
 import '../styles/register.css';
 
@@ -37,6 +38,7 @@ const Login: React.FC = () => {
       const trustedDeviceToken = localStorage.getItem('trustedDeviceToken');
       const response = await api.post('/api/v1/auth/google', { 
         token: idToken,
+        tenant_id: getCurrentTenantId(),
         trusted_device_token: trustedDeviceToken
       });
       
@@ -62,6 +64,7 @@ const Login: React.FC = () => {
       const trustedDeviceToken = localStorage.getItem('trustedDeviceToken');
       const response = await api.post('/api/v1/auth/github', { 
         token: idToken,
+        tenant_id: getCurrentTenantId(),
         trusted_device_token: trustedDeviceToken
       });
       

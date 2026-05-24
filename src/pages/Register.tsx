@@ -5,6 +5,7 @@ import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getCurrentTenantId } from '../utils/tenant';
 import '../styles/globals.css';
 import '../styles/register.css';
 
@@ -105,7 +106,12 @@ const Register: React.FC = () => {
       return;
     }
     try {
-      await api.post('/api/v1/auth/register', { email, username, password });
+      await api.post('/api/v1/auth/register', {
+        email,
+        username,
+        password,
+        tenant_id: getCurrentTenantId(),
+      });
       navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.detail || t('register_error_generic'));
@@ -116,7 +122,10 @@ const Register: React.FC = () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
-      const response = await api.post('/api/v1/auth/google', { token: idToken });
+      const response = await api.post('/api/v1/auth/google', {
+        token: idToken,
+        tenant_id: getCurrentTenantId(),
+      });
       const { access_token, refresh_token } = response.data;
       login(access_token, refresh_token, false);
       navigate('/feed');
@@ -129,7 +138,10 @@ const Register: React.FC = () => {
     try {
       const result = await signInWithPopup(auth, githubProvider);
       const idToken = await result.user.getIdToken();
-      const response = await api.post('/api/v1/auth/github', { token: idToken });
+      const response = await api.post('/api/v1/auth/github', {
+        token: idToken,
+        tenant_id: getCurrentTenantId(),
+      });
       const { access_token, refresh_token } = response.data;
       login(access_token, refresh_token, false);
       navigate('/feed');

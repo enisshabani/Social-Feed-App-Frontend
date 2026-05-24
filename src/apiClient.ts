@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCurrentTenantId } from './utils/tenant';
 
 const getBaseUrl = () => {
   if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) {
@@ -23,6 +24,9 @@ apiClient.interceptors.request.use(
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (config.headers) {
+      config.headers['X-Tenant-ID'] = getCurrentTenantId();
     }
     return config;
   },

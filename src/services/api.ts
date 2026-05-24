@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getCurrentTenantId } from '../utils/tenant';
 
 const api = axios.create({
   baseURL: '',
@@ -7,6 +8,7 @@ const api = axios.create({
 // Interceptor për të dërguar tokenin në çdo kërkesë
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  config.headers['X-Tenant-ID'] = getCurrentTenantId();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

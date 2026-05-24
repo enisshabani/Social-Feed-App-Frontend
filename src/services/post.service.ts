@@ -12,6 +12,7 @@ export interface UserPublic {
   avatar_url?: string;
   location?: string;
   website?: string;
+  tenant_id: string;
   created_at: string;
 }
 
