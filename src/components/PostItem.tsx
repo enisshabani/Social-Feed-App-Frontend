@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import type { Comment } from '../services/post.service';
@@ -17,6 +18,7 @@ interface PostItemProps {
 
 const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, highlightQuery }) => {
   const currentUser = getLoggedInUser();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [updating, setUpdating] = useState(false);
@@ -167,7 +169,8 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
               src={post.author.avatar_url}
               alt={post.author.username}
               className="avatar"
-              style={{ borderRadius: '4px', width: '44px', height: '44px' }}
+              style={{ borderRadius: '4px', width: '44px', height: '44px', cursor: 'pointer' }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author?.username}`); }}
             />
           ) : (
             <div
@@ -182,8 +185,10 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'bold',
-                border: '1px solid rgba(99, 100, 255, 0.2)'
+                border: '1px solid rgba(99, 100, 255, 0.2)',
+                cursor: 'pointer'
               }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author?.username}`); }}
             >
               {authorInitial}
             </div>
@@ -195,10 +200,18 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
           {/* Post Header Info */}
           <header className="post-item-header">
             <div className="author-metadata">
-              <span className="author-display-name">
+              <span
+                className="author-display-name"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author?.username}`); }}
+              >
                 {post.author?.display_name || post.author?.username || `User ${post.author_id}`}
               </span>
-              <span className="author-username">@{post.author?.username || `user_${post.author_id}`}</span>
+              <span
+                className="author-username"
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author?.username}`); }}
+              >@{post.author?.username || `user_${post.author_id}`}</span>
               <span className="bullet-spacer">•</span>
               <time className="post-time" dateTime={post.created_at}>
                 {formatPostDate(post.created_at)}

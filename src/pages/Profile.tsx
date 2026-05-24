@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
@@ -35,19 +35,40 @@ const Profile: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (user?.id) {
-      getFollowCounts(user.id)
-        .then(data => setFollowCounts(data))
-        .catch(() => {});
-    }
-  }, [user?.id]);
+  const { username: routeUsername } = useParams();
+  const [viewUser, setViewUser] = useState<any | null>(null);
 
+  // Load either the logged-in user profile or the route username profile
   useEffect(() => {
-    if (user?.id && activeTab === 'activity') {
-      fetchUserPosts(user.id);
-    }
-  }, [user?.id, activeTab]);
+    let mounted = true;
+
+    const loadProfile = async () => {
+      try {
+        if (routeUsername && routeUsername !== user?.username) {
+          const resp = await api.get(`/api/v1/users/${routeUsername}`);
+          if (!mounted) return;
+          setViewUser(resp.data);
+          const counts = await getFollowCounts(resp.data.id);
+          if (!mounted) return;
+          setFollowCounts(counts);
+          if (activeTab === 'activity') fetchUserPosts(resp.data.id);
+        } else if (user?.id) {
+          setViewUser(null);
+          const counts = await getFollowCounts(user.id);
+          if (!mounted) return;
+          setFollowCounts(counts);
+          if (activeTab === 'activity') fetchUserPosts(user.id);
+        }
+      } catch (err) {
+        console.error('Error loading profile:', err);
+        setPostsError('Gabim gjatë ngarkimit të profilit.');
+      }
+    };
+
+    loadProfile();
+
+    return () => { mounted = false; };
+  }, [routeUsername, user?.id, activeTab]);
 
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
@@ -132,14 +153,16 @@ const Profile: React.FC = () => {
 
   if (!user) return null;
 
-  const joinedYear = new Date(user.created_at).getFullYear();
+  const profileUser = viewUser || user;
+
+  const joinedYear = new Date(profileUser.created_at).getFullYear();
 
   // Decide which image to show
   let currentAvatar = null;
   if (isEditing && previewUrl) {
     currentAvatar = previewUrl;
-  } else if (user.avatar_url) {
-    currentAvatar = user.avatar_url;
+  } else if (profileUser.avatar_url) {
+    currentAvatar = profileUser.avatar_url;
   }
 
   return (
@@ -177,7 +200,7 @@ const Profile: React.FC = () => {
                 </svg>
               )}
 
-              {isEditing && (
+              {isEditing && profileUser.id === user.id && (
                 <div className="avatar-edit-overlay">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '4px' }}>
                     <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
@@ -186,7 +209,7 @@ const Profile: React.FC = () => {
                 </div>
               )}
             </div>
-            {!isEditing && (
+            {!isEditing && profileUser.id === user.id && (
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button
                   className="btn-edit-profile"
@@ -221,14 +244,14 @@ const Profile: React.FC = () => {
             onChange={handleFileChange}
           />
 
-          <div className="profile-name">{user.display_name || user.username}</div>
-          <div className="profile-username">@{user.username}@{user.tenant_id}</div>
+          <div className="profile-name">{profileUser.display_name || profileUser.username}</div>
+          <div className="profile-username">@{profileUser.username}@{profileUser.tenant_id}</div>
 
           <div className="profile-stats">
             <div
               className="stat-item"
               style={{ cursor: 'pointer' }}
-              onClick={() => navigate(`/followers/${user.id}`)}
+              onClick={() => navigate(`/followers/${profileUser.id}`)}
             >
               <span className="stat-value">{followCounts.followers_count}</span>
               <span className="stat-label">{t('profile_followers')}</span>
@@ -236,7 +259,7 @@ const Profile: React.FC = () => {
             <div
               className="stat-item"
               style={{ cursor: 'pointer' }}
-              onClick={() => navigate(`/following/${user.id}`)}
+              onClick={() => navigate(`/following/${profileUser.id}`)}
             >
               <span className="stat-value">{followCounts.following_count}</span>
               <span className="stat-label">{t('profile_following')}</span>
@@ -306,7 +329,7 @@ const Profile: React.FC = () => {
                         key={post.id} 
                         post={post} 
                         onPostUpdated={() => {
-                          if (user) fetchUserPosts(user.id);
+                          if (profileUser) fetchUserPosts(profileUser.id);
                         }} 
                       />
                     ))}
