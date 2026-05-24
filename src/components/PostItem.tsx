@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare } from 'lucide-react';
+import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import type { Comment } from '../services/post.service';
 import type { MatchContext } from '../services/search.service';
@@ -13,9 +13,16 @@ interface PostItemProps {
   onPostUpdated: () => void;
   matchContext?: MatchContext | null;
   highlightQuery?: string;
+  isBookmarkedInitially?: boolean;
 }
 
-const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, highlightQuery }) => {
+const PostItem: React.FC<PostItemProps> = ({
+  post,
+  onPostUpdated,
+  matchContext,
+  highlightQuery,
+  isBookmarkedInitially = false,
+}) => {
   const currentUser = getLoggedInUser();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -41,6 +48,23 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
       ? '/profile'
       : null;
 
+  const escapeHtml = (value: string) =>
+    value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+
+  const renderPlainText = (value: string) => escapeHtml(value).replace(/(?:\r\n|\r|\n)/g, '<br/>');
+  const resolveMediaUrl = (value: string) => {
+    if (!value?.startsWith('/')) return value;
+    const apiRoot = (import.meta.env?.VITE_API_URL || 'http://localhost:8000')
+      .replace(/\/+$/, '')
+      .replace(/\/api\/v1$/i, '');
+    return `${apiRoot}${value}`;
+  };
+
   const handleAuthorProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (authorProfilePath) {
@@ -61,7 +85,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
       const htmlParts = post.content_html.split(/<br\s*\/?>\s*<br\s*\/?>\s*---\s*<br\s*\/?>\s*<br\s*\/?>/i);
       bodyHtml = htmlParts.length > 1 ? htmlParts.slice(1).join('<br/><br/>---<br/><br/>') : post.content_html;
     } else {
-      bodyHtml = post.content.replace(/(?:\r\n|\r|\n)/g, '<br/>');
+      bodyHtml = renderPlainText(post.content);
     }
   }
 
@@ -132,6 +156,18 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
     }
   };
 
+  const handleCommentDelete = async (commentId: number) => {
+    if (!window.confirm('A jeni i sigurt qe deshironi ta fshini kete koment?')) return;
+
+    try {
+      await PostService.removeComment(commentId);
+      setCommentsList((prev) => prev.filter((comment) => comment.id !== commentId));
+      onPostUpdated();
+    } catch (err) {
+      alert('Gabim gjate fshirjes se komentit.');
+    }
+  };
+
   // Callbacks for API action updates in ActionBar
   const onLikeAPI = async (): Promise<boolean> => {
     const res = await PostService.toggleLike(post.id);
@@ -163,6 +199,10 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
   };
 
   const authorInitial = post.author?.username ? post.author.username.charAt(0).toUpperCase() : 'U';
+  const displayName = post.author?.display_name || post.author?.username || `User ${post.author_id}`;
+  const handleTagClick = (tagName: string) => {
+    navigate(`/hashtag/${encodeURIComponent(tagName)}`);
+  };
 
   return (
     <article className="post-item-wrapper">
@@ -173,7 +213,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
         </div>
       )}
 
-      <div className="post-main-content">
+        <div className="post-main-content">
         {/* User Avatar Column */}
         <div className="avatar-column">
           {post.author?.avatar_url ? (
@@ -217,7 +257,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
                 style={{ cursor: 'pointer' }}
                 onClick={handleAuthorProfileClick}
               >
-                {post.author?.display_name || post.author?.username || `User ${post.author_id}`}
+                {displayName}
               </span>
               <span
                 className="author-username"
@@ -309,11 +349,48 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
               <div
                 className="post-text-content"
                 dangerouslySetInnerHTML={{
-                  __html: post.content_html || post.content.replace(/(?:\r\n|\r|\n)/g, '<br/>'),
+                  __html: post.content_html || renderPlainText(post.content),
                 }}
               />
             )}
           </div>
+
+          {post.media?.length > 0 && (
+            <div className={`post-media-grid media-count-${Math.min(post.media.length, 4)}`}>
+              {post.media.slice(0, 4).map((media: any) => (
+                <a
+                  key={media.id || media.url}
+                  href={resolveMediaUrl(media.url)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="post-media-frame"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {media.media_type === 'video' ? (
+                    <video src={resolveMediaUrl(media.url)} controls />
+                  ) : (
+                    <img src={resolveMediaUrl(media.url)} alt="" loading="lazy" />
+                  )}
+                </a>
+              ))}
+            </div>
+          )}
+
+          {post.tags?.length > 0 && (
+            <div className="post-tag-row">
+              {post.tags.slice(0, 6).map((tag: any) => (
+                <button
+                  key={tag.id || tag.name}
+                  type="button"
+                  className="post-tag-chip"
+                  onClick={() => handleTagClick(tag.name)}
+                >
+                  <Hash size={12} />
+                  {tag.name}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Search: matched comment indicators */}
           {matchContext && !matchContext.post_match && matchContext.matched_comments.length > 0 && (
@@ -354,7 +431,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
 
           {/* Sentiment Badge */}
           {!isEditing && post.content && (
-            <div style={{ padding: '0 16px 4px' }}>
+            <div className="sentiment-row">
               <SentimentBadge postText={post.content} postId={post.id} />
             </div>
           )}
@@ -367,7 +444,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
               replyCount={post.reply_count || 0}
               isLikedInitially={post.likes?.some((l: any) => l.user_id === currentUser?.id)}
               isRepostedInitially={post.reposts?.some((r: any) => r.user_id === currentUser?.id)}
-              isBookmarkedInitially={false} // Will load bookmarked status dynamically if needed
+              isBookmarkedInitially={isBookmarkedInitially}
               onLike={onLikeAPI}
               onRepost={onRepostAPI}
               onBookmark={onBookmarkAPI}
@@ -387,7 +464,10 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
                 ) : commentsList.length === 0 ? (
                   <div className="comments-empty">Nuk ka asnjë koment ende. Bëhu i pari!</div>
                 ) : (
-                  commentsList.map((comment) => (
+                  commentsList.map((comment) => {
+                    const canDeleteComment = String(comment.author_id) === String(currentUser?.id);
+
+                    return (
                     <div key={comment.id} className="comment-item">
                       <div className="comment-avatar">
                         <User size={14} />
@@ -397,10 +477,21 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
                           <span className="comment-author">@{comment.author?.username || `user_${comment.author_id}`}</span>
                           <span className="comment-time">• {formatPostDate(comment.created_at)}</span>
                         </div>
+                          {canDeleteComment && (
+                            <button
+                              type="button"
+                              className="comment-delete-btn"
+                              title="Fshi komentin"
+                              onClick={() => handleCommentDelete(comment.id)}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
                         <div className="comment-content">{comment.content}</div>
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
@@ -433,12 +524,12 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
           padding: 16px 20px;
           border-bottom: 1px solid var(--border);
           background-color: transparent;
-          transition: background-color 0.15s ease;
+          transition: background-color 0.15s ease, border-color 0.15s ease;
           cursor: default;
         }
 
         .post-item-wrapper:hover {
-          background-color: rgba(255, 255, 255, 0.015);
+          background-color: rgba(255, 255, 255, 0.025);
         }
 
         .repost-indicator {
@@ -611,6 +702,80 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
           white-space: pre-wrap;
         }
 
+        .post-media-grid {
+          display: grid;
+          gap: 2px;
+          margin-top: 12px;
+          overflow: hidden;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: var(--bg-dark);
+        }
+
+        .media-count-1 {
+          grid-template-columns: 1fr;
+        }
+
+        .media-count-2,
+        .media-count-4 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .media-count-3 {
+          grid-template-columns: 1.1fr 0.9fr;
+        }
+
+        .media-count-3 .post-media-frame:first-child {
+          grid-row: span 2;
+        }
+
+        .post-media-frame {
+          display: block;
+          min-height: 160px;
+          max-height: 360px;
+          background: rgba(255, 255, 255, 0.04);
+        }
+
+        .post-media-frame img,
+        .post-media-frame video {
+          width: 100%;
+          height: 100%;
+          min-height: inherit;
+          max-height: inherit;
+          object-fit: cover;
+          display: block;
+        }
+
+        .post-tag-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 12px;
+        }
+
+        .post-tag-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          border: 1px solid rgba(99, 100, 255, 0.24);
+          border-radius: 999px;
+          background: rgba(99, 100, 255, 0.08);
+          color: var(--primary);
+          padding: 5px 9px;
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .post-tag-chip:hover {
+          background: rgba(99, 100, 255, 0.16);
+        }
+
+        .sentiment-row {
+          display: flex;
+          margin-top: 10px;
+        }
+
         /* Inline edit form */
         .inline-edit-form {
           display: flex;
@@ -704,6 +869,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
 
         .comment-header {
           display: flex;
+          align-items: center;
           gap: 6px;
           font-size: 12px;
           font-weight: 600;
@@ -723,6 +889,25 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
           color: var(--text-main);
           line-height: 1.4;
           word-break: break-word;
+        }
+
+        .comment-delete-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+          margin-left: auto;
+          border: none;
+          border-radius: 999px;
+          background: transparent;
+          color: var(--text-dimmed);
+          cursor: pointer;
+        }
+
+        .comment-delete-btn:hover {
+          color: var(--error);
+          background: var(--error-bg);
         }
 
         /* Comment Input box */

@@ -1,21 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PostService } from '../services/post.service';
 import MainLayout from '../components/MainLayout';
 
 import PostItem from '../components/PostItem';
+import CreatePostBox from '../components/CreatePostBox';
 import { Sparkles, Bookmark, Search, RefreshCw, Hash, AlertCircle } from 'lucide-react';
 import { getFollowing } from '../modules/follows/api/followsApi';
 import { getLoggedInUser } from '../components/SidebarLeft';
+import { useLanguage } from '../context/LanguageContext';
 
 const Feed: React.FC = () => {
   const currentUser = getLoggedInUser();
+  const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as 'home' | 'explore' | 'bookmarks') || 'home';
   const [currentTab, setCurrentTab] = useState<'home' | 'explore' | 'bookmarks'>(initialTab);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
+  const [hasMore, setHasMore] = useState(false);
 
   // Search & Hashtag Filtering States
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,6 +30,7 @@ const Feed: React.FC = () => {
   // Home Sub-tabs: 'forYou' (all posts) or 'following' (posts from users we follow)
   const [homeSubTab, setHomeSubTab] = useState<'forYou' | 'following'>('forYou');
   const [followingIds, setFollowingIds] = useState<Set<number>>(new Set());
+  const pageSize = 20;
 
   // Focus reference for text composing
   const feedTopRef = useRef<HTMLDivElement>(null);
@@ -42,15 +48,15 @@ const Feed: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchPosts();
+    fetchPosts(0, false);
   }, [currentTab, selectedTag, refreshKey]);
 
   useEffect(() => {
     const loadFollowingList = async () => {
       if (currentUser?.id) {
         try {
-          const list = await getFollowing(currentUser.id, 0, 1000);
-          const ids = new Set(list.map(item => item.followee_id));
+          const list = await getFollowing(currentUser.id, 0, 100);
+          const ids = new Set(list.map(item => Number(item.followee_id)));
           setFollowingIds(ids);
         } catch (e) {
           console.error("Failed to load following IDs", e);
@@ -70,31 +76,41 @@ const Feed: React.FC = () => {
     };
   }, [refreshKey, currentUser?.id]);
 
-  const fetchPosts = async () => {
-    setLoading(true);
+  const fetchPosts = async (skip = 0, append = false) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
     setError('');
     try {
       let fetchedItems: any[] = [];
+      let moreAvailable = false;
       
       if (selectedTag) {
         // Tag filtering feed
-        const res = await PostService.getPostsByTag(selectedTag);
+        const res = await PostService.getPostsByTag(selectedTag, skip, pageSize);
         fetchedItems = res.items || [];
+        moreAvailable = res.has_more;
       } else if (currentTab === 'home' || currentTab === 'explore') {
         // Home Feed
-        const res = await PostService.getHomeFeed(0, 40);
+        const res = await PostService.getHomeFeed(skip, pageSize);
         fetchedItems = res.items || [];
+        moreAvailable = res.has_more;
       } else if (currentTab === 'bookmarks') {
         // Bookmarks Feed
-        fetchedItems = await PostService.getBookmarks(0, 40);
+        fetchedItems = await PostService.getBookmarks(skip, pageSize);
+        moreAvailable = fetchedItems.length === pageSize;
       }
 
-      setPosts(fetchedItems);
+      setPosts((prev) => (append ? [...prev, ...fetchedItems] : fetchedItems));
+      setHasMore(moreAvailable);
     } catch (err: any) {
       console.error(err);
-      setError('Ndodhi një gabim gjatë ngarkimit të postimeve.');
+      setError(t('feed_error'));
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -105,6 +121,12 @@ const Feed: React.FC = () => {
     feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      fetchPosts(posts.length, true);
+    }
+  };
+
 
   const handleDismissTag = () => {
     setSelectedTag(null);
@@ -113,7 +135,7 @@ const Feed: React.FC = () => {
   const handleScrollToTop = () => {
     feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
     // Find the textarea inside CreatePostBox and focus it
-    const textarea = document.querySelector('.post-textarea') as HTMLTextAreaElement;
+    const textarea = document.querySelector('.mastodon-post-textarea') as HTMLTextAreaElement;
     if (textarea) {
       textarea.focus();
     }
@@ -121,17 +143,17 @@ const Feed: React.FC = () => {
 
   // Real-time client-side search filter
   const filteredPosts = posts.filter((post) => {
-    // Local subtab filtering for "Të ndjekur"
+    // Local subtab filtering for "TÃ« ndjekur"
     if (!selectedTag && currentTab === 'home' && homeSubTab === 'following') {
-      const isSelf = currentUser && post.author_id === currentUser.id;
-      const isFollowed = followingIds.has(post.author_id);
+      const isSelf = currentUser && String(post.author_id) === String(currentUser.id);
+      const isFollowed = followingIds.has(Number(post.author_id));
       if (!isSelf && !isFollowed) return false;
     }
 
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
     
-    const contentMatch = post.content.toLowerCase().includes(query);
+    const contentMatch = (post.content || '').toLowerCase().includes(query);
     const authorMatch = post.author?.username?.toLowerCase().includes(query) ||
                         post.author?.display_name?.toLowerCase().includes(query);
     return contentMatch || authorMatch;
@@ -144,6 +166,7 @@ const Feed: React.FC = () => {
       onPostClick={handleScrollToTop}
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
+      showSidebarComposer={false}
     >
       <div ref={feedTopRef} />
 
@@ -151,34 +174,34 @@ const Feed: React.FC = () => {
       <header className="feed-header">
         <div className="feed-header-title">
           <h2>
-            {selectedTag ? `Hashtag: #${selectedTag}` : 
-             currentTab === 'home' ? 'Ballina' : 
-             currentTab === 'explore' ? 'Eksploro' : 'Të ruajtura'}
+            {selectedTag ? `Hashtag: #${selectedTag}` :
+             currentTab === 'home' ? t('feed_home') :
+             currentTab === 'explore' ? t('feed_explore') : t('feed_bookmarks')}
           </h2>
           <button 
             className="btn-icon refresh-feed-btn" 
             onClick={() => setRefreshKey(prev => prev + 1)}
             disabled={loading}
-            title="Rifresko feed-in"
+            title={t('feed_refresh')}
           >
             <RefreshCw size={16} className={loading ? 'spinning' : ''} />
           </button>
         </div>
 
-        {/* Home Subtabs (Për ty, Të ndjekur) */}
+        {/* Home Subtabs (PÃ«r ty, TÃ« ndjekur) */}
         {!selectedTag && currentTab === 'home' && (
           <div className="feed-subtabs">
             <button 
               className={`subtab-btn ${homeSubTab === 'forYou' ? 'active' : ''}`}
               onClick={() => setHomeSubTab('forYou')}
             >
-              Për ty
+              {t('feed_for_you')}
             </button>
             <button 
               className={`subtab-btn ${homeSubTab === 'following' ? 'active' : ''}`}
               onClick={() => setHomeSubTab('following')}
             >
-              Të ndjekur
+              {t('feed_following')}
             </button>
           </div>
         )}
@@ -189,17 +212,29 @@ const Feed: React.FC = () => {
         <div className="filter-banner glass-panel">
           <div className="filter-banner-text">
             <Hash size={18} className="banner-hash-icon" />
-            <span>Po shfaqen postimet që përmbajnë tagun <strong>#{selectedTag}</strong></span>
+            <span>{t('feed_filter_showing')} <strong>#{selectedTag}</strong></span>
           </div>
           <button className="btn btn-secondary banner-dismiss" onClick={handleDismissTag}>
-            Shfaq të gjitha
+            {t('feed_filter_show_all')}
           </button>
         </div>
       )}
 
       {/* Main Feed Content Area */}
       <div className="feed-content-scroller">
-        {/* Create Post Area moved to left column */}
+        {!selectedTag && currentTab === 'home' && (
+          <div className="feed-compose-shell">
+            <CreatePostBox onPostCreated={() => {}} />
+          </div>
+        )}
+
+        <div className="feed-section-summary">
+          <span>{filteredPosts.length} {t('search_meta_posts')}</span>
+          {homeSubTab === 'following' && currentTab === 'home' && (
+            <span>Nga ju dhe personat qe ndiqni</span>
+          )}
+          {searchQuery && <span>Kerkim lokal: "{searchQuery}"</span>}
+        </div>
 
         {/* Error Display */}
         {error && (
@@ -230,26 +265,26 @@ const Feed: React.FC = () => {
               {currentTab === 'bookmarks' ? (
                 <>
                   <Bookmark size={48} className="empty-icon text-primary" />
-                  <h3>Nuk ka asnjë postim të ruajtur</h3>
-                  <p>Klikoni ikonën e faqeshënuesit në postimet e rregullta për t'i ruajtur këtu për t'i parë më vonë.</p>
+                  <h3>{t('feed_empty_bookmarks_title')}</h3>
+                  <p>{t('feed_empty_bookmarks_desc')}</p>
                 </>
               ) : selectedTag ? (
                 <>
                   <Hash size={48} className="empty-icon text-primary" />
-                  <h3>Nuk u gjet asnjë postim</h3>
-                  <p>Nuk ka postime që përmbajnë hashtagun #{selectedTag} në këtë tenant momentalisht.</p>
+                  <h3>{t('feed_empty_tag_title')}</h3>
+                  <p>{t('feed_empty_tag_desc')} #{selectedTag}.</p>
                 </>
               ) : searchQuery ? (
                 <>
                   <Search size={48} className="empty-icon text-muted" />
-                  <h3>Nuk u gjet asnjë rezultat</h3>
-                  <p>Nuk mundëm të gjenim asnjë postim që përputhet me kërkimin tuaj: "{searchQuery}". Provoni terma të tjerë.</p>
+                  <h3>{t('feed_empty_search_title')}</h3>
+                  <p>{t('feed_empty_search_desc')} "{searchQuery}"</p>
                 </>
               ) : (
                 <>
                   <Sparkles size={48} className="empty-icon text-primary" />
-                  <h3>Feed-i juaj është bosh</h3>
-                  <p>Bëhu i pari që ndan një mendim ose histori me komunitetin! Shkruaj diçka më lart.</p>
+                  <h3>{t('feed_empty_title')}</h3>
+                  <p>{t('feed_empty_desc')}</p>
                 </>
               )}
             </div>
@@ -260,10 +295,19 @@ const Feed: React.FC = () => {
                 key={post.id} 
                 post={post} 
                 onPostUpdated={handlePostCreated} 
+                isBookmarkedInitially={currentTab === 'bookmarks'}
               />
             ))
           )}
         </div>
+
+        {!loading && filteredPosts.length > 0 && hasMore && !searchQuery && (
+          <div className="load-more-row">
+            <button className="btn btn-secondary load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
+              {loadingMore ? 'Duke ngarkuar...' : 'Shfaq me shume'}
+            </button>
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -275,6 +319,32 @@ const Feed: React.FC = () => {
           background-color: var(--primary-light);
         }
 
+        .feed-compose-shell {
+          border-bottom: 1px solid var(--border);
+          background: rgba(40, 44, 55, 0.36);
+          padding: 16px;
+        }
+
+        .feed-compose-shell .create-post-box.mastodon-compose {
+          border-radius: 8px;
+          box-shadow: none;
+        }
+
+        .feed-section-summary {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+          justify-content: space-between;
+          min-height: 42px;
+          padding: 10px 20px;
+          border-bottom: 1px solid var(--border);
+          color: var(--text-dimmed);
+          font-size: 13px;
+          font-weight: 600;
+          background: rgba(25, 27, 34, 0.82);
+        }
+
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -284,7 +354,7 @@ const Feed: React.FC = () => {
           animation: spin 1s linear infinite;
         }
 
-        /* Feed Subtabs Për ty / Të ndjekur */
+        /* Feed Subtabs PÃ«r ty / TÃ« ndjekur */
         .feed-subtabs {
           display: flex;
           border-bottom: 1px solid var(--border);
@@ -356,6 +426,18 @@ const Feed: React.FC = () => {
 
         .feed-content-scroller {
           padding-bottom: 100px;
+        }
+
+        .load-more-row {
+          display: flex;
+          justify-content: center;
+          padding: 20px;
+        }
+
+        .load-more-btn {
+          width: 100%;
+          max-width: 260px;
+          border-radius: 8px;
         }
 
         /* Premium Skeleton styles */
@@ -432,3 +514,4 @@ const Feed: React.FC = () => {
 };
 
 export default Feed;
+

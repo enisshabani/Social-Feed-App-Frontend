@@ -9,9 +9,10 @@ import { getLoggedInUser } from './SidebarLeft';
 interface SidebarRightProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  showComposer?: boolean;
 }
 
-const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery }) => {
+const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery, showComposer = true }) => {
   const navigate = useNavigate();
   const [trends, setTrends] = useState<TrendingHashtag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +84,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
       )}
 
       {/* Composer Box */}
-      <CreatePostBox onPostCreated={() => { }} />
+      {showComposer && <CreatePostBox onPostCreated={() => { }} />}
 
       {/* Trending Box */}
       <div className="trending-box">

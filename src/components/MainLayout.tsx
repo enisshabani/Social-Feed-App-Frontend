@@ -9,6 +9,7 @@ interface MainLayoutProps {
   onPostClick?: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  showSidebarComposer?: boolean;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({
@@ -18,6 +19,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   onPostClick,
   searchQuery,
   setSearchQuery,
+  showSidebarComposer = true,
 }) => {
   return (
     <div className="app-container">
@@ -25,6 +27,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       <SidebarRight
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        showComposer={showSidebarComposer}
       />
 
       {/* Center Feed Component */}
