@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import { useNotifications } from '../modules/notifications/hooks/useNotifications';
 import type { NotificationItem as INotificationItem } from '../modules/notifications/types';
@@ -55,6 +56,7 @@ const TypeIcon: React.FC<{ type: string }> = ({ type }) => {
 };
 
 const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boolean }> = ({ notif, highlightUnread }) => {
+  const navigate = useNavigate();
   const { markAsReadById, deleteNotificationById } = useNotifications();
   const [followState, setFollowState] = useState<'loading' | 'following' | 'not_following'>('loading');
   const [followLoading, setFollowLoading] = useState(false);
@@ -88,6 +90,9 @@ const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boo
 
   const handleClick = () => {
     if (!notif.is_read) markAsReadById(notif.id);
+    if (notif.type === 'FOLLOW' && notif.actor?.username) {
+      navigate(`/profile/${encodeURIComponent(notif.actor.username)}`);
+    }
   };
 
   const actorName = notif.actor?.display_name || notif.actor?.username || `User ${notif.actor_id}`;
