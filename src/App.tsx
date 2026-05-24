@@ -11,6 +11,7 @@ import Feed from './pages/Feed';
 import Followers from './pages/Followers';
 import SearchPage from './pages/SearchPage';
 import HashtagFeed from './pages/HashtagFeed';
+import Notifications from './pages/Notifications';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -76,6 +77,14 @@ function App() {
           element={
             <ProtectedRoute>
               <HashtagFeed />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
             </ProtectedRoute>
           }
         />
