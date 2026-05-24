@@ -30,8 +30,8 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(user?.display_name || user?.username || '');
   const [showNameInput, setShowNameInput] = useState(!!user?.display_name);
-  const [editBio, setEditBio] = useState('');
-  const [showBioInput, setShowBioInput] = useState(false);
+  const [editBio, setEditBio] = useState(user?.bio || '');
+  const [showBioInput, setShowBioInput] = useState(!!user?.bio);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -109,9 +109,10 @@ const Profile: React.FC = () => {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      // 1. Ruajmë emrin
+      // 1. Ruajmë emrin dhe bion
       await api.put('/api/v1/users/me/profile', {
         display_name: editName,
+        bio: editBio,
       });
 
       // 2. Nëse ka zgjedhur foto të re, e bëjmë upload
@@ -127,9 +128,9 @@ const Profile: React.FC = () => {
 
         updateUser(avatarResponse.data);
       } else {
-        // Përditëso gjendjen globale të user-it vetëm për emrin
+        // Përditëso gjendjen globale të user-it vetëm për emrin dhe bion
         if (user) {
-          updateUser({ ...user, display_name: editName });
+          updateUser({ ...user, display_name: editName, bio: editBio });
         }
       }
 
@@ -148,6 +149,8 @@ const Profile: React.FC = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
     setEditName(user?.display_name || user?.username || '');
+    setEditBio(user?.bio || '');
+    setShowBioInput(!!user?.bio);
   };
 
   if (isLoading) {
@@ -261,6 +264,8 @@ const Profile: React.FC = () => {
                   className="btn-edit-profile"
                   onClick={() => {
                     setEditName(user.display_name || user.username);
+                    setEditBio(user.bio || '');
+                    setShowBioInput(!!user.bio);
                     setIsEditing(true);
                   }}
                 >
@@ -305,6 +310,11 @@ const Profile: React.FC = () => {
 
           <div className="profile-name">{profileUser.display_name || profileUser.username}</div>
           <div className="profile-username">@{profileUser.username}@{profileUser.tenant_id}</div>
+          {profileUser.bio && (
+            <div className="profile-bio" style={{ marginTop: '0.5rem', fontSize: '0.95rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
+              {profileUser.bio}
+            </div>
+          )}
 
           <div className="profile-stats">
             <div
@@ -507,17 +517,6 @@ const Profile: React.FC = () => {
                 {t('profile_edit_bio_desc')}
               </div>
             </div>
-
-            <div className="edit-profile-section">
-              <div className="edit-profile-section-header">
-                <div className="edit-profile-section-title">{t('profile_edit_custom_fields')}</div>
-                <button className="btn-outline">{t('profile_edit_add_field')}</button>
-              </div>
-              <div className="edit-profile-section-desc">
-                {t('profile_edit_field_desc')}
-              </div>
-            </div>
-
           </div>
         </div>
       )}

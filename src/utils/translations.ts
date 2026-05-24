@@ -127,9 +127,6 @@
     profile_edit_bio: "Bio",
     profile_edit_add_bio: "Add bio",
     profile_edit_bio_desc: "Add a short introduction to help others identify you.",
-    profile_edit_custom_fields: "Custom fields",
-    profile_edit_add_field: "Add field",
-    profile_edit_field_desc: "Add your pronouns, external links, or anything else you'd like to share.",
     
     // --- Settings ---
     settings_title: "Settings",
@@ -398,9 +395,6 @@
     profile_edit_bio: "Biografia",
     profile_edit_add_bio: "Shto biografi",
     profile_edit_bio_desc: "Shtoni njÃ« pÃ«rshkrim tÃ« shkurtÃ«r qÃ« tÃ« tjerÃ«t t'ju njohin.",
-    profile_edit_custom_fields: "Fusha tÃ« personalizuara",
-    profile_edit_add_field: "Shto fushÃ«",
-    profile_edit_field_desc: "Shtoni linke, ose Ã§farÃ«do tjetÃ«r qÃ« dÃ«shironi tÃ« ndani.",
     
     // --- Settings ---
     settings_title: "CilÃ«simet",
