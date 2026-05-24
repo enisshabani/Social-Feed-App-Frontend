@@ -231,9 +231,9 @@ const Feed: React.FC = () => {
         <div className="feed-section-summary">
           <span>{filteredPosts.length} {t('search_meta_posts')}</span>
           {homeSubTab === 'following' && currentTab === 'home' && (
-            <span>Nga ju dhe personat qe ndiqni</span>
+            <span>{t('feed_summary_following')}</span>
           )}
-          {searchQuery && <span>Kerkim lokal: "{searchQuery}"</span>}
+          {searchQuery && <span>{t('feed_summary_local_search')}: "{searchQuery}"</span>}
         </div>
 
         {/* Error Display */}
@@ -304,7 +304,7 @@ const Feed: React.FC = () => {
         {!loading && filteredPosts.length > 0 && hasMore && !searchQuery && (
           <div className="load-more-row">
             <button className="btn btn-secondary load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
-              {loadingMore ? 'Duke ngarkuar...' : 'Shfaq me shume'}
+              {loadingMore ? t('feed_loading_more') : t('feed_load_more')}
             </button>
           </div>
         )}

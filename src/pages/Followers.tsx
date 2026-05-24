@@ -5,6 +5,7 @@ import { FollowButton } from '../modules/follows/components/FollowButton';
 import type { FollowResponse } from '../modules/follows/types';
 import { ArrowLeft, User } from 'lucide-react';
 import { resolveAssetUrl } from '../utils/assets';
+import { useLanguage } from '../context/LanguageContext';
 
 type Mode = 'followers' | 'following';
 
@@ -12,6 +13,7 @@ const Followers: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   // Detect mode from path: /followers/:id → 'followers', /following/:id → 'following'
   const pathMode: Mode = location.pathname.startsWith('/following') ? 'following' : 'followers';
   const [activeTab, setActiveTab] = useState<Mode>(pathMode);
@@ -60,7 +62,7 @@ const Followers: React.FC = () => {
           <ArrowLeft size={20} />
         </button>
         <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700 }}>
-          {activeTab === 'followers' ? 'Followers' : 'Following'}
+          {activeTab === 'followers' ? t('profile_followers') : t('profile_following')}
         </h2>
       </div>
 
@@ -83,7 +85,7 @@ const Followers: React.FC = () => {
               transition: 'all 0.2s ease',
             }}
           >
-            {tab === 'followers' ? 'Followers' : 'Following'}
+            {tab === 'followers' ? t('profile_followers') : t('profile_following')}
           </button>
         ))}
       </div>
@@ -107,12 +109,12 @@ const Followers: React.FC = () => {
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted, #8899a6)' }}>
             <User size={48} style={{ marginBottom: 16, opacity: 0.4 }} />
             <p style={{ fontSize: '16px', fontWeight: 600 }}>
-              {activeTab === 'followers' ? 'No followers yet' : 'Not following anyone yet'}
+              {activeTab === 'followers' ? t('followers_empty_title') : t('following_empty_title')}
             </p>
             <p style={{ fontSize: '14px', marginTop: 8, opacity: 0.7 }}>
               {activeTab === 'followers'
-                ? 'When someone follows this user, they\'ll appear here.'
-                : 'When this user follows someone, they\'ll appear here.'}
+                ? t('followers_empty_desc')
+                : t('following_empty_desc')}
             </p>
           </div>
         ) : (

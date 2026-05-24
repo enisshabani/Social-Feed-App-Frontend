@@ -6,6 +6,7 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   onClear: () => void;
   placeholder?: string;
+  clearAriaLabel?: string;
   debounceMs?: number;
 }
 
@@ -13,17 +14,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
   onClear,
-  placeholder = 'Kërko postime, përdorues, hashtags...',
+  placeholder = 'Search posts, users, hashtags...',
+  clearAriaLabel = 'Clear search',
   debounceMs = 300,
 }) => {
   const [localValue, setLocalValue] = useState(value);
 
-  // Sync external value changes into local state
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
-  // Debounce: fire onChange after debounceMs ms of inactivity
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localValue !== value) {
@@ -31,7 +31,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       }
     }, debounceMs);
     return () => clearTimeout(timer);
-  }, [localValue, debounceMs]);
+  }, [localValue, debounceMs, onChange, value]);
 
   const handleClear = useCallback(() => {
     setLocalValue('');
@@ -58,7 +58,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <button
             onClick={handleClear}
             className="search-bar-clear"
-            aria-label="Pastro kërkimin"
+            aria-label={clearAriaLabel}
           >
             <X size={16} />
           </button>
