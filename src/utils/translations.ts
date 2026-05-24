@@ -44,7 +44,6 @@ export const translations = {
     register_error_passmatch: "Passwords do not match.",
     register_error_privacy: "You must accept the privacy policy.",
     register_error_generic: "Error during registration.",
-    register_verify_email_sent: "Registration successful. Please check your email to verify your account before logging in.",
     
     register_step1_title: "Some ground rules.",
     register_step1_subtitle: "These are set and enforced by the kaPak moderators.",
@@ -102,12 +101,6 @@ export const translations = {
     verify_error_empty: "Please enter the code.",
     verify_btn_continue: "Continue",
     verify_back: "Go back",
-    email_verify_title: "Email verification",
-    email_verify_loading: "Verifying your email...",
-    email_verify_missing: "Verification token is missing.",
-    email_verify_success: "Email verified successfully.",
-    email_verify_error: "Email verification failed. The link may have expired.",
-    email_verify_login: "Go to login",
 
     // --- Profile Page ---
     profile_loading: "Loading profile...",
@@ -321,7 +314,6 @@ export const translations = {
     register_error_passmatch: "Fjalëkalimet nuk përputhen.",
     register_error_privacy: "Duhet të pranoni politikat e privatësisë.",
     register_error_generic: "Gabim gjatë regjistrimit.",
-    register_verify_email_sent: "Regjistrimi u krye me sukses. Ju lutem kontrolloni email-in për ta verifikuar llogarinë para hyrjes.",
     
     register_step1_title: "Disa rregulla bazë.",
     register_step1_subtitle: "Këto janë vendosur dhe zbatohen nga moderatorët e kaPak.",
@@ -379,12 +371,6 @@ export const translations = {
     verify_error_empty: "Ju lutem shkruani kodin.",
     verify_btn_continue: "Vazhdo",
     verify_back: "Kthehu prapa",
-    email_verify_title: "Verifikimi i email-it",
-    email_verify_loading: "Duke verifikuar email-in...",
-    email_verify_missing: "Mungon token-i i verifikimit.",
-    email_verify_success: "Email-i u verifikua me sukses.",
-    email_verify_error: "Verifikimi i email-it dështoi. Linku mund të ketë skaduar.",
-    email_verify_login: "Shko te hyrja",
 
     // --- Profile Page ---
     profile_loading: "Duke ngarkuar profilin...",

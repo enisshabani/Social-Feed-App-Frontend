@@ -106,15 +106,12 @@ const Register: React.FC = () => {
       return;
     }
     try {
-      const response = await api.post('/api/v1/auth/register', {
+      await api.post('/api/v1/auth/register', {
         email,
         username,
         password,
         tenant_id: getCurrentTenantId(),
       });
-      if (!response.data?.is_verified) {
-        window.alert(t('register_verify_email_sent'));
-      }
       navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.detail || t('register_error_generic'));
