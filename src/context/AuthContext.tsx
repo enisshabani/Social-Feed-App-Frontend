@@ -10,6 +10,7 @@ export interface UserProfile {
   location?: string;
   website?: string;
   avatar_url?: string;
+  cover_url?: string;
   role: string;
   is_active: boolean;
   is_verified: boolean;

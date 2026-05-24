@@ -34,9 +34,12 @@ const Profile: React.FC = () => {
   const [showBioInput, setShowBioInput] = useState(!!user?.bio);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
+  const [previewCoverUrl, setPreviewCoverUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const { username: routeUsername } = useParams<{ username?: string }>();
   const [viewUser, setViewUser] = useState<any | null>(null);
@@ -106,6 +109,14 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedCoverFile(file);
+      setPreviewCoverUrl(URL.createObjectURL(file));
+    }
+  };
+
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
@@ -115,7 +126,9 @@ const Profile: React.FC = () => {
         bio: editBio,
       });
 
-      // 2. Nëse ka zgjedhur foto të re, e bëjmë upload
+      let updatedUserData = { ...user, display_name: editName, bio: editBio };
+
+      // 2. Nëse ka zgjedhur foto të re profili, e bëjmë upload
       if (selectedFile) {
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -125,18 +138,32 @@ const Profile: React.FC = () => {
             'Content-Type': 'multipart/form-data',
           },
         });
+        updatedUserData = avatarResponse.data;
+      }
 
-        updateUser(avatarResponse.data);
-      } else {
-        // Përditëso gjendjen globale të user-it vetëm për emrin dhe bion
-        if (user) {
-          updateUser({ ...user, display_name: editName, bio: editBio });
-        }
+      // 3. Nëse ka zgjedhur foto të re cover, e bëjmë upload
+      if (selectedCoverFile) {
+        const formData = new FormData();
+        formData.append('file', selectedCoverFile);
+
+        const coverResponse = await api.post('/api/v1/users/me/cover', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        updatedUserData = coverResponse.data;
+      }
+
+      // Përditëso gjendjen globale të user-it
+      if (user) {
+        updateUser(updatedUserData as any);
       }
 
       setIsEditing(false);
       setSelectedFile(null);
       setPreviewUrl(null);
+      setSelectedCoverFile(null);
+      setPreviewCoverUrl(null);
     } catch (err) {
       alert(t('profile_error_save'));
     } finally {
@@ -148,6 +175,8 @@ const Profile: React.FC = () => {
     setIsEditing(false);
     setSelectedFile(null);
     setPreviewUrl(null);
+    setSelectedCoverFile(null);
+    setPreviewCoverUrl(null);
     setEditName(user?.display_name || user?.username || '');
     setEditBio(user?.bio || '');
     setShowBioInput(!!user?.bio);
@@ -214,6 +243,13 @@ const Profile: React.FC = () => {
     currentAvatar = profileUser.avatar_url;
   }
 
+  let currentCover = null;
+  if (isEditing && previewCoverUrl) {
+    currentCover = previewCoverUrl;
+  } else if (profileUser.cover_url) {
+    currentCover = profileUser.cover_url;
+  }
+
   return (
     <MainLayout
       currentTab={currentFeedTab}
@@ -225,7 +261,8 @@ const Profile: React.FC = () => {
       <div className="profile-container">
 
         {/* Cover Image */}
-        <div className="profile-cover">
+        <div className="profile-cover" style={{ backgroundColor: 'var(--bg-secondary)', overflow: 'hidden' }}>
+          {currentCover && <img src={currentCover} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         </div>
 
         <div className="profile-info-section">
@@ -306,6 +343,13 @@ const Profile: React.FC = () => {
             ref={fileInputRef}
             style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
             onChange={handleFileChange}
+          />
+          <input
+            type="file"
+            accept="image/*"
+            ref={coverInputRef}
+            style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
+            onChange={handleCoverChange}
           />
 
           <div className="profile-name">{profileUser.display_name || profileUser.username}</div>
@@ -444,8 +488,13 @@ const Profile: React.FC = () => {
               </button>
             </div>
 
-            <div className="edit-profile-cover">
-              <div className="edit-profile-camera-btn" style={{ top: '1rem', right: '1rem' }}>
+            <div className="edit-profile-cover" style={{ backgroundColor: 'var(--bg-secondary)', overflow: 'hidden' }}>
+              {currentCover && <img src={currentCover} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              <div 
+                className="edit-profile-camera-btn" 
+                style={{ top: '1rem', right: '1rem', cursor: 'pointer' }}
+                onClick={() => coverInputRef.current?.click()}
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                   <circle cx="12" cy="13" r="4"></circle>
