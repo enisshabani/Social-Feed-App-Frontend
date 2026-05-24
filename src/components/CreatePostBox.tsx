@@ -42,12 +42,22 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const canPost = (content.trim().length > 0 || hasMedia) && !isOverLimit && !submitting && (!cwActive || warningText.trim().length > 0);
 
   const isValidMediaUrl = (value: string) => {
+    if (value.startsWith('/uploads/')) return true;
+
     try {
       const url = new URL(value);
       return url.protocol === 'http:' || url.protocol === 'https:';
     } catch {
       return false;
     }
+  };
+
+  const resolveMediaUrl = (value: string) => {
+    if (!value.startsWith('/')) return value;
+    const apiRoot = (import.meta.env?.VITE_API_URL || 'http://localhost:8000')
+      .replace(/\/+$/, '')
+      .replace(/\/api\/v1$/i, '');
+    return `${apiRoot}${value}`;
   };
 
   const handlePostSubmit = async (e: React.FormEvent) => {
@@ -196,7 +206,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                   </button>
                 </div>
                 <input
-                  type="url"
+                  type="text"
                   value={mediaUrl}
                   onChange={(e) => setMediaUrl(e.target.value)}
                   className="compose-media-url"
@@ -216,9 +226,9 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                 {normalizedMediaUrl && isValidMediaUrl(normalizedMediaUrl) && (
                   <div className="compose-media-preview">
                     {mediaType === 'video' ? (
-                      <video src={normalizedMediaUrl} controls />
+                      <video src={resolveMediaUrl(normalizedMediaUrl)} controls />
                     ) : (
-                      <img src={normalizedMediaUrl} alt="Media preview" />
+                      <img src={resolveMediaUrl(normalizedMediaUrl)} alt="Media preview" />
                     )}
                   </div>
                 )}

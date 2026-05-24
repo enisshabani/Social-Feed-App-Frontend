@@ -57,6 +57,13 @@ const PostItem: React.FC<PostItemProps> = ({
       .replace(/'/g, '&#039;');
 
   const renderPlainText = (value: string) => escapeHtml(value).replace(/(?:\r\n|\r|\n)/g, '<br/>');
+  const resolveMediaUrl = (value: string) => {
+    if (!value?.startsWith('/')) return value;
+    const apiRoot = (import.meta.env?.VITE_API_URL || 'http://localhost:8000')
+      .replace(/\/+$/, '')
+      .replace(/\/api\/v1$/i, '');
+    return `${apiRoot}${value}`;
+  };
 
   const handleAuthorProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -353,16 +360,16 @@ const PostItem: React.FC<PostItemProps> = ({
               {post.media.slice(0, 4).map((media: any) => (
                 <a
                   key={media.id || media.url}
-                  href={media.url}
+                  href={resolveMediaUrl(media.url)}
                   target="_blank"
                   rel="noreferrer"
                   className="post-media-frame"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {media.media_type === 'video' ? (
-                    <video src={media.url} controls />
+                    <video src={resolveMediaUrl(media.url)} controls />
                   ) : (
-                    <img src={media.url} alt="" loading="lazy" />
+                    <img src={resolveMediaUrl(media.url)} alt="" loading="lazy" />
                   )}
                 </a>
               ))}
