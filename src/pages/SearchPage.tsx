@@ -7,6 +7,7 @@ import PostItem from '../components/PostItem';
 import { SearchService } from '../services/search.service';
 import type { SearchPostResult } from '../services/search.service';
 import type { UserPublic, TrendingHashtag } from '../services/post.service';
+import { resolveAssetUrl } from '../utils/assets';
 
 type SearchTab = 'posts' | 'users' | 'hashtags';
 
@@ -218,7 +219,7 @@ const SearchPage: React.FC = () => {
                   >
                     <div className="user-result-avatar">
                       {u.avatar_url ? (
-                        <img src={u.avatar_url} alt={u.username} />
+                        <img src={resolveAssetUrl(u.avatar_url)} alt={u.username} />
                       ) : (
                         <User size={24} />
                       )}

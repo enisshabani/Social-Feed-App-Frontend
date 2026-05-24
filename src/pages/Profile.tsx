@@ -9,6 +9,7 @@ import { PostService } from '../services/post.service';
 import PostItem from '../components/PostItem';
 import { AlertCircle } from 'lucide-react';
 import { FollowButton } from '../modules/follows/components/FollowButton';
+import { resolveAssetUrl } from '../utils/assets';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
@@ -240,14 +241,14 @@ const Profile: React.FC = () => {
   if (isEditing && previewUrl) {
     currentAvatar = previewUrl;
   } else if (profileUser.avatar_url) {
-    currentAvatar = profileUser.avatar_url;
+    currentAvatar = resolveAssetUrl(profileUser.avatar_url);
   }
 
   let currentCover = null;
   if (isEditing && previewCoverUrl) {
     currentCover = previewCoverUrl;
   } else if (profileUser.cover_url) {
-    currentCover = profileUser.cover_url;
+    currentCover = resolveAssetUrl(profileUser.cover_url);
   }
 
   return (

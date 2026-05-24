@@ -1,7 +1,8 @@
 import React from 'react';
 import type { NotificationItem as INotificationItem } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
-import { UserPlus, Heart, Repeat, AtSign, MessageCircle, Bell } from 'lucide-react';
+import { User, UserPlus, Heart, Repeat, AtSign, MessageCircle, Bell } from 'lucide-react';
+import { resolveAssetUrl } from '../../../utils/assets';
 
 interface Props {
   notification: INotificationItem;
@@ -96,8 +97,42 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
       }}
     >
       <div style={{ display: 'flex', gap: '12px' }}>
-        <div style={{ marginTop: '2px' }}>
-          {getIcon()}
+        <div style={{ position: 'relative', width: 38, height: 38, flexShrink: 0 }}>
+          <div style={{
+            width: 38,
+            height: 38,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            background: '#eef2ff',
+            color: '#6364ff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {notification.actor?.avatar_url ? (
+              <img
+                src={resolveAssetUrl(notification.actor.avatar_url)}
+                alt={notification.actor.username}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <User size={18} />
+            )}
+          </div>
+          <span style={{
+            position: 'absolute',
+            right: -4,
+            bottom: -4,
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            background: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {getIcon()}
+          </span>
         </div>
         <div>
           <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#333' }}>

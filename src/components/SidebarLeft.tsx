@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { NotificationBell } from '../modules/notifications/components/NotificationBell';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface SidebarLeftProps {
   currentTab: 'home' | 'explore' | 'bookmarks';
@@ -48,7 +49,7 @@ export const getLoggedInUser = () => {
 const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, user: authUser } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const user = getLoggedInUser();
 
@@ -147,7 +148,11 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
           <div className="sidebar-user-card" onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
             <div className="user-info-wrapper">
               <div className="user-avatar-placeholder">
-                <User size={20} />
+                {authUser?.avatar_url ? (
+                  <img src={resolveAssetUrl(authUser.avatar_url)} alt={user.username} />
+                ) : (
+                  <User size={20} />
+                )}
               </div>
               <div className="user-details">
                 <div className="user-display-name">@{user.username}</div>
@@ -345,6 +350,13 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
           justify-content: center;
           flex-shrink: 0;
           border: 1px solid rgba(59, 130, 246, 0.2);
+          overflow: hidden;
+        }
+
+        .user-avatar-placeholder img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .user-details {

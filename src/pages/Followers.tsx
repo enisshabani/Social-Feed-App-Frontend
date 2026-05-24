@@ -4,6 +4,7 @@ import { getFollowers, getFollowing } from '../modules/follows/api/followsApi';
 import { FollowButton } from '../modules/follows/components/FollowButton';
 import type { FollowResponse } from '../modules/follows/types';
 import { ArrowLeft, User } from 'lucide-react';
+import { resolveAssetUrl } from '../utils/assets';
 
 type Mode = 'followers' | 'following';
 
@@ -117,6 +118,7 @@ const Followers: React.FC = () => {
         ) : (
           list.map(item => {
             const targetId = activeTab === 'followers' ? item.follower_id : item.followee_id;
+            const targetUser = activeTab === 'followers' ? item.follower : item.followee;
             return (
               <div key={item.id} style={{
                 display: 'flex',
@@ -132,19 +134,24 @@ const Followers: React.FC = () => {
                     backgroundColor: 'var(--primary-light, #1e3a5f)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: 'var(--primary, #3b82f6)',
+                    overflow: 'hidden',
                   }}>
-                    <User size={20} />
+                    {targetUser?.avatar_url ? (
+                      <img
+                        src={resolveAssetUrl(targetUser.avatar_url)}
+                        alt={targetUser.username || `User ${targetId}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <User size={20} />
+                    )}
                   </div>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '15px' }}>
-                      {activeTab === 'followers'
-                        ? (item.follower?.display_name || item.follower?.username || `User ${targetId}`)
-                        : (item.followee?.display_name || item.followee?.username || `User ${targetId}`)}
+                      {targetUser?.display_name || targetUser?.username || `User ${targetId}`}
                     </div>
                     <div style={{ fontSize: '13px', color: 'var(--text-muted, #8899a6)' }}>
-                      @{activeTab === 'followers'
-                        ? (item.follower?.username || `user${targetId}`)
-                        : (item.followee?.username || `user${targetId}`)}
+                      @{targetUser?.username || `user${targetId}`}
                     </div>
                   </div>
                 </div>

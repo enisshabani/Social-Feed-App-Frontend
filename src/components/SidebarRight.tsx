@@ -6,6 +6,8 @@ import type { TrendingHashtag } from '../services/post.service';
 import CreatePostBox from './CreatePostBox';
 import { useLanguage } from '../context/LanguageContext';
 import { getLoggedInUser } from './SidebarLeft';
+import { useAuth } from '../context/AuthContext';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface SidebarRightProps {
   searchQuery: string;
@@ -29,6 +31,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
   }, []);
 
   const currentUser = getLoggedInUser();
+  const { user } = useAuth();
   const { t } = useLanguage();
 
   const fetchTrendingTags = async () => {
@@ -74,9 +77,13 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
       {currentUser && (
         <div className="mastodon-profile-card">
           <div className="profile-card-header">
-            <div className="profile-card-avatar">
-              {currentUser.username.charAt(0).toUpperCase()}
-            </div>
+            {user?.avatar_url ? (
+              <img className="profile-card-avatar profile-card-avatar-img" src={resolveAssetUrl(user.avatar_url)} alt={currentUser.username} />
+            ) : (
+              <div className="profile-card-avatar">
+                {currentUser.username.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div className="profile-card-info">
               <div className="profile-card-name">@{currentUser.username}</div>
               <div className="profile-card-handle">@{currentUser.username}</div>
@@ -221,6 +228,10 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
           justify-content: center;
           font-size: 20px;
           font-weight: 700;
+        }
+
+        .profile-card-avatar-img {
+          object-fit: cover;
         }
 
         .profile-card-info {

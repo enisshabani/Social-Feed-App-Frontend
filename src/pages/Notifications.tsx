@@ -8,6 +8,7 @@ import { followUser, unfollowUser, checkIsFollowing, getPendingFollowBacks } fro
 import type { FollowResponse } from '../modules/follows/types';
 import notificationsApi from '../modules/notifications/api/notificationsApi';
 import type { NotificationPreference } from '../modules/notifications/types';
+import { resolveAssetUrl } from '../utils/assets';
 import '../styles/globals.css';
 
 const getRelativeTime = (dateString: string): string => {
@@ -115,7 +116,7 @@ const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boo
       {/* Actor Avatar */}
       <div className="notif-avatar">
         {notif.actor?.avatar_url ? (
-          <img src={notif.actor.avatar_url} alt={actorName} className="notif-avatar-img" />
+          <img src={resolveAssetUrl(notif.actor.avatar_url)} alt={actorName} className="notif-avatar-img" />
         ) : (
           <div className="notif-avatar-placeholder">
             <User size={20} />
@@ -179,7 +180,7 @@ const FollowBackReminderRow: React.FC<{ follow: FollowResponse }> = ({ follow })
 
       <div className="notif-avatar">
         {targetUser?.avatar_url ? (
-          <img src={targetUser.avatar_url} alt={targetName} className="notif-avatar-img" />
+          <img src={resolveAssetUrl(targetUser.avatar_url)} alt={targetName} className="notif-avatar-img" />
         ) : (
           <div className="notif-avatar-placeholder">
             <User size={20} />

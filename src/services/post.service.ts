@@ -31,6 +31,26 @@ export interface MediaInput {
   meta?: any;
 }
 
+export interface PollInput {
+  question: string;
+  options: string[];
+}
+
+export interface PollOption {
+  id: number;
+  poll_id: number;
+  text: string;
+  vote_count: number;
+}
+
+export interface Poll {
+  id: number;
+  post_id: number;
+  question: string;
+  options: PollOption[];
+  created_at: string;
+}
+
 export interface Tag {
   id: number;
   name: string;
@@ -81,6 +101,7 @@ export interface Post {
   reposts: Repost[];
   media: Media[];
   tags: Tag[];
+  poll?: Poll;
 }
 
 export interface PostBrief {
@@ -100,6 +121,7 @@ export interface PostBrief {
   reposts?: Repost[];
   media?: Media[];
   tags?: Tag[];
+  poll?: Poll;
 }
 
 export interface FeedResponse {
@@ -190,13 +212,15 @@ export class PostService {
     content: string,
     visibility = 'public',
     replyToPostId?: number,
-    media: MediaInput[] = []
+    media: MediaInput[] = [],
+    poll?: PollInput
   ): Promise<Post> {
     const payload = {
       content,
       visibility,
       reply_to_post_id: replyToPostId,
-      media
+      media,
+      poll
     };
     const response = await api.post<Post>('/api/v1/posts/', payload);
     return response.data;
@@ -250,6 +274,13 @@ export class PostService {
    */
   static async removeComment(commentId: number): Promise<{ message: string }> {
     const response = await api.delete<{ message: string }>(`/api/v1/posts/comments/${commentId}`);
+    return response.data;
+  }
+
+  static async votePoll(postId: number, optionId: number): Promise<Poll> {
+    const response = await api.post<Poll>(`/api/v1/posts/${postId}/poll/vote`, {
+      option_id: optionId,
+    });
     return response.data;
   }
 

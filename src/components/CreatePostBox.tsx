@@ -5,6 +5,8 @@ import type { MediaInput } from '../services/post.service';
 import { getLoggedInUser } from './SidebarLeft';
 import AiAssistButton from './AiAssistButton';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface CreatePostBoxProps {
   onPostCreated?: () => void;
@@ -20,6 +22,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   autoFocus = false,
 }) => {
   const currentUser = getLoggedInUser();
+  const { user } = useAuth();
   const { t } = useLanguage();
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState('public');
@@ -31,6 +34,9 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const [showMediaInput, setShowMediaInput] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [pollActive, setPollActive] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const characterLimit = 500;
@@ -40,7 +46,10 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
 
   const normalizedMediaUrl = mediaUrl.trim();
   const hasMedia = normalizedMediaUrl.length > 0;
-  const canPost = (content.trim().length > 0 || hasMedia) && !isOverLimit && !submitting && (!cwActive || warningText.trim().length > 0);
+  const cleanPollOptions = pollOptions.map((option) => option.trim()).filter(Boolean);
+  const hasValidPoll = pollActive && pollQuestion.trim().length > 0 && cleanPollOptions.length >= 2;
+  const pollHasDraft = pollActive && (pollQuestion.trim().length > 0 || cleanPollOptions.length > 0);
+  const canPost = (content.trim().length > 0 || hasMedia || hasValidPoll) && (!pollHasDraft || hasValidPoll) && !isOverLimit && !submitting && (!cwActive || warningText.trim().length > 0);
 
   const isValidMediaUrl = (value: string) => {
     if (value.startsWith('/uploads/')) return true;
@@ -67,10 +76,12 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     setErrorMessage('');
     setSubmitting(true);
 
+    const baseContent = content.trim() || pollQuestion.trim();
     const finalContent = cwActive && warningText.trim()
-      ? `CW: ${warningText.trim()}\n\n---\n\n${content}`
-      : content;
+      ? `CW: ${warningText.trim()}\n\n---\n\n${baseContent}`
+      : baseContent;
     const media: MediaInput[] = hasMedia ? [{ url: normalizedMediaUrl, media_type: mediaType }] : [];
+    const poll = hasValidPoll ? { question: pollQuestion.trim(), options: cleanPollOptions.slice(0, 4) } : undefined;
 
     if (hasMedia && !isValidMediaUrl(normalizedMediaUrl)) {
       setErrorMessage(t('create_post_alert_invalid_url'));
@@ -83,7 +94,8 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         finalContent || (mediaType === 'image' ? 'Shared an image' : 'Shared a video'),
         visibility,
         replyToPostId,
-        media
+        media,
+        poll
       );
       setContent('');
       setMediaUrl('');
@@ -91,6 +103,9 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
       setShowMediaInput(false);
       setWarningText('');
       setCwActive(false);
+      setPollActive(false);
+      setPollQuestion('');
+      setPollOptions(['', '']);
       if (onPostCreated) {
         onPostCreated();
       } else {
@@ -132,6 +147,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   };
 
   const userInitial = currentUser?.username ? currentUser.username.charAt(0).toUpperCase() : 'U';
+  const avatarUrl = user?.avatar_url;
   const copy = {
     placeholder: placeholder || t('create_post_placeholder'),
     publish: t('create_post_publish'),
@@ -145,9 +161,18 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         <div className="mastodon-compose-row">
           {/* Avatar Column */}
           <div className="compose-avatar-column">
-            <div className="compose-avatar" title={`KyÃ§ur si @${currentUser?.username || 'user'}`}>
-              {userInitial}
-            </div>
+            {avatarUrl ? (
+              <img
+                src={resolveAssetUrl(avatarUrl)}
+                alt={currentUser?.username || 'user'}
+                className="compose-avatar compose-avatar-img"
+                title={`KyÃ§ur si @${currentUser?.username || 'user'}`}
+              />
+            ) : (
+              <div className="compose-avatar" title={`KyÃ§ur si @${currentUser?.username || 'user'}`}>
+                {userInitial}
+              </div>
+            )}
           </div>
 
           {/* Fields Column */}
@@ -240,6 +265,55 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                 )}
               </div>
             )}
+            {pollActive && (
+              <div className="compose-poll-panel">
+                <input
+                  type="text"
+                  value={pollQuestion}
+                  onChange={(e) => setPollQuestion(e.target.value)}
+                  className="compose-poll-input"
+                  placeholder="Poll question"
+                  maxLength={280}
+                />
+                <div className="compose-poll-options">
+                  {pollOptions.map((option, index) => (
+                    <div key={index} className="compose-poll-option-row">
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => {
+                          const next = [...pollOptions];
+                          next[index] = e.target.value;
+                          setPollOptions(next);
+                        }}
+                        className="compose-poll-input"
+                        placeholder={`Option ${index + 1}`}
+                        maxLength={120}
+                      />
+                      {pollOptions.length > 2 && (
+                        <button
+                          type="button"
+                          className="compose-poll-remove"
+                          title="Remove option"
+                          onClick={() => setPollOptions((prev) => prev.filter((_, i) => i !== index))}
+                        >
+                          <X size={15} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {pollOptions.length < 4 && (
+                  <button
+                    type="button"
+                    className="compose-poll-add"
+                    onClick={() => setPollOptions((prev) => [...prev, ''])}
+                  >
+                    Add option
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -281,9 +355,9 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
             {/* Poll */}
             <button
               type="button"
-              className="btn-mastodon-tool"
-              title="Polls are not available yet"
-              disabled
+              className={`btn-mastodon-tool ${pollActive ? 'active' : ''}`}
+              title="Add poll"
+              onClick={() => setPollActive((value) => !value)}
             >
               <BarChart2 size={18} />
             </button>

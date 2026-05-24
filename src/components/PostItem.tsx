@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash } from 'lucide-react';
 import { PostService } from '../services/post.service';
-import type { Comment } from '../services/post.service';
+import type { Comment, Poll } from '../services/post.service';
 import type { MatchContext } from '../services/search.service';
 import ActionBar from './ActionBar';
 import SentimentBadge from './SentimentBadge';
 import { getLoggedInUser } from './SidebarLeft';
+import { resolveAssetUrl } from '../utils/assets';
 
 interface PostItemProps {
   post: any; // Can be Post or PostBrief
@@ -36,6 +37,9 @@ const PostItem: React.FC<PostItemProps> = ({
   const [newCommentText, setNewCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [replyCount, setReplyCount] = useState(post.reply_count || 0);
+  const [localPoll, setLocalPoll] = useState<Poll | undefined>(post.poll);
+  const [selectedPollOption, setSelectedPollOption] = useState<number | null>(null);
+  const [votingPoll, setVotingPoll] = useState(false);
 
   // Content Warning Expanded state
   const [cwExpanded, setCwExpanded] = useState(false);
@@ -43,7 +47,9 @@ const PostItem: React.FC<PostItemProps> = ({
   useEffect(() => {
     setEditContent(post.content);
     setReplyCount(post.reply_count || 0);
-  }, [post.content, post.reply_count]);
+    setLocalPoll(post.poll);
+    setSelectedPollOption(null);
+  }, [post.content, post.reply_count, post.poll]);
 
   // Check if current user is the author (safely convert both to string)
   const isAuthor = currentUser && String(currentUser.id) === String(post.author_id);
@@ -209,6 +215,22 @@ const PostItem: React.FC<PostItemProps> = ({
     navigate(`/hashtag/${encodeURIComponent(tagName)}`);
   };
 
+  const handlePollVote = async (optionId: number) => {
+    if (votingPoll) return;
+    setVotingPoll(true);
+    try {
+      const updatedPoll = await PostService.votePoll(post.id, optionId);
+      setLocalPoll(updatedPoll);
+      setSelectedPollOption(optionId);
+    } catch {
+      alert('Gabim gjatë votimit në sondazh.');
+    } finally {
+      setVotingPoll(false);
+    }
+  };
+
+  const pollTotalVotes = localPoll?.options.reduce((sum, option) => sum + (option.vote_count || 0), 0) || 0;
+
   return (
     <article className="post-item-wrapper">
       {/* Repost Indicator Header */}
@@ -223,7 +245,7 @@ const PostItem: React.FC<PostItemProps> = ({
         <div className="avatar-column">
           {post.author?.avatar_url ? (
             <img
-              src={post.author.avatar_url}
+              src={resolveAssetUrl(post.author.avatar_url)}
               alt={post.author.username}
               className="avatar"
               style={{ borderRadius: '4px', width: '44px', height: '44px', cursor: 'pointer' }}
@@ -381,6 +403,35 @@ const PostItem: React.FC<PostItemProps> = ({
             </div>
           )}
 
+          {localPoll && (
+            <div className="post-poll">
+              <div className="post-poll-question">{localPoll.question}</div>
+              <div className="post-poll-options">
+                {localPoll.options.map((option) => {
+                  const percent = pollTotalVotes > 0 ? Math.round((option.vote_count / pollTotalVotes) * 100) : 0;
+                  const isSelected = selectedPollOption === option.id;
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`post-poll-option ${isSelected ? 'selected' : ''}`}
+                      onClick={() => handlePollVote(option.id)}
+                      disabled={votingPoll}
+                    >
+                      <span className="post-poll-fill" style={{ width: `${percent}%` }} />
+                      <span className="post-poll-label">{option.text}</span>
+                      <span className="post-poll-percent">{percent}%</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="post-poll-total">
+                {pollTotalVotes} {pollTotalVotes === 1 ? 'vote' : 'votes'}
+              </div>
+            </div>
+          )}
+
           {post.tags?.length > 0 && (
             <div className="post-tag-row">
               {post.tags.slice(0, 6).map((tag: any) => (
@@ -416,7 +467,7 @@ const PostItem: React.FC<PostItemProps> = ({
                   <div key={mc.id} className="matched-comment-snippet">
                     <div className="matched-comment-avatar">
                       {mc.author.avatar_url ? (
-                        <img src={mc.author.avatar_url} alt={mc.author.username} />
+                        <img src={resolveAssetUrl(mc.author.avatar_url)} alt={mc.author.username} />
                       ) : (
                         <User size={12} />
                       )}
@@ -475,7 +526,11 @@ const PostItem: React.FC<PostItemProps> = ({
                     return (
                     <div key={comment.id} className="comment-item">
                       <div className="comment-avatar">
-                        <User size={14} />
+                        {comment.author?.avatar_url ? (
+                          <img src={resolveAssetUrl(comment.author.avatar_url)} alt={comment.author.username} />
+                        ) : (
+                          <User size={14} />
+                        )}
                       </div>
                       <div className="comment-details">
                         <div className="comment-header">
@@ -758,6 +813,94 @@ const PostItem: React.FC<PostItemProps> = ({
           margin-top: 12px;
         }
 
+        .post-poll {
+          display: flex;
+          flex-direction: column;
+          gap: 9px;
+          margin-top: 12px;
+          padding: 12px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: rgba(255, 255, 255, 0.02);
+        }
+
+        .post-poll-question {
+          color: var(--text-main);
+          font-size: 15px;
+          font-weight: 800;
+          line-height: 1.35;
+        }
+
+        .post-poll-options {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .post-poll-option {
+          position: relative;
+          min-height: 40px;
+          overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          border: 1px solid rgba(99, 100, 255, 0.28);
+          border-radius: 7px;
+          background: rgba(99, 100, 255, 0.06);
+          color: var(--text-main);
+          cursor: pointer;
+          padding: 9px 11px;
+          text-align: left;
+        }
+
+        .post-poll-option:hover:not(:disabled) {
+          border-color: rgba(99, 100, 255, 0.54);
+          background: rgba(99, 100, 255, 0.1);
+        }
+
+        .post-poll-option:disabled {
+          cursor: wait;
+          opacity: 0.8;
+        }
+
+        .post-poll-option.selected {
+          border-color: var(--primary);
+        }
+
+        .post-poll-fill {
+          position: absolute;
+          inset: 0 auto 0 0;
+          background: rgba(99, 100, 255, 0.2);
+          pointer-events: none;
+        }
+
+        .post-poll-label,
+        .post-poll-percent {
+          position: relative;
+          z-index: 1;
+        }
+
+        .post-poll-label {
+          min-width: 0;
+          overflow-wrap: anywhere;
+          font-size: 14px;
+          font-weight: 700;
+        }
+
+        .post-poll-percent {
+          flex-shrink: 0;
+          color: var(--text-muted);
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .post-poll-total {
+          color: var(--text-dimmed);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
         .post-tag-chip {
           display: inline-flex;
           align-items: center;
@@ -864,6 +1007,13 @@ const PostItem: React.FC<PostItemProps> = ({
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
+          overflow: hidden;
+        }
+
+        .comment-avatar img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .comment-details {

@@ -1393,6 +1393,10 @@ select {
   border: 1px solid rgba(99, 100, 255, 0.2);
 }
 
+.compose-avatar-img {
+  object-fit: cover;
+}
+
 .compose-fields-column {
   flex-grow: 1;
   min-width: 0;
@@ -1638,6 +1642,77 @@ select {
   max-height: 220px;
   object-fit: cover;
   display: block;
+}
+
+.compose-poll-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.16);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.compose-poll-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.compose-poll-option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compose-poll-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-dark);
+  color: var(--text-main);
+  outline: none;
+  padding: 9px 10px;
+  font-size: 14px;
+}
+
+.compose-poll-input:focus {
+  border-color: var(--primary);
+}
+
+.compose-poll-remove,
+.compose-poll-add {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.compose-poll-remove {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.compose-poll-remove:hover {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+.compose-poll-add {
+  align-self: flex-start;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.compose-poll-add:hover {
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .mastodon-toolbar-right {
