@@ -408,11 +408,12 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
           padding: 16px 20px;
           border-bottom: 1px solid var(--border);
           background-color: transparent;
-          transition: background-color 0.2s ease;
+          transition: background-color 0.15s ease;
+          cursor: default;
         }
 
         .post-item-wrapper:hover {
-          background-color: rgba(255, 255, 255, 0.02);
+          background-color: rgba(255, 255, 255, 0.015);
         }
 
         .repost-indicator {
