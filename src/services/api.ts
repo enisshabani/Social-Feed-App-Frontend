@@ -1,8 +1,15 @@
 import axios from 'axios';
 import { getCurrentTenantId } from '../utils/tenant';
 
+const getBaseUrl = () => {
+  if (import.meta.env?.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  return '';
+};
+
 const api = axios.create({
-  baseURL: '',
+  baseURL: getBaseUrl(),
 });
 
 // Interceptor për të dërguar tokenin në çdo kërkesë

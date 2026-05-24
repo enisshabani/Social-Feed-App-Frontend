@@ -2,14 +2,16 @@ import axios from 'axios';
 import { getCurrentTenantId } from './utils/tenant';
 
 const getBaseUrl = () => {
+  const normalizeApiRoot = (url: string) => `${url.replace(/\/$/, '')}/api/v1`;
+
   if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) {
-    return process.env.REACT_APP_API_URL;
+    return normalizeApiRoot(process.env.REACT_APP_API_URL);
   }
   if (import.meta && import.meta.env && import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+    return normalizeApiRoot(import.meta.env.VITE_API_URL);
   }
   if (import.meta && import.meta.env && import.meta.env.REACT_APP_API_URL) {
-    return import.meta.env.REACT_APP_API_URL;
+    return normalizeApiRoot(import.meta.env.REACT_APP_API_URL);
   }
   return '/api/v1';
 };

@@ -1643,6 +1643,144 @@ select {
 }
 
 /* ==========================================
+   MOBILE RESPONSIVE POLISH
+   ========================================== */
+@media (max-width: 688px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-container {
+    width: 100%;
+    max-width: 100%;
+    gap: 0;
+  }
+
+  .feed-container {
+    width: 100%;
+    min-width: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .feed-header-title {
+    padding: 12px 14px;
+  }
+
+  .feed-header h2 {
+    font-size: 18px;
+  }
+
+  .profile-wrapper {
+    padding: 0;
+  }
+
+  .profile-container {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+  }
+
+  .profile-cover {
+    height: 120px;
+  }
+
+  .profile-info-section {
+    padding: 0 1rem 1.25rem;
+  }
+
+  .profile-avatar-wrapper {
+    margin-top: -42px;
+  }
+
+  .profile-avatar {
+    width: 84px;
+    height: 84px;
+  }
+
+  .profile-name {
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+  }
+
+  .profile-username {
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+
+  .profile-stats {
+    gap: 0.75rem;
+    justify-content: space-between;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+
+  .stat-item {
+    min-width: max-content;
+  }
+
+  .profile-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .profile-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .profile-tab {
+    flex: 0 0 auto;
+    padding: 0.85rem 1rem;
+  }
+
+  .post-item-wrapper {
+    width: 100%;
+  }
+
+  .settings-layout {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .settings-sidebar {
+    width: 100%;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-input);
+  }
+
+  .settings-subnav {
+    margin-left: 0;
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    border-left: none;
+    padding-left: 0;
+    padding-bottom: 0.35rem;
+  }
+
+  .settings-nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .settings-content-wrapper {
+    padding: 1.25rem;
+    max-width: none;
+    width: 100%;
+  }
+
+  .settings-content-header {
+    font-size: 1.35rem;
+  }
+
+  .settings-form-row,
+  .settings-radio-group {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+/* ==========================================
    NOTIFICATION DROPDOWN DARK THEME
    ========================================== */
 .notification-list-wrapper {
