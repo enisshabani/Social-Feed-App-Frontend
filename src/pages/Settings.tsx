@@ -272,7 +272,6 @@ const Settings: React.FC = () => {
             >
               {t('settings_sidebar_2fa')}
             </div>
-            <div className="settings-nav-item">{t('settings_sidebar_auth_apps')}</div>
           </div>
         )}
       </div>
