@@ -20,7 +20,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   autoFocus = false,
 }) => {
   const currentUser = getLoggedInUser();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [content, setContent] = useState('');
   const [visibility, setVisibility] = useState('public');
   const [cwActive, setCwActive] = useState(false);
@@ -71,7 +71,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     const media: MediaInput[] = hasMedia ? [{ url: normalizedMediaUrl, media_type: mediaType }] : [];
 
     if (hasMedia && !isValidMediaUrl(normalizedMediaUrl)) {
-      alert('Please paste a valid http or https media URL.');
+      alert(t('create_post_alert_invalid_url'));
       setSubmitting(false);
       return;
     }
@@ -96,7 +96,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         window.dispatchEvent(new Event('postCreated'));
       }
     } catch (err) {
-      alert('Gabim gjatÃ« krijimit tÃ« postimit.');
+      alert(t('create_post_alert_error'));
     } finally {
       setSubmitting(false);
     }
@@ -121,7 +121,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
       setMediaType(uploaded.media_type);
       setShowMediaInput(true);
     } catch {
-      alert('Could not upload that media file.');
+      alert(t('create_post_alert_upload_error'));
     } finally {
       setUploadingMedia(false);
       e.target.value = '';
@@ -130,10 +130,10 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
 
   const userInitial = currentUser?.username ? currentUser.username.charAt(0).toUpperCase() : 'U';
   const copy = {
-    placeholder: placeholder || (language === 'sq' ? 'Cfare po mendoni?' : 'What are you thinking?'),
-    publish: language === 'sq' ? 'Publiko' : 'Post',
-    reply: language === 'sq' ? 'Pergjigju' : 'Reply',
-    warningPlaceholder: language === 'sq' ? 'Shkruaj paralajmerimin ketu...' : 'Write a content warning here...',
+    placeholder: placeholder || t('create_post_placeholder'),
+    publish: t('create_post_publish'),
+    reply: t('create_post_reply'),
+    warningPlaceholder: t('create_post_warning'),
   };
 
   return (
@@ -185,7 +185,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                       onClick={() => setMediaType('image')}
                     >
                       <Image size={15} />
-                      Image
+                      {t("create_post_media_image")}
                     </button>
                     <button
                       type="button"
@@ -193,7 +193,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                       onClick={() => setMediaType('video')}
                     >
                       <Video size={15} />
-                      Video
+                      {t("create_post_media_video")}
                     </button>
                   </div>
                   <button
@@ -222,9 +222,9 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingMedia}
                   >
-                    {uploadingMedia ? 'Uploading...' : 'Upload from PC'}
+                    {uploadingMedia ? t('create_post_uploading') : t('create_post_media_upload')}
                   </button>
-                  <span>or paste a link above</span>
+                  <span>{t('create_post_media_paste')}</span>
                 </div>
                 {normalizedMediaUrl && isValidMediaUrl(normalizedMediaUrl) && (
                   <div className="compose-media-preview">
@@ -281,9 +281,9 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                   onChange={(e) => setVisibility(e.target.value)}
                   className="visibility-select"
                 >
-                  <option value="public" style={{ background: '#282c37' }}>Publik</option>
-                  <option value="private" style={{ background: '#282c37' }}>VetÃ«m NdjekÃ«sit</option>
-                  <option value="unlisted" style={{ background: '#282c37' }}>Jo-publik</option>
+                  <option value="public" style={{ background: '#282c37' }}>{t('create_post_visibility_public')}</option>
+                  <option value="private" style={{ background: '#282c37' }}>{t('create_post_visibility_private')}</option>
+                  <option value="unlisted" style={{ background: '#282c37' }}>{t('create_post_visibility_unlisted')}</option>
                 </select>
                 <ChevronDown size={12} style={{ display: 'none' }} />
               </label>
