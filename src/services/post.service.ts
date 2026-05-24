@@ -70,6 +70,7 @@ export interface Like {
   id: number;
   user_id: number;
   post_id: number;
+  reaction_type?: string;
   created_at: string;
 }
 
@@ -287,8 +288,10 @@ export class PostService {
   /**
    * Like / unlike a post. Returns whether liked or not.
    */
-  static async toggleLike(postId: number): Promise<{ liked: boolean; message: string }> {
-    const response = await api.post<{ liked: boolean; message: string }>(`/api/v1/posts/${postId}/like`);
+  static async toggleLike(postId: number, reactionType = 'star'): Promise<{ liked: boolean; message: string; reaction_type?: string }> {
+    const response = await api.post<{ liked: boolean; message: string; reaction_type?: string }>(`/api/v1/posts/${postId}/like`, {
+      reaction_type: reactionType,
+    });
     return response.data;
   }
 

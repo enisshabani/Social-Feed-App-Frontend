@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash, Image as ImageIcon, Upload } from 'lucide-react';
+import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash, Image as ImageIcon, Upload, Crop } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import type { Comment, MediaInput, Poll } from '../services/post.service';
 import type { MatchContext } from '../services/search.service';
@@ -37,6 +37,7 @@ const PostItem: React.FC<PostItemProps> = ({
   );
   const [updating, setUpdating] = useState(false);
   const [uploadingEditMedia, setUploadingEditMedia] = useState(false);
+  const [cropDraft, setCropDraft] = useState<{ index: number; cropX: number; cropY: number; cropZoom: number } | null>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   
   // Comments state (on-demand loading)
@@ -83,16 +84,10 @@ const PostItem: React.FC<PostItemProps> = ({
       .replace(/'/g, '&#039;');
 
   const renderPlainText = (value: string) => escapeHtml(value).replace(/(?:\r\n|\r|\n)/g, '<br/>');
-  const resolveMediaUrl = (value: string) => {
-    if (!value?.startsWith('/')) return value;
-    const apiRoot = (import.meta.env?.VITE_API_URL || 'http://localhost:8000')
-      .replace(/\/+$/, '')
-      .replace(/\/api\/v1$/i, '');
-    return `${apiRoot}${value}`;
-  };
   const getMediaCrop = (media: any) => ({
     x: Number(media?.meta?.cropX ?? 50),
     y: Number(media?.meta?.cropY ?? 50),
+    zoom: Number(media?.meta?.cropZoom ?? 1),
   });
   const mediaSignature = (items: any[] = []) => JSON.stringify(items.map((media) => ({
     url: media.url,
@@ -100,6 +95,7 @@ const PostItem: React.FC<PostItemProps> = ({
     meta: {
       cropX: Number(media?.meta?.cropX ?? 50),
       cropY: Number(media?.meta?.cropY ?? 50),
+      cropZoom: Number(media?.meta?.cropZoom ?? 1),
     },
   })));
 
@@ -217,8 +213,8 @@ const PostItem: React.FC<PostItemProps> = ({
   };
 
   // Callbacks for API action updates in ActionBar
-  const onLikeAPI = async (): Promise<boolean> => {
-    const res = await PostService.toggleLike(post.id);
+  const onLikeAPI = async (reactionType: string): Promise<boolean> => {
+    const res = await PostService.toggleLike(post.id, reactionType);
     return res.liked;
   };
 
@@ -283,6 +279,7 @@ const PostItem: React.FC<PostItemProps> = ({
   };
 
   const pollTotalVotes = localPoll?.options.reduce((sum, option) => sum + (option.vote_count || 0), 0) || 0;
+  const currentUserReaction = post.likes?.find((like: any) => String(like.user_id) === String(currentUser?.id))?.reaction_type || 'star';
 
   return (
     <article className="post-item-wrapper">
@@ -410,14 +407,27 @@ const PostItem: React.FC<PostItemProps> = ({
                         <Upload size={14} /> {uploadingEditMedia ? '...' : 'Change'}
                       </button>
                       {editMedia.length > 0 && (
-                        <button
-                          type="button"
-                          className="btn btn-secondary edit-media-btn danger"
-                          onClick={() => setEditMedia([])}
-                          disabled={updating}
-                        >
-                          <Trash2 size={14} /> Delete image
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn-secondary edit-media-btn"
+                            onClick={() => {
+                              const crop = getMediaCrop(editMedia[0]);
+                              setCropDraft({ index: 0, cropX: crop.x, cropY: crop.y, cropZoom: crop.zoom });
+                            }}
+                            disabled={updating || editMedia[0]?.media_type === 'video'}
+                          >
+                            <Crop size={14} /> Crop
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary edit-media-btn danger"
+                            onClick={() => setEditMedia([])}
+                            disabled={updating}
+                          >
+                            <Trash2 size={14} /> Delete image
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -428,52 +438,21 @@ const PostItem: React.FC<PostItemProps> = ({
                         <div key={`${media.url}-${index}`} className="inline-edit-media-editor">
                           <div className="inline-edit-media-preview">
                             {media.media_type === 'video' ? (
-                              <video src={resolveMediaUrl(media.url)} controls />
+                              <video src={resolveAssetUrl(media.url)} controls />
                             ) : (
                               <img
-                                src={resolveMediaUrl(media.url)}
+                                src={resolveAssetUrl(media.url)}
                                 alt=""
-                                style={{ objectPosition: `${crop.x}% ${crop.y}%` }}
+                                style={{
+                                  objectPosition: `${crop.x}% ${crop.y}%`,
+                                  transform: `scale(${crop.zoom})`,
+                                  transformOrigin: `${crop.x}% ${crop.y}%`,
+                                }}
                               />
                             )}
                           </div>
                           {media.media_type !== 'video' && (
-                            <div className="crop-controls">
-                              <label>
-                                Horizontal crop
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="100"
-                                  value={crop.x}
-                                  onChange={(e) => {
-                                    const value = Number(e.target.value);
-                                    setEditMedia((prev) => prev.map((item, itemIndex) => (
-                                      itemIndex === index
-                                        ? { ...item, meta: { ...(item.meta || {}), cropX: value, cropY: crop.y } }
-                                        : item
-                                    )));
-                                  }}
-                                />
-                              </label>
-                              <label>
-                                Vertical crop
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="100"
-                                  value={crop.y}
-                                  onChange={(e) => {
-                                    const value = Number(e.target.value);
-                                    setEditMedia((prev) => prev.map((item, itemIndex) => (
-                                      itemIndex === index
-                                        ? { ...item, meta: { ...(item.meta || {}), cropX: crop.x, cropY: value } }
-                                        : item
-                                    )));
-                                  }}
-                                />
-                              </label>
-                            </div>
+                            <div className="crop-summary">Crop: {Math.round(crop.x)}% / {Math.round(crop.y)}%, zoom {crop.zoom.toFixed(1)}x</div>
                           )}
                         </div>
                       );
@@ -555,20 +534,24 @@ const PostItem: React.FC<PostItemProps> = ({
               {post.media.slice(0, 4).map((media: any) => (
                 <a
                   key={media.id || media.url}
-                  href={resolveMediaUrl(media.url)}
+                  href={resolveAssetUrl(media.url)}
                   target="_blank"
                   rel="noreferrer"
                   className="post-media-frame"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {media.media_type === 'video' ? (
-                    <video src={resolveMediaUrl(media.url)} controls />
+                    <video src={resolveAssetUrl(media.url)} controls />
                   ) : (
                     <img
-                      src={resolveMediaUrl(media.url)}
+                      src={resolveAssetUrl(media.url)}
                       alt=""
                       loading="lazy"
-                      style={{ objectPosition: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%` }}
+                      style={{
+                        objectPosition: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%`,
+                        transform: `scale(${getMediaCrop(media).zoom})`,
+                        transformOrigin: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%`,
+                      }}
                     />
                   )}
                 </a>
@@ -686,6 +669,7 @@ const PostItem: React.FC<PostItemProps> = ({
               repostCount={post.repost_count || 0}
               replyCount={replyCount}
               isLikedInitially={post.likes?.some((l: any) => l.user_id === currentUser?.id)}
+              initialReactionType={currentUserReaction}
               isRepostedInitially={post.reposts?.some((r: any) => r.user_id === currentUser?.id)}
               isBookmarkedInitially={isBookmarkedInitially}
               onLike={onLikeAPI}
@@ -778,6 +762,91 @@ const PostItem: React.FC<PostItemProps> = ({
           )}
         </div>
       </div>
+
+      {cropDraft && editMedia[cropDraft.index] && (
+        <div className="crop-modal-overlay" onClick={() => setCropDraft(null)}>
+          <div className="crop-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="crop-modal-header">
+              <strong>Crop image</strong>
+              <button type="button" className="btn-icon" onClick={() => setCropDraft(null)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className="crop-stage">
+              <img
+                src={resolveAssetUrl(editMedia[cropDraft.index].url)}
+                alt=""
+                style={{
+                  objectPosition: `${cropDraft.cropX}% ${cropDraft.cropY}%`,
+                  transform: `scale(${cropDraft.cropZoom})`,
+                  transformOrigin: `${cropDraft.cropX}% ${cropDraft.cropY}%`,
+                }}
+              />
+              <div className="crop-window" />
+            </div>
+            <div className="crop-modal-controls">
+              <label>
+                Position X
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={cropDraft.cropX}
+                  onChange={(e) => setCropDraft((prev) => prev ? { ...prev, cropX: Number(e.target.value) } : prev)}
+                />
+              </label>
+              <label>
+                Position Y
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={cropDraft.cropY}
+                  onChange={(e) => setCropDraft((prev) => prev ? { ...prev, cropY: Number(e.target.value) } : prev)}
+                />
+              </label>
+              <label>
+                Zoom
+                <input
+                  type="range"
+                  min="1"
+                  max="2.5"
+                  step="0.05"
+                  value={cropDraft.cropZoom}
+                  onChange={(e) => setCropDraft((prev) => prev ? { ...prev, cropZoom: Number(e.target.value) } : prev)}
+                />
+              </label>
+            </div>
+            <div className="crop-modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={() => setCropDraft(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditMedia((prev) => prev.map((item, itemIndex) => (
+                    itemIndex === cropDraft.index
+                      ? {
+                          ...item,
+                          meta: {
+                            ...(item.meta || {}),
+                            cropX: cropDraft.cropX,
+                            cropY: cropDraft.cropY,
+                            cropZoom: cropDraft.cropZoom,
+                          },
+                        }
+                      : item
+                  )));
+                  setCropDraft(null);
+                }}
+              >
+                Apply crop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .post-item-wrapper {
@@ -1239,6 +1308,12 @@ const PostItem: React.FC<PostItemProps> = ({
           gap: 10px;
         }
 
+        .crop-summary {
+          color: var(--text-muted);
+          font-size: 12px;
+          font-weight: 700;
+        }
+
         .crop-controls label {
           display: flex;
           flex-direction: column;
@@ -1269,6 +1344,97 @@ const PostItem: React.FC<PostItemProps> = ({
         .inline-edit-media-empty:hover {
           border-color: var(--garfield-orange, #f28c28);
           color: var(--garfield-orange, #f28c28);
+        }
+
+        .crop-modal-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 200;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          background: rgba(0, 0, 0, 0.68);
+        }
+
+        .crop-modal {
+          width: min(620px, 100%);
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: var(--bg-panel-solid);
+          box-shadow: var(--shadow);
+          padding: 14px;
+        }
+
+        .crop-modal-header,
+        .crop-modal-actions {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .crop-modal-header {
+          margin-bottom: 12px;
+        }
+
+        .crop-stage {
+          position: relative;
+          height: min(58vh, 390px);
+          overflow: hidden;
+          border-radius: 8px;
+          background: var(--bg-dark);
+        }
+
+        .crop-stage img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .crop-window {
+          position: absolute;
+          inset: 10%;
+          border: 2px solid #fff;
+          box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.36);
+          pointer-events: none;
+        }
+
+        .crop-window::before,
+        .crop-window::after {
+          content: '';
+          position: absolute;
+          inset: 33.333% 0 auto;
+          border-top: 1px solid rgba(255, 255, 255, 0.65);
+        }
+
+        .crop-window::after {
+          inset: 66.666% 0 auto;
+        }
+
+        .crop-modal-controls {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+          margin: 14px 0;
+        }
+
+        .crop-modal-controls label {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          color: var(--text-muted);
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .crop-modal-controls input {
+          accent-color: var(--garfield-orange, #f28c28);
+        }
+
+        .crop-modal-actions {
+          justify-content: flex-end;
         }
 
         .edit-cancel {

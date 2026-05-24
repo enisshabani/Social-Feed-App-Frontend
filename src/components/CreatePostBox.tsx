@@ -62,14 +62,6 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     }
   };
 
-  const resolveMediaUrl = (value: string) => {
-    if (!value.startsWith('/')) return value;
-    const apiRoot = (import.meta.env?.VITE_API_URL || 'http://localhost:8000')
-      .replace(/\/+$/, '')
-      .replace(/\/api\/v1$/i, '');
-    return `${apiRoot}${value}`;
-  };
-
   const handlePostSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canPost) return;
@@ -257,9 +249,9 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                 {normalizedMediaUrl && isValidMediaUrl(normalizedMediaUrl) && (
                   <div className="compose-media-preview">
                     {mediaType === 'video' ? (
-                      <video src={resolveMediaUrl(normalizedMediaUrl)} controls />
+                      <video src={resolveAssetUrl(normalizedMediaUrl)} controls />
                     ) : (
-                      <img src={resolveMediaUrl(normalizedMediaUrl)} alt="Media preview" />
+                      <img src={resolveAssetUrl(normalizedMediaUrl)} alt="Media preview" />
                     )}
                   </div>
                 )}

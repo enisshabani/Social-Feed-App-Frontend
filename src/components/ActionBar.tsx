@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Star, Repeat2, MessageSquare, Bookmark } from 'lucide-react';
+import { Bookmark, MessageSquare, Repeat2, Star } from 'lucide-react';
 
 interface ActionBarProps {
   postId: number;
@@ -7,13 +7,26 @@ interface ActionBarProps {
   repostCount: number;
   replyCount: number;
   isLikedInitially?: boolean;
+  initialReactionType?: string;
   isRepostedInitially?: boolean;
   isBookmarkedInitially?: boolean;
-  onLike: () => Promise<boolean>; // Returns new state
-  onRepost: () => Promise<boolean>; // Returns new state
-  onBookmark: () => Promise<boolean>; // Returns new state
+  onLike: (reactionType: string) => Promise<boolean>;
+  onRepost: () => Promise<boolean>;
+  onBookmark: () => Promise<boolean>;
   onCommentClick: () => void;
 }
+
+const reactions = [
+  { type: 'star', emoji: '\u2B50', label: 'Star' },
+  { type: 'laugh', emoji: '\u{1F602}', label: 'Laugh' },
+  { type: 'love', emoji: '\u{1F60D}', label: 'Love' },
+  { type: 'wow', emoji: '\u{1F62E}', label: 'Wow' },
+  { type: 'sad', emoji: '\u{1F622}', label: 'Sad' },
+  { type: 'angry', emoji: '\u{1F621}', label: 'Angry' },
+];
+
+const getReaction = (type?: string | null) =>
+  reactions.find((reaction) => reaction.type === type) || reactions[0];
 
 const ActionBar: React.FC<ActionBarProps> = ({
   postId,
@@ -21,6 +34,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
   repostCount,
   replyCount,
   isLikedInitially = false,
+  initialReactionType = 'star',
   isRepostedInitially = false,
   isBookmarkedInitially = false,
   onLike,
@@ -33,25 +47,18 @@ const ActionBar: React.FC<ActionBarProps> = ({
   const [reposted, setReposted] = useState(isRepostedInitially);
   const [reposts, setReposts] = useState(repostCount);
   const [bookmarked, setBookmarked] = useState(isBookmarkedInitially);
-  const [reactionEmoji, setReactionEmoji] = useState<string | null>(null);
+  const [reactionType, setReactionType] = useState(initialReactionType || 'star');
 
   const [likePulse, setLikePulse] = useState(false);
   const [repostPulse, setRepostPulse] = useState(false);
   const [bookmarkPulse, setBookmarkPulse] = useState(false);
   const [busyAction, setBusyAction] = useState<'like' | 'repost' | 'bookmark' | null>(null);
-  const reactionOptions = ['⭐', '😂', '😍', '😮', '😢', '😡'];
-  const reactionStorageKey = `kapak:post-reaction:${postId}`;
 
   useEffect(() => {
     setLiked(isLikedInitially);
     setLikes(likeCount);
-    if (isLikedInitially) {
-      setReactionEmoji(localStorage.getItem(reactionStorageKey) || '⭐');
-    } else {
-      setReactionEmoji(null);
-      localStorage.removeItem(reactionStorageKey);
-    }
-  }, [isLikedInitially, likeCount, reactionStorageKey]);
+    setReactionType(initialReactionType || 'star');
+  }, [isLikedInitially, likeCount, initialReactionType, postId]);
 
   useEffect(() => {
     setReposted(isRepostedInitially);
@@ -62,7 +69,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
     setBookmarked(isBookmarkedInitially);
   }, [isBookmarkedInitially]);
 
-  const applyReaction = async (emoji: string) => {
+  const applyReaction = async (nextReactionType: string) => {
     if (busyAction) return;
     setLikePulse(true);
     setBusyAction('like');
@@ -70,17 +77,14 @@ const ActionBar: React.FC<ActionBarProps> = ({
 
     try {
       let isNowLiked = liked;
-      if (!liked || reactionEmoji === emoji) {
-        isNowLiked = await onLike();
+      if (!liked || reactionType === nextReactionType) {
+        isNowLiked = await onLike(nextReactionType);
         setLikes((prev) => (isNowLiked ? prev + 1 : Math.max(0, prev - 1)));
+      } else {
+        await onLike(nextReactionType);
       }
       setLiked(isNowLiked);
-      setReactionEmoji(isNowLiked ? emoji : null);
-      if (isNowLiked) {
-        localStorage.setItem(reactionStorageKey, emoji);
-      } else {
-        localStorage.removeItem(reactionStorageKey);
-      }
+      setReactionType(nextReactionType);
     } catch (e) {
       console.error(e);
     } finally {
@@ -90,12 +94,12 @@ const ActionBar: React.FC<ActionBarProps> = ({
 
   const handleLikeClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await applyReaction(reactionEmoji || '⭐');
+    await applyReaction(reactionType || 'star');
   };
 
-  const handleReactionClick = async (e: React.MouseEvent, emoji: string) => {
+  const handleReactionClick = async (e: React.MouseEvent, nextReactionType: string) => {
     e.stopPropagation();
-    await applyReaction(emoji);
+    await applyReaction(nextReactionType);
   };
 
   const handleRepostClick = async (e: React.MouseEvent) => {
@@ -135,7 +139,6 @@ const ActionBar: React.FC<ActionBarProps> = ({
 
   return (
     <div className="post-action-bar">
-      {/* Comment Action */}
       <button className="action-btn comment-action" onClick={onCommentClick} title="Komentar">
         <div className="icon-wrapper">
           <MessageSquare size={18} />
@@ -143,7 +146,6 @@ const ActionBar: React.FC<ActionBarProps> = ({
         <span className="action-count">{replyCount}</span>
       </button>
 
-      {/* Repost Action */}
       <button
         className={`action-btn repost-action ${reposted ? 'active' : ''}`}
         onClick={handleRepostClick}
@@ -156,36 +158,34 @@ const ActionBar: React.FC<ActionBarProps> = ({
         <span className="action-count">{reposts}</span>
       </button>
 
-      {/* Like Action */}
       <div className="reaction-shell">
-      <button
-        className={`action-btn like-action ${liked ? 'active' : ''}`}
-        onClick={handleLikeClick}
-        disabled={busyAction !== null}
-        title="Pëlqe"
-      >
-        <div className={`icon-wrapper ${likePulse ? 'pulse-active' : ''}`}>
-          {reactionEmoji ? <span className="reaction-main-emoji">{reactionEmoji}</span> : <Star size={18} />}
-        </div>
-        <span className="action-count">{likes}</span>
-      </button>
+        <button
+          className={`action-btn like-action ${liked ? 'active' : ''}`}
+          onClick={handleLikeClick}
+          disabled={busyAction !== null}
+          title="React"
+        >
+          <div className={`icon-wrapper ${likePulse ? 'pulse-active' : ''}`}>
+            {liked ? <span className="reaction-main-emoji">{getReaction(reactionType).emoji}</span> : <Star size={18} />}
+          </div>
+          <span className="action-count">{likes}</span>
+        </button>
         <div className="reaction-picker" role="menu" aria-label="Choose reaction">
-          {reactionOptions.map((emoji) => (
+          {reactions.map((reaction) => (
             <button
-              key={emoji}
+              key={reaction.type}
               type="button"
-              className={`reaction-option ${reactionEmoji === emoji ? 'selected' : ''}`}
-              onClick={(e) => handleReactionClick(e, emoji)}
+              className={`reaction-option ${liked && reactionType === reaction.type ? 'selected' : ''}`}
+              onClick={(e) => handleReactionClick(e, reaction.type)}
               disabled={busyAction !== null}
-              title={`React ${emoji}`}
+              title={reaction.label}
             >
-              {emoji}
+              {reaction.emoji}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Bookmark Action */}
       <button
         className={`action-btn bookmark-action ${bookmarked ? 'active' : ''}`}
         onClick={handleBookmarkClick}
@@ -228,14 +228,28 @@ const ActionBar: React.FC<ActionBarProps> = ({
           opacity: 0.65;
         }
 
+        .icon-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: var(--radius-round);
+          transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .action-count {
+          transition: color 0.2s ease;
+        }
+
         .reaction-shell {
           position: relative;
         }
 
         .reaction-picker {
           position: absolute;
-          left: 0;
-          bottom: calc(100% + 6px);
+          left: 50%;
+          bottom: calc(100% + 8px);
           display: flex;
           gap: 4px;
           padding: 6px;
@@ -244,7 +258,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
           background: var(--bg-panel-solid);
           box-shadow: var(--shadow);
           opacity: 0;
-          transform: translateY(4px) scale(0.98);
+          transform: translate(-50%, 4px) scale(0.98);
           pointer-events: none;
           transition: opacity 0.18s ease, transform 0.18s ease;
           z-index: 5;
@@ -253,13 +267,13 @@ const ActionBar: React.FC<ActionBarProps> = ({
         .reaction-shell:hover .reaction-picker,
         .reaction-shell:focus-within .reaction-picker {
           opacity: 1;
-          transform: translateY(0) scale(1);
+          transform: translate(-50%, 0) scale(1);
           pointer-events: auto;
         }
 
         .reaction-option {
-          width: 30px;
-          height: 30px;
+          width: 32px;
+          height: 32px;
           border: none;
           border-radius: 50%;
           background: transparent;
@@ -280,62 +294,44 @@ const ActionBar: React.FC<ActionBarProps> = ({
           line-height: 1;
         }
 
-        .icon-wrapper {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: var(--radius-round);
-          transition: background-color 0.2s ease, color 0.2s ease;
-        }
-
-        .action-count {
-          transition: color 0.2s ease;
-        }
-
-        /* Comment Action hover */
         .comment-action:hover {
           color: var(--comment);
         }
+
         .comment-action:hover .icon-wrapper {
           background-color: var(--comment-light);
         }
 
-        /* Repost Action hover & active */
         .repost-action:hover {
           color: var(--repost);
         }
+
         .repost-action:hover .icon-wrapper {
           background-color: var(--repost-light);
         }
+
         .repost-action.active {
           color: var(--repost);
         }
 
-        /* Like Action hover & active */
-        .like-action:hover {
-          color: var(--like);
-        }
-        .like-action:hover .icon-wrapper {
-          background-color: var(--like-light);
-        }
+        .like-action:hover,
         .like-action.active {
           color: var(--like);
         }
 
-        /* Bookmark Action hover & active */
-        .bookmark-action:hover {
-          color: var(--primary);
+        .like-action:hover .icon-wrapper {
+          background-color: var(--like-light);
         }
-        .bookmark-action:hover .icon-wrapper {
-          background-color: var(--primary-light);
-        }
+
+        .bookmark-action:hover,
         .bookmark-action.active {
           color: var(--primary);
         }
 
-        /* Custom Animations */
+        .bookmark-action:hover .icon-wrapper {
+          background-color: var(--primary-light);
+        }
+
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(180deg); }
