@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import MainLayout from '../components/MainLayout';
 import { useNotifications } from '../modules/notifications/hooks/useNotifications';
 import type { NotificationItem as INotificationItem } from '../modules/notifications/types';
-import { UserPlus, Heart, Repeat2, AtSign, MessageCircle, Bell, Check, Trash2, User } from 'lucide-react';
+import { UserPlus, Heart, Repeat2, AtSign, MessageCircle, Bell, Check, Trash2, User, Settings, X } from 'lucide-react';
 import { followUser, unfollowUser, checkIsFollowing } from '../modules/follows/api/followsApi';
+import notificationsApi from '../modules/notifications/api/notificationsApi';
+import type { NotificationPreference } from '../modules/notifications/types';
 import '../styles/globals.css';
 
 const getRelativeTime = (dateString: string): string => {
@@ -52,7 +54,7 @@ const TypeIcon: React.FC<{ type: string }> = ({ type }) => {
   }
 };
 
-const NotificationRow: React.FC<{ notif: INotificationItem }> = ({ notif }) => {
+const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boolean }> = ({ notif, highlightUnread }) => {
   const { markAsReadById, deleteNotificationById } = useNotifications();
   const [followState, setFollowState] = useState<'loading' | 'following' | 'not_following'>('loading');
   const [followLoading, setFollowLoading] = useState(false);
@@ -97,7 +99,7 @@ const NotificationRow: React.FC<{ notif: INotificationItem }> = ({ notif }) => {
       onClick={handleClick}
     >
       {/* Unread dot */}
-      {!notif.is_read && <span className="notif-unread-dot" />}
+      {!notif.is_read && highlightUnread && <span className="notif-unread-dot" />}
 
       {/* Icon */}
       <div className="notif-type-icon">
@@ -158,10 +160,26 @@ const Notifications: React.FC = () => {
   const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [preferences, setPreferences] = useState<NotificationPreference | null>(null);
 
   useEffect(() => {
     fetchNotifications();
+    notificationsApi.getPreferences().then(setPreferences).catch(console.error);
   }, [fetchNotifications]);
+
+  const handleTogglePreference = async (key: keyof NotificationPreference) => {
+    if (!preferences) return;
+    const newPrefs = { ...preferences, [key]: !preferences[key] };
+    setPreferences(newPrefs);
+    try {
+      await notificationsApi.updatePreferences(newPrefs);
+    } catch (e) {
+      console.error(e);
+      // Revert on error
+      setPreferences(preferences);
+    }
+  };
 
   const filteredNotifications = activeTab === 'mentions'
     ? notifications.filter(n => n.type === 'MENTION' || n.type === 'COMMENT')
@@ -193,23 +211,32 @@ const Notifications: React.FC = () => {
                 <span>Shëno të gjitha</span>
               </button>
             )}
+            <button 
+              className="notif-settings-btn"
+              onClick={() => setIsSettingsOpen(true)}
+              title="Cilësimet e njoftimeve"
+            >
+              <Settings size={20} />
+            </button>
           </div>
 
           {/* Tabs */}
-          <div className="notif-tabs">
-            <button
-              className={`notif-tab ${activeTab === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveTab('all')}
-            >
-              Të gjitha
-            </button>
-            <button
-              className={`notif-tab ${activeTab === 'mentions' ? 'active' : ''}`}
-              onClick={() => setActiveTab('mentions')}
-            >
-              Përmendjet
-            </button>
-          </div>
+          {preferences?.display_all_categories !== false && (
+            <div className="notif-tabs">
+              <button
+                className={`notif-tab ${activeTab === 'all' ? 'active' : ''}`}
+                onClick={() => setActiveTab('all')}
+              >
+                Të gjitha
+              </button>
+              <button
+                className={`notif-tab ${activeTab === 'mentions' ? 'active' : ''}`}
+                onClick={() => setActiveTab('mentions')}
+              >
+                Përmendjet
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Body */}
@@ -236,11 +263,99 @@ const Notifications: React.FC = () => {
             </div>
           ) : (
             filteredNotifications.map(notif => (
-              <NotificationRow key={notif.id} notif={notif} />
+              <NotificationRow key={notif.id} notif={notif} highlightUnread={preferences?.highlight_unread ?? true} />
             ))
           )}
         </div>
       </div>
+
+      {isSettingsOpen && preferences && (
+        <div className="notif-settings-modal-overlay" onClick={() => setIsSettingsOpen(false)}>
+          <div className="notif-settings-modal" onClick={e => e.stopPropagation()}>
+            <div className="notif-settings-header">
+              <h3>Cilësimet e njoftimeve</h3>
+              <button className="close-btn" onClick={() => setIsSettingsOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="notif-settings-body">
+              <div className="settings-section">
+                <h4>Menaxho njoftimet nga...</h4>
+                
+                <label className="settings-toggle">
+                  <div className="toggle-info">
+                    <span>Njerëzit që nuk të ndjekin</span>
+                    <small>Filtro njoftimet nga llogaritë që nuk janë ndjekësit e tu.</small>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={preferences.filter_not_following} 
+                    onChange={() => handleTogglePreference('filter_not_following')} 
+                  />
+                  <span className="slider"></span>
+                </label>
+
+                <label className="settings-toggle">
+                  <div className="toggle-info">
+                    <span>Njerëzit që nuk i ndjek</span>
+                    <small>Filtro njoftimet nga llogaritë që nuk i ndjek.</small>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={preferences.filter_not_followed_by} 
+                    onChange={() => handleTogglePreference('filter_not_followed_by')} 
+                  />
+                  <span className="slider"></span>
+                </label>
+
+                <label className="settings-toggle">
+                  <div className="toggle-info">
+                    <span>Llogaritë e reja</span>
+                    <small>Filtro njoftimet nga llogaritë e krijuara nesër/së fundmi.</small>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={preferences.filter_new_accounts} 
+                    onChange={() => handleTogglePreference('filter_new_accounts')} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="settings-section">
+                <h4>Njoftimet e palexuara</h4>
+                <label className="settings-toggle">
+                  <div className="toggle-info">
+                    <span>Thekso njoftimet e palexuara</span>
+                    <small>Trego një pikë për të dalluar njoftimet e palexuara.</small>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={preferences.highlight_unread} 
+                    onChange={() => handleTogglePreference('highlight_unread')} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+
+              <div className="settings-section">
+                <h4>Shiriti i shpejtë i filtrave</h4>
+                <label className="settings-toggle">
+                  <div className="toggle-info">
+                    <span>Shfaq të gjitha kategoritë</span>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={preferences.display_all_categories} 
+                    onChange={() => handleTogglePreference('display_all_categories')} 
+                  />
+                  <span className="slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .notif-page {
@@ -515,12 +630,179 @@ const Notifications: React.FC = () => {
           border-radius: 6px;
         }
 
-        /* ---- Header top row ---- */
         .feed-header-top {
           display: flex;
           align-items: center;
           justify-content: space-between;
           padding: 12px 20px;
+          gap: 8px;
+        }
+
+        .notif-settings-btn {
+          background: transparent;
+          border: none;
+          color: var(--text-muted);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px;
+          border-radius: 50%;
+          transition: all 0.2s ease;
+          margin-left: auto;
+        }
+
+        .notif-settings-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--text-main);
+        }
+
+        /* ---- Settings Modal ---- */
+        .notif-settings-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .notif-settings-modal {
+          background: var(--bg-panel-solid, #15202b);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          width: 90%;
+          max-width: 500px;
+          max-height: 85vh;
+          overflow-y: auto;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .notif-settings-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 20px;
+          border-bottom: 1px solid var(--border);
+          position: sticky;
+          top: 0;
+          background: var(--bg-panel-solid, #15202b);
+          z-index: 2;
+        }
+
+        .notif-settings-header h3 {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 700;
+        }
+
+        .close-btn {
+          background: transparent;
+          border: none;
+          color: var(--text-muted);
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          color: var(--text-main);
+        }
+
+        .notif-settings-body {
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+
+        .settings-section h4 {
+          margin: 0 0 16px 0;
+          font-size: 15px;
+          font-weight: 700;
+          color: var(--text-main);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .settings-toggle {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          cursor: pointer;
+          margin-bottom: 16px;
+        }
+        
+        .settings-toggle:last-child {
+          margin-bottom: 0;
+        }
+
+        .toggle-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding-right: 16px;
+        }
+
+        .toggle-info span {
+          font-size: 15px;
+          font-weight: 600;
+          color: var(--text-main);
+        }
+
+        .toggle-info small {
+          font-size: 13px;
+          color: var(--text-muted);
+        }
+
+        /* Custom Checkbox/Toggle Switch */
+        .settings-toggle input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .slider {
+          position: relative;
+          cursor: pointer;
+          width: 44px;
+          height: 24px;
+          background-color: var(--border);
+          border-radius: 24px;
+          transition: .3s;
+          flex-shrink: 0;
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 18px;
+          width: 18px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          border-radius: 50%;
+          transition: .3s;
+        }
+
+        .settings-toggle input:checked + .slider {
+          background-color: var(--primary);
+        }
+
+        .settings-toggle input:checked + .slider:before {
+          transform: translateX(20px);
         }
       `}</style>
     </MainLayout>

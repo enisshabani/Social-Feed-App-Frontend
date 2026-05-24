@@ -1,5 +1,5 @@
 import apiClient from '../../../apiClient';
-import type { NotificationType, NotificationListResponse, MarkReadResponse, UnreadCountResponse } from '../types';
+import type { NotificationType, NotificationListResponse, MarkReadResponse, UnreadCountResponse, NotificationPreference } from '../types';
 
 const BASE = '/notifications';
 
@@ -34,10 +34,22 @@ export const getUnreadCount = async (): Promise<UnreadCountResponse> => {
   return response.data;
 };
 
+export const getPreferences = async (): Promise<NotificationPreference> => {
+  const response = await apiClient.get<NotificationPreference>(`${BASE}/preferences`);
+  return response.data;
+};
+
+export const updatePreferences = async (prefs: NotificationPreference): Promise<NotificationPreference> => {
+  const response = await apiClient.put<NotificationPreference>(`${BASE}/preferences`, prefs);
+  return response.data;
+};
+
 export default {
   getNotifications,
   markAsRead,
   markAllAsRead,
   deleteNotification,
   getUnreadCount,
+  getPreferences,
+  updatePreferences,
 };

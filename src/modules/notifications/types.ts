@@ -32,3 +32,12 @@ export interface MarkReadResponse {
 export interface UnreadCountResponse {
   unread_count: number;
 }
+
+export interface NotificationPreference {
+  filter_not_following: boolean;
+  filter_not_followed_by: boolean;
+  filter_new_accounts: boolean;
+  highlight_unread: boolean;
+  display_all_categories: boolean;
+}
+
