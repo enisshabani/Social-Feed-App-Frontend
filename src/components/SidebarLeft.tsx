@@ -97,7 +97,9 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
                 onClick={() => handleNavClick(item.id)}
                 className={`nav-item ${isActive ? 'active' : ''}`}
               >
-                <Icon size={24} className="nav-icon" />
+                <span className="nav-icon-box">
+                  <Icon size={24} strokeWidth={2.3} className="nav-icon" />
+                </span>
                 <span className="nav-label">{item.label}</span>
               </button>
             );
@@ -112,14 +114,14 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
           onClick={() => navigate('/profile')}
           title="Profili im"
         >
-          <User size={24} className="nav-icon" />
+          <span className="nav-icon-box">
+            <User size={24} strokeWidth={2.3} className="nav-icon" />
+          </span>
           <span className="nav-label">Profili</span>
         </button>
 
         {/* Notification Bell */}
-        <div style={{ padding: '4px 20px' }}>
-          <NotificationBell />
-        </div>
+        <NotificationBell />
 
         {/* User Card at bottom */}
         {user && (
@@ -191,7 +193,9 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
           cursor: pointer;
           transition: all 0.2s ease;
           width: max-content;
+          min-height: 50px;
           text-align: left;
+          box-sizing: border-box;
         }
 
         .nav-item:hover {
@@ -204,11 +208,44 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
         }
 
         .nav-icon {
+          display: block;
+          flex-shrink: 0;
+        }
+
+        .nav-icon-box {
+          position: relative;
+          width: 24px;
+          height: 24px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex: 0 0 24px;
           transition: transform 0.2s ease;
         }
 
-        .nav-item:hover .nav-icon {
-          transform: scale(1.15);
+        .nav-item:hover .nav-icon-box {
+          transform: scale(1.08);
+        }
+
+        .notification-badge {
+          position: absolute;
+          top: -7px;
+          right: -9px;
+          min-width: 17px;
+          height: 17px;
+          padding: 0 4px;
+          border-radius: 9999px;
+          background: var(--primary);
+          color: #fff;
+          border: 2px solid var(--bg-app);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          font-weight: 800;
+          line-height: 1;
+          box-sizing: border-box;
+          pointer-events: none;
         }
 
         .cta-post-btn {

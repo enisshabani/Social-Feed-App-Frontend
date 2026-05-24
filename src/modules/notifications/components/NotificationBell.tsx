@@ -11,36 +11,20 @@ export const NotificationBell: React.FC = () => {
   const isActive = location.pathname === '/notifications';
 
   return (
-    <div
+    <button
       className={`nav-item ${isActive ? 'active' : ''}`}
       onClick={() => navigate('/notifications')}
-      style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative', width: 'max-content', cursor: 'pointer' }}
       title="Njoftime"
     >
-      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-        <Bell size={24} className="nav-icon" />
+      <span className="nav-icon-box">
+        <Bell size={24} strokeWidth={2.3} className="nav-icon" />
         {unreadCount > 0 && (
-          <span style={{
-            position: 'absolute',
-            top: '-4px',
-            right: '-6px',
-            backgroundColor: 'var(--primary)',
-            color: 'white',
-            borderRadius: '50%',
-            width: '18px',
-            height: '18px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '11px',
-            fontWeight: 'bold',
-            lineHeight: 1,
-          }}>
+          <span className="notification-badge">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
-      </div>
+      </span>
       <span className="nav-label" style={isActive ? { fontWeight: 700 } : {}}>Njoftime</span>
-    </div>
+    </button>
   );
 };
