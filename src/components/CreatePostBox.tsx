@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Globe, EyeOff, Lock, ChevronDown, Paperclip, BarChart2 } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import { getLoggedInUser } from './SidebarLeft';
+import AiAssistButton from './AiAssistButton';
 
 interface CreatePostBoxProps {
   onPostCreated: () => void;
@@ -52,6 +53,14 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleAiHashtags = (hashtags: string[]) => {
+    const tagString = hashtags.map((t) => `#${t}`).join(' ');
+    setContent((prev) => {
+      const trimmed = prev.trimEnd();
+      return trimmed ? `${trimmed} ${tagString}` : tagString;
+    });
   };
 
   const userInitial = currentUser?.username ? currentUser.username.charAt(0).toUpperCase() : 'U';
@@ -149,6 +158,12 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
             >
               <span>CW</span>
             </button>
+
+            {/* AI Assist */}
+            <AiAssistButton
+              postText={content}
+              onSelectHashtags={handleAiHashtags}
+            />
           </div>
 
           <div className="mastodon-toolbar-right">

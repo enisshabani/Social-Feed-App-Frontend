@@ -4,6 +4,7 @@ import { PostService } from '../services/post.service';
 import type { Comment } from '../services/post.service';
 import type { MatchContext } from '../services/search.service';
 import ActionBar from './ActionBar';
+import SentimentBadge from './SentimentBadge';
 import { getLoggedInUser } from './SidebarLeft';
 import { FollowButton } from '../modules/follows/components/FollowButton';
 
@@ -323,6 +324,13 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Sentiment Badge */}
+          {!isEditing && post.content && (
+            <div style={{ padding: '0 16px 4px' }}>
+              <SentimentBadge postText={post.content} postId={post.id} />
             </div>
           )}
 
