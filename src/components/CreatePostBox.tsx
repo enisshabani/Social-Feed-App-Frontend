@@ -7,7 +7,7 @@ import AiAssistButton from './AiAssistButton';
 import { useLanguage } from '../context/LanguageContext';
 
 interface CreatePostBoxProps {
-  onPostCreated: () => void;
+  onPostCreated?: () => void;
   replyToPostId?: number;
   placeholder?: string;
   autoFocus?: boolean;
@@ -89,9 +89,12 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
       setShowMediaInput(false);
       setWarningText('');
       setCwActive(false);
-      onPostCreated();
-      // Fire global event so Feed.tsx auto-refreshes
-      window.dispatchEvent(new Event('postCreated'));
+      if (onPostCreated) {
+        onPostCreated();
+      } else {
+        // Fire global event so Feed.tsx auto-refreshes when the composer lives outside the feed.
+        window.dispatchEvent(new Event('postCreated'));
+      }
     } catch (err) {
       alert('Gabim gjatÃ« krijimit tÃ« postimit.');
     } finally {

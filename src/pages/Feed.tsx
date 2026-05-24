@@ -224,7 +224,7 @@ const Feed: React.FC = () => {
       <div className="feed-content-scroller">
         {!selectedTag && currentTab === 'home' && (
           <div className="feed-compose-shell">
-            <CreatePostBox onPostCreated={() => {}} />
+            <CreatePostBox onPostCreated={handlePostCreated} />
           </div>
         )}
 
