@@ -5,7 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 import MainLayout from '../components/MainLayout';
 import { getFollowCounts } from '../modules/follows/api/followsApi';
-import { PostService, type PostBrief } from '../services/post.service';
+import { PostService } from '../services/post.service';
 import PostItem from '../components/PostItem';
 import { AlertCircle } from 'lucide-react';
 import '../styles/globals.css';
@@ -20,6 +20,8 @@ const Profile: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [followCounts, setFollowCounts] = useState({ followers_count: 0, following_count: 0 });
   const [posts, setPosts] = useState<any[]>([]);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [postsError, setPostsError] = useState('');
 
@@ -35,7 +37,7 @@ const Profile: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { username: routeUsername } = useParams();
+  const { username: routeUsername } = useParams<{ username?: string }>();
   const [viewUser, setViewUser] = useState<any | null>(null);
 
   // Load either the logged-in user profile or the route username profile
@@ -43,9 +45,14 @@ const Profile: React.FC = () => {
     let mounted = true;
 
     const loadProfile = async () => {
+      setLoadingProfile(true);
+      setProfileError('');
+      setPostsError('');
       try {
         if (routeUsername && routeUsername !== user?.username) {
-          const resp = await api.get(`/api/v1/users/${routeUsername}`);
+          setViewUser(null);
+          setPosts([]);
+          const resp = await api.get(`/api/v1/users/${encodeURIComponent(routeUsername)}`);
           if (!mounted) return;
           setViewUser(resp.data);
           const counts = await getFollowCounts(resp.data.id);
@@ -61,14 +68,20 @@ const Profile: React.FC = () => {
         }
       } catch (err) {
         console.error('Error loading profile:', err);
-        setPostsError('Gabim gjatë ngarkimit të profilit.');
+        if (!mounted) return;
+        setProfileError('Gabim gjatë ngarkimit të profilit.');
+        setPosts([]);
+      } finally {
+        if (mounted) {
+          setLoadingProfile(false);
+        }
       }
     };
 
     loadProfile();
 
     return () => { mounted = false; };
-  }, [routeUsername, user?.id, activeTab]);
+  }, [routeUsername, user?.id, user?.username, activeTab]);
 
   const fetchUserPosts = async (userId: number) => {
     setLoadingPosts(true);
@@ -152,6 +165,37 @@ const Profile: React.FC = () => {
   }
 
   if (!user) return null;
+
+  if (loadingProfile && routeUsername && routeUsername !== user.username) {
+    return (
+      <MainLayout
+        currentTab={currentFeedTab}
+        setCurrentTab={setCurrentFeedTab}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      >
+        <div style={{ textAlign: 'center', marginTop: '5rem', color: 'var(--text-main)' }}>
+          {t('profile_loading')}
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (profileError && routeUsername && routeUsername !== user.username) {
+    return (
+      <MainLayout
+        currentTab={currentFeedTab}
+        setCurrentTab={setCurrentFeedTab}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      >
+        <div className="error-container" style={{ margin: '5rem auto' }}>
+          <AlertCircle size={18} style={{ marginRight: '8px' }} />
+          <span>{profileError}</span>
+        </div>
+      </MainLayout>
+    );
+  }
 
   const profileUser = viewUser || user;
 

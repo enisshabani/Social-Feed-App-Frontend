@@ -27,7 +27,9 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const t = (key: keyof typeof translations['en']): string => {
-    return translations[language]?.[key] || translations['en'][key] || key;
+    const currentTranslations = translations[language] as Record<string, string>;
+    const fallbackTranslations = translations.en as Record<string, string>;
+    return currentTranslations[key] || fallbackTranslations[key] || key;
   };
 
   return (

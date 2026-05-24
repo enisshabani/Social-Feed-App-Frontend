@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Hash, Bookmark, LogOut, User, Sparkles } from 'lucide-react';
+import { Home, Hash, Bookmark, LogOut, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { NotificationBell } from '../modules/notifications/components/NotificationBell';
@@ -44,7 +44,7 @@ export const getLoggedInUser = () => {
   }
 };
 
-const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab, onPostClick }) => {
+const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();

@@ -7,7 +7,6 @@ import type { MatchContext } from '../services/search.service';
 import ActionBar from './ActionBar';
 import SentimentBadge from './SentimentBadge';
 import { getLoggedInUser } from './SidebarLeft';
-import { FollowButton } from '../modules/follows/components/FollowButton';
 
 interface PostItemProps {
   post: any; // Can be Post or PostBrief
@@ -35,6 +34,19 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
 
   // Check if current user is the author (safely convert both to string)
   const isAuthor = currentUser && String(currentUser.id) === String(post.author_id);
+  const authorUsername = post.author?.username;
+  const authorProfilePath = authorUsername
+    ? `/profile/${encodeURIComponent(authorUsername)}`
+    : isAuthor
+      ? '/profile'
+      : null;
+
+  const handleAuthorProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (authorProfilePath) {
+      navigate(authorProfilePath);
+    }
+  };
 
   // CW parsing
   const cwRegex = /^CW:\s*(.*?)\s*\n\n---\n\n([\s\S]*)$/;
@@ -170,7 +182,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
               alt={post.author.username}
               className="avatar"
               style={{ borderRadius: '4px', width: '44px', height: '44px', cursor: 'pointer' }}
-              onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author?.username}`); }}
+              onClick={handleAuthorProfileClick}
             />
           ) : (
             <div
@@ -188,7 +200,7 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
                 border: '1px solid rgba(99, 100, 255, 0.2)',
                 cursor: 'pointer'
               }}
-              onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author?.username}`); }}
+              onClick={handleAuthorProfileClick}
             >
               {authorInitial}
             </div>
@@ -203,14 +215,14 @@ const PostItem: React.FC<PostItemProps> = ({ post, onPostUpdated, matchContext, 
               <span
                 className="author-display-name"
                 style={{ cursor: 'pointer' }}
-                onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author?.username}`); }}
+                onClick={handleAuthorProfileClick}
               >
                 {post.author?.display_name || post.author?.username || `User ${post.author_id}`}
               </span>
               <span
                 className="author-username"
                 style={{ cursor: 'pointer' }}
-                onClick={(e) => { e.stopPropagation(); navigate(`/profile/${post.author?.username}`); }}
+                onClick={handleAuthorProfileClick}
               >@{post.author?.username || `user_${post.author_id}`}</span>
               <span className="bullet-spacer">•</span>
               <time className="post-time" dateTime={post.created_at}>
