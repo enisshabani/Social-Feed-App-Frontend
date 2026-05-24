@@ -6,9 +6,10 @@ interface FollowButtonProps {
   userId: number;
   initialIsFollowing?: boolean;
   hideForCurrentUser?: boolean;
+  onFollowChange?: (isFollowing: boolean) => void;
 }
 
-export const FollowButton: React.FC<FollowButtonProps> = ({ userId, initialIsFollowing }) => {
+export const FollowButton: React.FC<FollowButtonProps> = ({ userId, initialIsFollowing, onFollowChange }) => {
   const { following, isLoading, follow, unfollow, setInitialFollowingStatus } = useFollow();
   const [isInitializing, setIsInitializing] = useState(false);
 
@@ -34,14 +35,20 @@ export const FollowButton: React.FC<FollowButtonProps> = ({ userId, initialIsFol
   const isFollowing = following.has(userId);
   const loading = isLoading.has(userId) || isInitializing;
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (loading) return;
-    if (isFollowing) {
-      unfollow(userId);
-    } else {
-      follow(userId);
+    try {
+      if (isFollowing) {
+        await unfollow(userId);
+        onFollowChange?.(false);
+      } else {
+        await follow(userId);
+        onFollowChange?.(true);
+      }
+    } catch {
+      // FollowContext already rolls back optimistic UI and logs the error.
     }
   };
 

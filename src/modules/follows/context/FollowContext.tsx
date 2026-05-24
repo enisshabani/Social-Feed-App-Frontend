@@ -41,6 +41,7 @@ export const FollowProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return next;
       });
       console.error("Failed to follow user", error);
+      throw error;
     } finally {
       setIsLoading(prev => {
         const next = new Set(prev);
@@ -65,6 +66,7 @@ export const FollowProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       // Rollback on API error
       setFollowing(prev => new Set(prev).add(userId));
       console.error("Failed to unfollow user", error);
+      throw error;
     } finally {
       setIsLoading(prev => {
         const next = new Set(prev);

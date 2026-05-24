@@ -8,6 +8,7 @@ import { getFollowCounts } from '../modules/follows/api/followsApi';
 import { PostService } from '../services/post.service';
 import PostItem from '../components/PostItem';
 import { AlertCircle } from 'lucide-react';
+import { FollowButton } from '../modules/follows/components/FollowButton';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
@@ -198,6 +199,7 @@ const Profile: React.FC = () => {
   }
 
   const profileUser = viewUser || user;
+  const isOwnProfile = profileUser.id === user.id;
 
   const joinedYear = new Date(profileUser.created_at).getFullYear();
 
@@ -244,7 +246,7 @@ const Profile: React.FC = () => {
                 </svg>
               )}
 
-              {isEditing && profileUser.id === user.id && (
+              {isEditing && isOwnProfile && (
                 <div className="avatar-edit-overlay">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: '4px' }}>
                     <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
@@ -253,7 +255,7 @@ const Profile: React.FC = () => {
                 </div>
               )}
             </div>
-            {!isEditing && profileUser.id === user.id && (
+            {!isEditing && isOwnProfile && (
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <button
                   className="btn-edit-profile"
@@ -275,6 +277,19 @@ const Profile: React.FC = () => {
                     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                   </svg>
                 </button>
+              </div>
+            )}
+            {!isEditing && !isOwnProfile && (
+              <div style={{ marginTop: '5rem' }}>
+                <FollowButton
+                  userId={profileUser.id}
+                  onFollowChange={(isFollowing) => {
+                    setFollowCounts((prev) => ({
+                      ...prev,
+                      followers_count: Math.max(0, prev.followers_count + (isFollowing ? 1 : -1)),
+                    }));
+                  }}
+                />
               </div>
             )}
           </div>
