@@ -38,7 +38,13 @@ apiClient.interceptors.request.use(
 
 // Response interceptor: Handle 401 Unauthorized globally
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Catch cases where Firebase or a proxy returns HTML instead of JSON
+    if (typeof response.data === 'string' && response.data.trim().startsWith('<')) {
+      return Promise.reject(new Error("API returned an HTML response. The backend might be unreachable."));
+    }
+    return response;
+  },
   (error) => {
     if (error.response && error.response.status === 401) {
       console.error("apiClient caught 401 Unauthorized. Not redirecting to avoid loops.");
