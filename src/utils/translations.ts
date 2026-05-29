@@ -44,6 +44,7 @@
     register_error_passmatch: "Passwords do not match.",
     register_error_privacy: "You must accept the privacy policy.",
     register_error_generic: "Error during registration.",
+    register_email_verification_sent: "Account created. Please verify your email to continue.",
     
     register_step1_title: "Some ground rules.",
     register_step1_subtitle: "These are set and enforced by the kaPak moderators.",
@@ -101,6 +102,23 @@
     verify_error_empty: "Please enter the code.",
     verify_btn_continue: "Continue",
     verify_back: "Go back",
+
+    // --- Email Verification Page ---
+    email_verify_title: "Verify your email",
+    email_verify_desc: "We sent a verification link to {email}. Open the link, then come back here to finish setup.",
+    email_verify_your_email: "your email",
+    email_verify_check: "I've verified my email",
+    email_verify_checking: "Checking...",
+    email_verify_resend: "Resend verification email",
+    email_verify_resent: "Verification email sent again.",
+    email_verify_success: "Email verified.",
+    email_verify_success_desc: "Your email has been confirmed. You can now log in.",
+    email_verify_login: "Go to login",
+    email_verify_back_login: "Back to login",
+    email_verify_error_not_verified: "Email is not verified yet. Please click the link in your inbox first.",
+    email_verify_error_login_required: "Please register or sign in again on this device, then retry verification.",
+    email_verify_error_resend: "Could not resend the verification email. Please try again.",
+    email_verify_error_generic: "Could not verify your email. Please try again.",
 
     // --- Profile Page ---
     profile_loading: "Loading profile...",
@@ -368,6 +386,7 @@
     register_error_passmatch: "Fjalëkalimet nuk përputhen.",
     register_error_privacy: "Duhet të pranoni politikat e privatësisë.",
     register_error_generic: "Gabim gjatë regjistrimit.",
+    register_email_verification_sent: "Llogaria u krijua. Ju lutem verifikoni emailin për të vazhduar.",
     
     register_step1_title: "Disa rregulla bazë.",
     register_step1_subtitle: "Këto janë vendosur dhe zbatohen nga moderatorët e kaPak.",
@@ -425,6 +444,23 @@
     verify_error_empty: "Ju lutem shkruani kodin.",
     verify_btn_continue: "Vazhdo",
     verify_back: "Kthehu prapa",
+
+    // --- Email Verification Page ---
+    email_verify_title: "Verifikoni emailin",
+    email_verify_desc: "Ju dërguam një link verifikimi te {email}. Hapeni linkun, pastaj kthehuni këtu për të përfunduar.",
+    email_verify_your_email: "emaili juaj",
+    email_verify_check: "E kam verifikuar emailin",
+    email_verify_checking: "Duke kontrolluar...",
+    email_verify_resend: "Ridërgo emailin e verifikimit",
+    email_verify_resent: "Emaili i verifikimit u dërgua përsëri.",
+    email_verify_success: "Emaili u verifikua.",
+    email_verify_success_desc: "Emaili juaj u konfirmua. Tani mund të hyni.",
+    email_verify_login: "Shko te hyrja",
+    email_verify_back_login: "Kthehu te hyrja",
+    email_verify_error_not_verified: "Emaili nuk është verifikuar ende. Ju lutem klikoni linkun në inbox.",
+    email_verify_error_login_required: "Ju lutem regjistrohuni ose hyni përsëri në këtë pajisje, pastaj provoni verifikimin.",
+    email_verify_error_resend: "Emaili i verifikimit nuk mund të ridërgohej. Ju lutem provoni përsëri.",
+    email_verify_error_generic: "Emaili nuk mund të verifikohej. Ju lutem provoni përsëri.",
 
     // --- Profile Page ---
     profile_loading: "Duke ngarkuar profilin...",
@@ -643,4 +679,3 @@
 };
 
 export type Language = 'en' | 'sq';
-
