@@ -24,15 +24,32 @@ const Followers: React.FC = () => {
 
   useEffect(() => {
     if (!numericUserId) return;
-    setIsLoading(true);
-    const fetch = activeTab === 'followers'
-      ? getFollowers(numericUserId)
-      : getFollowing(numericUserId);
 
-    fetch
-      .then(data => setList(data))
-      .catch(() => setList([]))
-      .finally(() => setIsLoading(false));
+    let mounted = true;
+
+    const loadFollowList = async () => {
+      setIsLoading(true);
+      try {
+        const data = activeTab === 'followers'
+          ? await getFollowers(numericUserId)
+          : await getFollowing(numericUserId);
+        if (mounted) {
+          setList(data);
+        }
+      } catch {
+        if (mounted) {
+          setList([]);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadFollowList();
+
+    return () => { mounted = false; };
   }, [numericUserId, activeTab]);
 
   return (

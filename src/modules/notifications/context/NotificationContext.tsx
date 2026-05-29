@@ -14,6 +14,7 @@ interface NotificationContextState {
   clearAllNotifications: () => Promise<void>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const NotificationContext = createContext<NotificationContextState | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

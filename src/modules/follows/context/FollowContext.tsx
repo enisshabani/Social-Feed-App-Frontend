@@ -10,6 +10,7 @@ interface FollowContextState {
   setInitialFollowingStatus: (userId: number, isFollowing: boolean) => void;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const FollowContext = createContext<FollowContextState | undefined>(undefined);
 
 export const FollowProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

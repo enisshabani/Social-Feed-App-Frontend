@@ -14,23 +14,32 @@ export const FollowButton: React.FC<FollowButtonProps> = ({ userId, initialIsFol
   const [isInitializing, setIsInitializing] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
+    const loadFollowStatus = async () => {
+      setIsInitializing(true);
+      try {
+        const res = await checkIsFollowing(userId);
+        if (mounted) {
+          setInitialFollowingStatus(userId, res.is_following);
+        }
+      } catch (err) {
+        console.error("Error fetching follow status", err);
+      } finally {
+        if (mounted) {
+          setIsInitializing(false);
+        }
+      }
+    };
+
     if (initialIsFollowing !== undefined) {
       setInitialFollowingStatus(userId, initialIsFollowing);
     } else if (!following.has(userId)) {
-      let mounted = true;
-      setIsInitializing(true);
-      checkIsFollowing(userId).then((res) => {
-        if (mounted) {
-          setInitialFollowingStatus(userId, res.is_following);
-          setIsInitializing(false);
-        }
-      }).catch(err => {
-        console.error("Error fetching follow status", err);
-        if (mounted) setIsInitializing(false);
-      });
-      return () => { mounted = false; };
+      void loadFollowStatus();
     }
-  }, [userId, initialIsFollowing, setInitialFollowingStatus]);
+
+    return () => { mounted = false; };
+  }, [userId, initialIsFollowing, following, setInitialFollowingStatus]);
 
   const isFollowing = following.has(userId);
   const loading = isLoading.has(userId) || isInitializing;
