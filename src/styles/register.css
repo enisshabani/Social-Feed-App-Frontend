@@ -491,6 +491,67 @@
   text-decoration: underline;
 }
 
+.verify-email-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 2rem 1rem;
+}
+
+.verify-email-panel {
+  width: 100%;
+  max-width: 440px;
+  padding: 3rem 2.5rem;
+  text-align: center;
+}
+
+.verify-email-logo {
+  margin-bottom: 1.5rem;
+}
+
+.verify-email-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.verify-email-icon.verified {
+  color: #1f9d55;
+  background: rgba(31, 157, 85, 0.14);
+}
+
+.verify-email-title {
+  margin: 0 0 0.75rem;
+  color: var(--text-main);
+  font-size: 1.45rem;
+  line-height: 1.25;
+}
+
+.verify-email-copy {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.success-message {
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  color: #0f6b3a;
+  background: rgba(31, 157, 85, 0.12);
+  border: 1px solid rgba(31, 157, 85, 0.24);
+  font-size: 0.9rem;
+}
+
 /* ── Light mode overrides ── */
 :root.light-mode .reg-input,
 :root.light-mode .reg-input-wrap {

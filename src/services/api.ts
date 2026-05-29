@@ -27,6 +27,16 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
+api.interceptors.response.use((response) => {
+  // Catch cases where Firebase or a proxy returns HTML instead of JSON
+  if (typeof response.data === 'string' && response.data.trim().startsWith('<')) {
+    return Promise.reject(new Error("API returned an HTML response. The backend might be unreachable."));
+  }
+  return response;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 // Auth API (gjithashtu mund të mbahen këtu)
 export const login = (data: any) => api.post('/api/v1/auth/login', data);
 export const register = (data: any) => api.post('/api/v1/auth/register', data);

@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { signInWithPopup } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signInWithPopup,
+  updateProfile,
+} from 'firebase/auth';
 import { auth, googleProvider, githubProvider } from '../services/firebase';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getFirebaseErrorMessage, sendVerificationEmail } from '../utils/emailVerification';
 import { getCurrentTenantId } from '../utils/tenant';
 import '../styles/globals.css';
 import '../styles/register.css';
@@ -50,6 +56,7 @@ const Register: React.FC = () => {
   const [privacyChecked, setPrivacyChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedRules, setExpandedRules] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -101,20 +108,40 @@ const Register: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
     if (password !== confirmPassword) {
       setError(t('register_error_passmatch'));
+      setIsSubmitting(false);
       return;
     }
+    let firebaseUser = null;
+    let backendAccountCreated = false;
     try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      firebaseUser = credential.user;
+      await updateProfile(firebaseUser, { displayName: username });
+
       await api.post('/api/v1/auth/register', {
         email,
         username,
         password,
         tenant_id: getCurrentTenantId(),
       });
-      navigate('/login');
+      backendAccountCreated = true;
+
+      await sendVerificationEmail(firebaseUser);
+      navigate('/verify-email', { state: { email } });
     } catch (err: any) {
-      setError(err.response?.data?.detail || t('register_error_generic'));
+      if (firebaseUser && !backendAccountCreated) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch {
+          // Ignore cleanup failures; Firebase may require a fresh auth session.
+        }
+      }
+      setError(getFirebaseErrorMessage(err, t('register_error_generic')));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -376,10 +403,10 @@ const Register: React.FC = () => {
               <button
                 type="submit"
                 className="btn-primary reg-btn"
-                disabled={!privacyChecked}
-                style={{ opacity: privacyChecked ? 1 : 0.5 }}
+                disabled={!privacyChecked || isSubmitting}
+                style={{ opacity: privacyChecked && !isSubmitting ? 1 : 0.5 }}
               >
-                {t('register_button')}
+                {isSubmitting ? t('register_submitting') : t('register_button')}
               </button>
             </form>
 

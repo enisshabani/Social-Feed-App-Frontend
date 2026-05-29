@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import { Link } from 'react-router-dom';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import { useLanguage } from '../context/LanguageContext';
+import { getFirebaseErrorMessage } from '../utils/emailVerification';
 import '../styles/globals.css';
 import '../styles/register.css';
 
@@ -10,7 +12,6 @@ const ForgotPassword: React.FC = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,15 +21,13 @@ const ForgotPassword: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const res = await api.post('/api/v1/auth/forgot-password', { email });
-      if (res.data.code) {
-        window.alert(`Kodi juaj i sigurisë është: ${res.data.code}`);
-        navigate(`/verify-code`);
-      } else {
-        setMessage(t('forgot_success_msg'));
-      }
+      await sendPasswordResetEmail(auth, email, {
+        url: `${window.location.origin}/login`,
+        handleCodeInApp: false,
+      });
+      setMessage(t('forgot_success_msg'));
     } catch (err: any) {
-      setError(err.response?.data?.detail || t('forgot_error_generic'));
+      setError(getFirebaseErrorMessage(err, t('forgot_error_generic')));
     } finally {
       setIsLoading(false);
     }
@@ -71,4 +70,3 @@ const ForgotPassword: React.FC = () => {
 };
 
 export default ForgotPassword;
-
