@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { NotificationBell } from '../modules/notifications/components/NotificationBell';
-import { resolveAssetUrl } from '../utils/assets';
+import SafeAvatar from './SafeAvatar';
 
 interface SidebarLeftProps {
   currentTab: 'home' | 'explore' | 'bookmarks';
@@ -147,13 +147,12 @@ const SidebarLeft: React.FC<SidebarLeftProps> = ({ currentTab, setCurrentTab }) 
         {user && (
           <div className="sidebar-user-card" onClick={() => navigate('/profile')} style={{ cursor: 'pointer' }}>
             <div className="user-info-wrapper">
-              <div className="user-avatar-placeholder">
-                {authUser?.avatar_url ? (
-                  <img src={resolveAssetUrl(authUser.avatar_url)} alt={user.username} />
-                ) : (
-                  <User size={20} />
-                )}
-              </div>
+              <SafeAvatar
+                src={authUser?.avatar_url}
+                alt={user.username}
+                fallbackText={user.username}
+                className="user-avatar-placeholder"
+              />
               <div className="user-details">
                 <div className="user-display-name">@{user.username}</div>
                 <div className="user-tenant-badge">

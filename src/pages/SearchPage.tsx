@@ -7,8 +7,8 @@ import PostItem from '../components/PostItem';
 import { SearchService } from '../services/search.service';
 import type { SearchPostResult } from '../services/search.service';
 import type { UserPublic, TrendingHashtag } from '../services/post.service';
-import { resolveAssetUrl } from '../utils/assets';
 import { useLanguage } from '../context/LanguageContext';
+import SafeAvatar from '../components/SafeAvatar';
 
 type SearchTab = 'posts' | 'users' | 'hashtags';
 
@@ -207,13 +207,12 @@ const SearchPage: React.FC = () => {
                     className="user-result-card"
                     onClick={() => navigate(`/profile/${encodeURIComponent(u.username)}`)}
                   >
-                    <div className="user-result-avatar">
-                      {u.avatar_url ? (
-                        <img src={resolveAssetUrl(u.avatar_url)} alt={u.username} />
-                      ) : (
-                        <User size={24} />
-                      )}
-                    </div>
+                    <SafeAvatar
+                      src={u.avatar_url}
+                      alt={u.username}
+                      fallbackText={u.username}
+                      className="user-result-avatar"
+                    />
                     <div className="user-result-info">
                       <span className="user-result-name">{u.display_name || u.username}</span>
                       <span className="user-result-username">@{u.username}</span>

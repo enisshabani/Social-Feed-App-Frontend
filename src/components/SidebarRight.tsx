@@ -7,7 +7,7 @@ import CreatePostBox from './CreatePostBox';
 import { useLanguage } from '../context/LanguageContext';
 import { getLoggedInUser } from './SidebarLeft';
 import { useAuth } from '../context/AuthContext';
-import { resolveAssetUrl } from '../utils/assets';
+import SafeAvatar from './SafeAvatar';
 
 interface SidebarRightProps {
   searchQuery: string;
@@ -85,13 +85,13 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
           }}
         >
           <div className="profile-card-header">
-            {user?.avatar_url ? (
-              <img className="profile-card-avatar profile-card-avatar-img" src={resolveAssetUrl(user.avatar_url)} alt={currentUser.username} />
-            ) : (
-              <div className="profile-card-avatar">
-                {currentUser.username.charAt(0).toUpperCase()}
-              </div>
-            )}
+            <SafeAvatar
+              src={user?.avatar_url}
+              alt={currentUser.username}
+              fallbackText={currentUser.username}
+              className="profile-card-avatar"
+              imgClassName="profile-card-avatar-img"
+            />
             <div className="profile-card-info">
               <div className="profile-card-name">@{currentUser.username}</div>
               <div className="profile-card-handle">@{currentUser.username}</div>

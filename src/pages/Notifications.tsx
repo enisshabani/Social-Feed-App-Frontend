@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import { useNotifications } from '../modules/notifications/hooks/useNotifications';
 import type { NotificationItem as INotificationItem } from '../modules/notifications/types';
-import { UserPlus, Heart, Repeat2, AtSign, MessageCircle, Bell, Check, Trash2, User, Settings, X } from 'lucide-react';
+import { UserPlus, Heart, Repeat2, AtSign, MessageCircle, Bell, Check, Trash2, Settings, X } from 'lucide-react';
 import { followUser, unfollowUser, checkIsFollowing, getPendingFollowBacks } from '../modules/follows/api/followsApi';
 import type { FollowResponse } from '../modules/follows/types';
 import notificationsApi from '../modules/notifications/api/notificationsApi';
 import type { NotificationPreference } from '../modules/notifications/types';
-import { resolveAssetUrl } from '../utils/assets';
+import SafeAvatar from '../components/SafeAvatar';
 import '../styles/globals.css';
 
 const getRelativeTime = (dateString: string): string => {
@@ -115,13 +115,13 @@ const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boo
 
       {/* Actor Avatar */}
       <div className="notif-avatar">
-        {notif.actor?.avatar_url ? (
-          <img src={resolveAssetUrl(notif.actor.avatar_url)} alt={actorName} className="notif-avatar-img" />
-        ) : (
-          <div className="notif-avatar-placeholder">
-            <User size={20} />
-          </div>
-        )}
+        <SafeAvatar
+          src={notif.actor?.avatar_url}
+          alt={actorName}
+          fallbackText={actorName}
+          className="notif-avatar-placeholder"
+          imgClassName="notif-avatar-img"
+        />
       </div>
 
       {/* Content */}
@@ -179,13 +179,13 @@ const FollowBackReminderRow: React.FC<{ follow: FollowResponse }> = ({ follow })
       </div>
 
       <div className="notif-avatar">
-        {targetUser?.avatar_url ? (
-          <img src={resolveAssetUrl(targetUser.avatar_url)} alt={targetName} className="notif-avatar-img" />
-        ) : (
-          <div className="notif-avatar-placeholder">
-            <User size={20} />
-          </div>
-        )}
+        <SafeAvatar
+          src={targetUser?.avatar_url}
+          alt={targetName}
+          fallbackText={targetName}
+          className="notif-avatar-placeholder"
+          imgClassName="notif-avatar-img"
+        />
       </div>
 
       <div className="notif-content">

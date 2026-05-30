@@ -7,6 +7,7 @@ import AiAssistButton from './AiAssistButton';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { resolveAssetUrl } from '../utils/assets';
+import SafeAvatar from './SafeAvatar';
 
 interface CreatePostBoxProps {
   onPostCreated?: () => void;
@@ -53,6 +54,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
 
   const isValidMediaUrl = (value: string) => {
     if (value.startsWith('/uploads/')) return true;
+    if (value.startsWith('data:image/')) return true;
 
     try {
       const url = new URL(value);
@@ -153,18 +155,15 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         <div className="mastodon-compose-row">
           {/* Avatar Column */}
           <div className="compose-avatar-column">
-            {avatarUrl ? (
-              <img
-                src={resolveAssetUrl(avatarUrl)}
-                alt={currentUser?.username || 'user'}
-                className="compose-avatar compose-avatar-img"
-                title={`KyÃ§ur si @${currentUser?.username || 'user'}`}
-              />
-            ) : (
-              <div className="compose-avatar" title={`KyÃ§ur si @${currentUser?.username || 'user'}`}>
-                {userInitial}
-              </div>
-            )}
+            <SafeAvatar
+              src={avatarUrl}
+              alt={currentUser?.username || 'user'}
+              fallbackText={userInitial}
+              className="compose-avatar"
+              imgClassName="compose-avatar-img"
+              imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              title={`KyÃ§ur si @${currentUser?.username || 'user'}`}
+            />
           </div>
 
           {/* Fields Column */}

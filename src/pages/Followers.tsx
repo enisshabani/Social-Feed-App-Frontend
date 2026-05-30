@@ -4,8 +4,8 @@ import { getFollowers, getFollowing } from '../modules/follows/api/followsApi';
 import { FollowButton } from '../modules/follows/components/FollowButton';
 import type { FollowResponse } from '../modules/follows/types';
 import { ArrowLeft, User } from 'lucide-react';
-import { resolveAssetUrl } from '../utils/assets';
 import { useLanguage } from '../context/LanguageContext';
+import SafeAvatar from '../components/SafeAvatar';
 
 type Mode = 'followers' | 'following';
 
@@ -148,23 +148,19 @@ const Followers: React.FC = () => {
                 transition: 'background 0.15s',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: 44, height: 44, borderRadius: '50%',
-                    backgroundColor: 'var(--primary-light, #1e3a5f)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'var(--primary, #3b82f6)',
-                    overflow: 'hidden',
-                  }}>
-                    {targetUser?.avatar_url ? (
-                      <img
-                        src={resolveAssetUrl(targetUser.avatar_url)}
-                        alt={targetUser.username || `User ${targetId}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <User size={20} />
-                    )}
-                  </div>
+                  <SafeAvatar
+                    src={targetUser?.avatar_url}
+                    alt={targetUser?.username || `User ${targetId}`}
+                    fallbackText={targetUser?.username || `User ${targetId}`}
+                    style={{
+                      width: 44, height: 44, borderRadius: '50%',
+                      backgroundColor: 'var(--primary-light, #1e3a5f)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'var(--primary, #3b82f6)',
+                      overflow: 'hidden',
+                    }}
+                    imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '15px' }}>
                       {targetUser?.display_name || targetUser?.username || `User ${targetId}`}

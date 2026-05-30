@@ -2,8 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { NotificationItem as INotificationItem } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
-import { User, UserPlus, Heart, Repeat, AtSign, MessageCircle, Bell } from 'lucide-react';
-import { resolveAssetUrl } from '../../../utils/assets';
+import { UserPlus, Heart, Repeat, AtSign, MessageCircle, Bell } from 'lucide-react';
+import SafeAvatar from '../../../components/SafeAvatar';
 
 interface Props {
   notification: INotificationItem;
@@ -118,22 +118,14 @@ export const NotificationItem: React.FC<Props> = ({ notification }) => {
             alignItems: 'center',
             justifyContent: 'center',
           }}>
-            {notification.actor?.avatar_url ? (
-              <img
-                src={resolveAssetUrl(notification.actor.avatar_url)}
-                alt={notification.actor.username}
-                onClick={handleActorClick}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', cursor: 'pointer' }}
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={handleActorClick}
-                style={{ border: 'none', background: 'transparent', color: 'inherit', cursor: 'pointer' }}
-              >
-                <User size={18} />
-              </button>
-            )}
+            <SafeAvatar
+              src={notification.actor?.avatar_url}
+              alt={notification.actor?.username || `User ${notification.actor_id}`}
+              fallbackText={notification.actor?.username}
+              style={{ width: '100%', height: '100%', cursor: 'pointer' }}
+              imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onClick={handleActorClick}
+            />
           </div>
           <span style={{
             position: 'absolute',

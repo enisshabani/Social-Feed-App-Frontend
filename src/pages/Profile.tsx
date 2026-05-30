@@ -10,6 +10,7 @@ import PostItem from '../components/PostItem';
 import { AlertCircle } from 'lucide-react';
 import { FollowButton } from '../modules/follows/components/FollowButton';
 import { resolveAssetUrl } from '../utils/assets';
+import SafeAvatar from '../components/SafeAvatar';
 import '../styles/globals.css';
 
 const Profile: React.FC = () => {
@@ -263,7 +264,14 @@ const Profile: React.FC = () => {
 
         {/* Cover Image */}
         <div className="profile-cover" style={{ backgroundColor: 'var(--bg-secondary)', overflow: 'hidden' }}>
-          {currentCover && <img src={currentCover} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+          {currentCover && (
+            <img
+              src={currentCover}
+              alt="Cover"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
+          )}
         </div>
 
         <div className="profile-info-section">
@@ -278,14 +286,13 @@ const Profile: React.FC = () => {
                 alignItems: 'center',
               }}
             >
-              {currentAvatar ? (
-                <img src={currentAvatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                /* Default avatar SVG icon */
-                <svg width="60" height="60" viewBox="0 0 24 24" fill="var(--text-muted)" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                </svg>
-              )}
+              <SafeAvatar
+                src={currentAvatar}
+                alt="Avatar"
+                fallbackText={profileUser.username}
+                style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
 
               {isEditing && isOwnProfile && (
                 <div className="avatar-edit-overlay">
@@ -490,7 +497,14 @@ const Profile: React.FC = () => {
             </div>
 
             <div className="edit-profile-cover" style={{ backgroundColor: 'var(--bg-secondary)', overflow: 'hidden' }}>
-              {currentCover && <img src={currentCover} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+              {currentCover && (
+                <img
+                  src={currentCover}
+                  alt="Cover"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              )}
               <div 
                 className="edit-profile-camera-btn" 
                 style={{ top: '1rem', right: '1rem', cursor: 'pointer' }}
@@ -505,13 +519,13 @@ const Profile: React.FC = () => {
 
             <div className="edit-profile-avatar-container">
               <div className="edit-profile-avatar">
-                {currentAvatar ? (
-                  <img src={currentAvatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
-                ) : (
-                  <svg width="80" height="80" viewBox="0 0 24 24" fill="var(--text-muted)" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-                  </svg>
-                )}
+                <SafeAvatar
+                  src={currentAvatar}
+                  alt="Avatar"
+                  fallbackText={profileUser.username}
+                  style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  imgStyle={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }}
+                />
                 <div
                   className="edit-profile-camera-btn"
                   style={{ bottom: '-10px', right: '-10px' }}

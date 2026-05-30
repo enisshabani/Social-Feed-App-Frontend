@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash, Image as ImageIcon, Upload, Crop } from 'lucide-react';
+import { Edit2, Trash2, Globe, Lock, EyeOff, X, Check, MessageSquare, Hash, Image as ImageIcon, Upload, Crop } from 'lucide-react';
 import { PostService } from '../services/post.service';
 import type { Comment, MediaInput, Poll } from '../services/post.service';
 import type { MatchContext } from '../services/search.service';
@@ -8,6 +8,7 @@ import ActionBar from './ActionBar';
 import SentimentBadge from './SentimentBadge';
 import { getLoggedInUser } from './SidebarLeft';
 import { resolveAssetUrl } from '../utils/assets';
+import SafeAvatar from './SafeAvatar';
 
 interface PostItemProps {
   post: any; // Can be Post or PostBrief
@@ -50,6 +51,8 @@ const PostItem: React.FC<PostItemProps> = ({
   const [localPoll, setLocalPoll] = useState<Poll | undefined>(post.poll);
   const [selectedPollOption, setSelectedPollOption] = useState<number | null>(null);
   const [votingPoll, setVotingPoll] = useState(false);
+  const [openMedia, setOpenMedia] = useState<any | null>(null);
+  const [brokenMediaKeys, setBrokenMediaKeys] = useState<Set<string>>(new Set());
 
   // Content Warning Expanded state
   const [cwExpanded, setCwExpanded] = useState(false);
@@ -64,7 +67,18 @@ const PostItem: React.FC<PostItemProps> = ({
     setReplyCount(post.reply_count || 0);
     setLocalPoll(post.poll);
     setSelectedPollOption(null);
+    setOpenMedia(null);
+    setBrokenMediaKeys(new Set());
   }, [post.content, post.media, post.reply_count, post.poll]);
+
+  useEffect(() => {
+    if (!openMedia) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenMedia(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [openMedia]);
 
   // Check if current user is the author (safely convert both to string)
   const isAuthor = currentUser && String(currentUser.id) === String(post.author_id);
@@ -280,6 +294,10 @@ const PostItem: React.FC<PostItemProps> = ({
 
   const pollTotalVotes = localPoll?.options.reduce((sum, option) => sum + (option.vote_count || 0), 0) || 0;
   const currentUserReaction = post.likes?.find((like: any) => String(like.user_id) === String(currentUser?.id))?.reaction_type || 'star';
+  const mediaKey = (media: any, index: number) => String(media.id || media.url || index);
+  const markMediaBroken = (media: any, index: number) => {
+    setBrokenMediaKeys((prev) => new Set(prev).add(mediaKey(media, index)));
+  };
 
   return (
     <article className="post-item-wrapper">
@@ -293,35 +311,28 @@ const PostItem: React.FC<PostItemProps> = ({
         <div className="post-main-content">
         {/* User Avatar Column */}
         <div className="avatar-column">
-          {post.author?.avatar_url ? (
-            <img
-              src={resolveAssetUrl(post.author.avatar_url)}
-              alt={post.author.username}
-              className="avatar"
-              style={{ borderRadius: '4px', width: '44px', height: '44px', cursor: 'pointer' }}
-              onClick={handleAuthorProfileClick}
-            />
-          ) : (
-            <div
-              className="avatar-circle"
-              style={{
-                borderRadius: '4px',
-                width: '44px',
-                height: '44px',
-                backgroundColor: 'var(--primary-light)',
-                color: 'var(--primary)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 'bold',
-                border: '1px solid rgba(99, 100, 255, 0.2)',
-                cursor: 'pointer'
-              }}
-              onClick={handleAuthorProfileClick}
-            >
-              {authorInitial}
-            </div>
-          )}
+          <SafeAvatar
+            src={post.author?.avatar_url}
+            alt={post.author?.username || `user_${post.author_id}`}
+            fallbackText={post.author?.username || authorInitial}
+            className="avatar-circle"
+            style={{
+              borderRadius: '4px',
+              width: '44px',
+              height: '44px',
+              backgroundColor: 'var(--primary-light)',
+              color: 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              border: '1px solid rgba(99, 100, 255, 0.2)',
+              cursor: 'pointer',
+              overflow: 'hidden',
+            }}
+            imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onClick={handleAuthorProfileClick}
+          />
         </div>
 
         {/* Text Details Column */}
@@ -531,31 +542,49 @@ const PostItem: React.FC<PostItemProps> = ({
 
           {post.media?.length > 0 && (
             <div className={`post-media-grid media-count-${Math.min(post.media.length, 4)}`}>
-              {post.media.slice(0, 4).map((media: any) => (
-                <a
-                  key={media.id || media.url}
-                  href={resolveAssetUrl(media.url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="post-media-frame"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {media.media_type === 'video' ? (
-                    <video src={resolveAssetUrl(media.url)} controls />
-                  ) : (
-                    <img
-                      src={resolveAssetUrl(media.url)}
-                      alt=""
-                      loading="lazy"
-                      style={{
-                        objectPosition: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%`,
-                        transform: `scale(${getMediaCrop(media).zoom})`,
-                        transformOrigin: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%`,
-                      }}
-                    />
-                  )}
-                </a>
-              ))}
+              {post.media.slice(0, 4).map((media: any, index: number) => {
+                const key = mediaKey(media, index);
+                const isBroken = brokenMediaKeys.has(key) || !resolveAssetUrl(media.url);
+
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`post-media-frame ${isBroken ? 'media-broken' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isBroken && media.media_type !== 'video') {
+                        setOpenMedia(media);
+                      }
+                    }}
+                    disabled={isBroken}
+                    title={isBroken ? 'Media unavailable' : 'Open media'}
+                  >
+                    {isBroken ? (
+                      <span>Media unavailable</span>
+                    ) : media.media_type === 'video' ? (
+                      <video
+                        src={resolveAssetUrl(media.url)}
+                        controls
+                        onClick={(e) => e.stopPropagation()}
+                        onError={() => markMediaBroken(media, index)}
+                      />
+                    ) : (
+                      <img
+                        src={resolveAssetUrl(media.url)}
+                        alt=""
+                        loading="lazy"
+                        onError={() => markMediaBroken(media, index)}
+                        style={{
+                          objectPosition: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%`,
+                          transform: `scale(${getMediaCrop(media).zoom})`,
+                          transformOrigin: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%`,
+                        }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -622,21 +651,14 @@ const PostItem: React.FC<PostItemProps> = ({
                 return (
                   <div key={mc.id} className="matched-comment-snippet">
                     <div className="matched-comment-avatar">
-                      {mc.author.avatar_url ? (
-                        <img
-                          src={resolveAssetUrl(mc.author.avatar_url)}
-                          alt={mc.author.username}
-                          onClick={(e) => goToProfile(e, mc.author.username)}
-                        />
-                      ) : (
-                        <button
-                          type="button"
-                          className="mini-profile-button"
-                          onClick={(e) => goToProfile(e, mc.author.username)}
-                        >
-                          <User size={12} />
-                        </button>
-                      )}
+                      <SafeAvatar
+                        src={mc.author.avatar_url}
+                        alt={mc.author.username}
+                        fallbackText={mc.author.username}
+                        className="mini-profile-button"
+                        imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onClick={(e) => goToProfile(e, mc.author.username)}
+                      />
                     </div>
                     <div className="matched-comment-body">
                       <span
@@ -697,21 +719,14 @@ const PostItem: React.FC<PostItemProps> = ({
                     return (
                     <div key={comment.id} className="comment-item">
                       <div className="comment-avatar">
-                        {comment.author?.avatar_url ? (
-                          <img
-                            src={resolveAssetUrl(comment.author.avatar_url)}
-                            alt={comment.author.username}
-                            onClick={(e) => goToProfile(e, comment.author?.username)}
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            className="mini-profile-button"
-                            onClick={(e) => goToProfile(e, comment.author?.username)}
-                          >
-                            <User size={14} />
-                          </button>
-                        )}
+                        <SafeAvatar
+                          src={comment.author?.avatar_url}
+                          alt={comment.author?.username || `user_${comment.author_id}`}
+                          fallbackText={comment.author?.username}
+                          className="mini-profile-button"
+                          imgStyle={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onClick={(e) => goToProfile(e, comment.author?.username)}
+                        />
                       </div>
                       <div className="comment-details">
                         <div className="comment-header">
@@ -762,6 +777,26 @@ const PostItem: React.FC<PostItemProps> = ({
           )}
         </div>
       </div>
+
+      {openMedia && (
+        <div className="media-lightbox-overlay" onClick={() => setOpenMedia(null)}>
+          <div className="media-lightbox" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="media-lightbox-close"
+              title="Close"
+              onClick={() => setOpenMedia(null)}
+            >
+              <X size={20} />
+            </button>
+            {openMedia.media_type === 'video' ? (
+              <video src={resolveAssetUrl(openMedia.url)} controls autoPlay />
+            ) : (
+              <img src={resolveAssetUrl(openMedia.url)} alt="" />
+            )}
+          </div>
+        </div>
+      )}
 
       {cropDraft && editMedia[cropDraft.index] && (
         <div className="crop-modal-overlay" onClick={() => setCropDraft(null)}>
@@ -1085,6 +1120,10 @@ const PostItem: React.FC<PostItemProps> = ({
           min-height: 160px;
           max-height: 360px;
           background: rgba(255, 255, 255, 0.04);
+          border: none;
+          padding: 0;
+          cursor: zoom-in;
+          text-align: inherit;
         }
 
         .post-media-frame img,
@@ -1095,6 +1134,77 @@ const PostItem: React.FC<PostItemProps> = ({
           max-height: inherit;
           object-fit: cover;
           display: block;
+        }
+
+        .post-media-frame:not(.media-broken):hover img {
+          filter: brightness(0.92);
+        }
+
+        .post-media-frame.media-broken {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: var(--text-muted);
+          font-size: 13px;
+          font-weight: 700;
+          cursor: default;
+        }
+
+        .post-media-frame.media-broken img,
+        .post-media-frame.media-broken video {
+          display: none;
+        }
+
+        .media-lightbox-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 300;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 28px;
+          background: rgba(0, 0, 0, 0.82);
+        }
+
+        .media-lightbox {
+          position: relative;
+          max-width: min(96vw, 1180px);
+          max-height: 92vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .media-lightbox img,
+        .media-lightbox video {
+          max-width: 100%;
+          max-height: 92vh;
+          object-fit: contain;
+          border-radius: 8px;
+          background: #000;
+          box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .media-lightbox-close {
+          position: absolute;
+          top: -18px;
+          right: -18px;
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(15, 17, 26, 0.92);
+          color: #fff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 1;
+        }
+
+        .media-lightbox-close:hover {
+          background: rgba(255, 255, 255, 0.14);
         }
 
         .post-tag-row {
