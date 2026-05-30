@@ -13,9 +13,10 @@ interface SidebarRightProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   showComposer?: boolean;
+  onHashtagClick?: (tagName: string) => void;
 }
 
-const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery, showComposer = true }) => {
+const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery, showComposer = true, onHashtagClick }) => {
   const navigate = useNavigate();
   const [trends, setTrends] = useState<TrendingHashtag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +54,18 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && localQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(localQuery.trim())}`);
+    }
+  };
+
+  const handleTrendClick = (tagName: string) => {
+    const cleanTag = tagName.replace(/^#/, '').trim();
+    if (!cleanTag) return;
+    setLocalQuery('');
+    setSearchQuery('');
+    if (onHashtagClick) {
+      onHashtagClick(cleanTag);
+    } else {
+      navigate(`/feed?tag=${encodeURIComponent(cleanTag)}`);
     }
   };
 
@@ -133,7 +146,12 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
                 <div
                   key={trend.id}
                   className="trending-item"
-                  onClick={() => navigate(`/hashtag/${trend.name}`)}
+                  onClick={() => handleTrendClick(trend.name)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') handleTrendClick(trend.name);
+                  }}
                 >
                   <div className="trend-meta">{t('sidebar_trend_meta')}</div>
                   <div className="trend-name-row">

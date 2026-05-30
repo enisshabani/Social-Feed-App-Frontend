@@ -7,6 +7,7 @@ interface MainLayoutProps {
   currentTab: 'home' | 'explore' | 'bookmarks';
   setCurrentTab: (tab: 'home' | 'explore' | 'bookmarks') => void;
   onPostClick?: () => void;
+  onHashtagClick?: (tagName: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   showSidebarComposer?: boolean;
@@ -17,6 +18,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   currentTab,
   setCurrentTab,
   onPostClick,
+  onHashtagClick,
   searchQuery,
   setSearchQuery,
   showSidebarComposer = true,
@@ -28,6 +30,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         showComposer={showSidebarComposer}
+        onHashtagClick={onHashtagClick}
       />
 
       {/* Center Feed Component */}

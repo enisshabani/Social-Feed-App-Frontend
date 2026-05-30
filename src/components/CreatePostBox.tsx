@@ -8,7 +8,6 @@ import {
   Image,
   Lock,
   Smile,
-  Video,
   X,
 } from 'lucide-react';
 import { PostService } from '../services/post.service';

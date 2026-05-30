@@ -139,7 +139,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
 
   return (
     <div className="post-action-bar">
-      <button className="action-btn comment-action" onClick={onCommentClick} title="Komentar">
+      <button type="button" className="action-btn comment-action" onClick={onCommentClick} title="Komentar">
         <div className="icon-wrapper">
           <MessageSquare size={18} />
         </div>
@@ -147,6 +147,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       </button>
 
       <button
+        type="button"
         className={`action-btn repost-action ${reposted ? 'active' : ''}`}
         onClick={handleRepostClick}
         disabled={busyAction !== null}
@@ -160,6 +161,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
 
       <div className="reaction-shell">
         <button
+          type="button"
           className={`action-btn like-action ${liked ? 'active' : ''}`}
           onClick={handleLikeClick}
           disabled={busyAction !== null}
@@ -187,6 +189,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
       </div>
 
       <button
+        type="button"
         className={`action-btn bookmark-action ${bookmarked ? 'active' : ''}`}
         onClick={handleBookmarkClick}
         disabled={busyAction !== null}
@@ -202,6 +205,8 @@ const ActionBar: React.FC<ActionBarProps> = ({
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 8px;
+          width: 100%;
           max-width: 425px;
           margin-top: 12px;
           color: var(--text-dimmed);
@@ -211,6 +216,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
           display: flex;
           align-items: center;
           gap: 6px;
+          min-width: 0;
           background: transparent;
           border: none;
           cursor: pointer;
@@ -244,6 +250,7 @@ const ActionBar: React.FC<ActionBarProps> = ({
 
         .reaction-shell {
           position: relative;
+          flex: 0 0 auto;
         }
 
         .reaction-picker {
@@ -253,6 +260,8 @@ const ActionBar: React.FC<ActionBarProps> = ({
           display: flex;
           gap: 4px;
           padding: 6px;
+          max-width: calc(100vw - 32px);
+          box-sizing: border-box;
           border: 1px solid var(--border);
           border-radius: 999px;
           background: var(--bg-panel-solid);
@@ -262,6 +271,15 @@ const ActionBar: React.FC<ActionBarProps> = ({
           pointer-events: none;
           transition: opacity 0.18s ease, transform 0.18s ease;
           z-index: 5;
+        }
+
+        .reaction-picker::after {
+          content: '';
+          position: absolute;
+          bottom: -16px;
+          left: 0;
+          right: 0;
+          height: 16px;
         }
 
         .reaction-shell:hover .reaction-picker,
@@ -274,12 +292,16 @@ const ActionBar: React.FC<ActionBarProps> = ({
         .reaction-option {
           width: 32px;
           height: 32px;
+          flex: 0 0 32px;
           border: none;
           border-radius: 50%;
           background: transparent;
           cursor: pointer;
           font-size: 18px;
           line-height: 1;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           transition: transform 0.16s ease, background-color 0.16s ease;
         }
 
@@ -292,6 +314,9 @@ const ActionBar: React.FC<ActionBarProps> = ({
         .reaction-main-emoji {
           font-size: 17px;
           line-height: 1;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .comment-action:hover {

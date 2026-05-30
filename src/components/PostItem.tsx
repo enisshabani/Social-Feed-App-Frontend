@@ -7,6 +7,7 @@ import type { MatchContext } from '../services/search.service';
 import ActionBar from './ActionBar';
 import SentimentBadge from './SentimentBadge';
 import { getLoggedInUser } from './SidebarLeft';
+import { useAuth } from '../context/AuthContext';
 import { resolveAssetUrl, resolveAssetUrlCandidates } from '../utils/assets';
 import { imageFileToDataUrl } from '../utils/mediaFiles';
 import SafeAvatar from './SafeAvatar';
@@ -28,9 +29,12 @@ const PostItem: React.FC<PostItemProps> = ({
   isBookmarkedInitially = false,
   onOpenDetails,
 }) => {
-  const currentUser = getLoggedInUser();
+  const { user: authUser } = useAuth();
+  const tokenUser = getLoggedInUser();
+  const currentUser = authUser || tokenUser;
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [editMedia, setEditMedia] = useState<MediaInput[]>(
     (post.media || []).map((media: any) => ({
@@ -189,12 +193,15 @@ const PostItem: React.FC<PostItemProps> = ({
   };
 
   const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (!window.confirm('A jeni i sigurt që dëshironi ta fshini këtë postim?')) return;
 
     try {
       await PostService.deletePost(post.id);
+      setIsDeleted(true);
       onPostUpdated();
+      window.dispatchEvent(new Event('postDeleted'));
     } catch (err) {
       alert('Gabim gjatë fshirjes së postimit.');
     }
@@ -280,7 +287,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const authorInitial = post.author?.username ? post.author.username.charAt(0).toUpperCase() : 'U';
   const displayName = post.author?.display_name || post.author?.username || `User ${post.author_id}`;
   const handleTagClick = (tagName: string) => {
-    navigate(`/hashtag/${encodeURIComponent(tagName)}`);
+    navigate(`/feed?tag=${encodeURIComponent(tagName.replace(/^#/, ''))}`);
   };
 
   const handleEditFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -338,6 +345,8 @@ const PostItem: React.FC<PostItemProps> = ({
     if (target.closest('button, a, input, textarea, select, video')) return;
     onOpenDetails?.(post);
   };
+
+  if (isDeleted) return null;
 
   return (
     <article className={`post-item-wrapper ${onOpenDetails ? 'clickable-post' : ''}`} onClick={handlePostOpen}>
@@ -416,6 +425,7 @@ const PostItem: React.FC<PostItemProps> = ({
                   <Edit2 size={14} />
                 </button>
                 <button
+                  type="button"
                   className="btn-icon btn-action-delete"
                   onClick={handleDelete}
                   title="Fshi postimin"

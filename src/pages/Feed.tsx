@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PostService } from '../services/post.service';
 import MainLayout from '../components/MainLayout';
@@ -15,6 +15,7 @@ const Feed: React.FC = () => {
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as 'home' | 'explore' | 'bookmarks') || 'home';
+  const initialTag = searchParams.get('tag');
   const [currentTab, setCurrentTab] = useState<'home' | 'explore' | 'bookmarks'>(initialTab);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,7 +28,7 @@ const Feed: React.FC = () => {
 
   // Search & Hashtag Filtering States
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(initialTag);
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Home Sub-tabs: 'forYou' (all posts) or 'following' (posts from users we follow)
@@ -50,6 +51,23 @@ const Feed: React.FC = () => {
       setSearchParams({});
     }
   };
+
+  const handleHashtagClick = (tagName: string) => {
+    const cleanTag = tagName.replace(/^#/, '').trim();
+    if (!cleanTag) return;
+    setSelectedTag(cleanTag);
+    setCurrentTab('home');
+    setSearchQuery('');
+    setSearchParams({ tag: cleanTag });
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const nextTab = (searchParams.get('tab') as 'home' | 'explore' | 'bookmarks') || 'home';
+    const nextTag = searchParams.get('tag');
+    setCurrentTab(nextTag ? 'home' : nextTab);
+    setSelectedTag(nextTag);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchPosts(0, false);
@@ -141,29 +159,13 @@ const Feed: React.FC = () => {
     feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleRefreshCheck = async () => {
+  const handleRefreshCheck = () => {
     if (loading) return;
-
-    try {
-      const res = selectedTag
-        ? await PostService.getPostsByTag(selectedTag, 0, pageSize)
-        : currentTab === 'bookmarks'
-          ? { items: await PostService.getBookmarks(0, pageSize), has_more: hasMore }
-          : await PostService.getHomeFeed(0, pageSize);
-      const items = res.items || [];
-      const currentTopId = posts[0]?.id;
-      const currentTopIndex = items.findIndex((item: any) => item.id === currentTopId);
-
-      if (currentTopId && currentTopIndex > 0) {
-        setNewPostsCount(currentTopIndex);
-      } else {
-        setPosts(items);
-        setHasMore(Boolean(res.has_more));
-        setNewPostsCount(0);
-      }
-    } catch {
-      setRefreshKey((prev) => prev + 1);
-    }
+    setPosts([]);
+    setHasMore(false);
+    setNewPostsCount(0);
+    setRefreshKey((prev) => prev + 1);
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const showNewPosts = () => {
@@ -174,6 +176,7 @@ const Feed: React.FC = () => {
 
   const handleDismissTag = () => {
     setSelectedTag(null);
+    setSearchParams({});
   };
 
   const handleScrollToTop = () => {
@@ -229,6 +232,7 @@ const Feed: React.FC = () => {
       searchQuery={searchQuery}
       setSearchQuery={setSearchQuery}
       showSidebarComposer={false}
+      onHashtagClick={handleHashtagClick}
     >
       <div ref={feedTopRef} />
 
@@ -415,10 +419,19 @@ const Feed: React.FC = () => {
       <style>{`
         .refresh-feed-btn {
           color: var(--primary);
+          flex: 0 0 auto;
+          width: 38px;
+          height: 38px;
+          margin-left: 12px;
         }
 
         .refresh-feed-btn:hover {
           background-color: var(--primary-light);
+        }
+
+        .refresh-feed-btn:disabled {
+          cursor: wait;
+          opacity: 0.72;
         }
 
         .feed-compose-shell {
