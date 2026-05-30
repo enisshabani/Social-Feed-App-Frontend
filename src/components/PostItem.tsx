@@ -572,7 +572,7 @@ const PostItem: React.FC<PostItemProps> = ({
                     ) : (
                       <img
                         src={resolveAssetUrl(media.url)}
-                        alt=""
+                        alt={media.meta?.alt || ''}
                         loading="lazy"
                         onError={() => markMediaBroken(media, index)}
                         style={{
