@@ -16,6 +16,7 @@ interface PostItemProps {
   matchContext?: MatchContext | null;
   highlightQuery?: string;
   isBookmarkedInitially?: boolean;
+  onOpenDetails?: (post: any) => void;
 }
 
 const PostItem: React.FC<PostItemProps> = ({
@@ -24,6 +25,7 @@ const PostItem: React.FC<PostItemProps> = ({
   matchContext,
   highlightQuery,
   isBookmarkedInitially = false,
+  onOpenDetails,
 }) => {
   const currentUser = getLoggedInUser();
   const navigate = useNavigate();
@@ -299,8 +301,14 @@ const PostItem: React.FC<PostItemProps> = ({
     setBrokenMediaKeys((prev) => new Set(prev).add(mediaKey(media, index)));
   };
 
+  const handlePostOpen = (event: React.MouseEvent<HTMLElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest('button, a, input, textarea, select, video')) return;
+    onOpenDetails?.(post);
+  };
+
   return (
-    <article className="post-item-wrapper">
+    <article className={`post-item-wrapper ${onOpenDetails ? 'clickable-post' : ''}`} onClick={handlePostOpen}>
       {/* Repost Indicator Header */}
       {post.is_repost && (
         <div className="repost-indicator">
@@ -633,6 +641,14 @@ const PostItem: React.FC<PostItemProps> = ({
             </div>
           )}
 
+          {isAuthor && !isEditing && (
+            <div className="post-analytics-mini">
+              <span>{post.like_count || 0} likes</span>
+              <span>{replyCount || 0} replies</span>
+              <span>{post.repost_count || 0} reposts</span>
+            </div>
+          )}
+
           {/* Search: matched comment indicators */}
           {matchContext && !matchContext.post_match && matchContext.matched_comments.length > 0 && (
             <div className="match-context-badge">
@@ -894,6 +910,10 @@ const PostItem: React.FC<PostItemProps> = ({
 
         .post-item-wrapper:hover {
           background-color: rgba(255, 255, 255, 0.025);
+        }
+
+        .post-item-wrapper.clickable-post {
+          cursor: pointer;
         }
 
         .repost-indicator {
@@ -1318,6 +1338,16 @@ const PostItem: React.FC<PostItemProps> = ({
 
         .post-tag-chip:hover {
           background: rgba(99, 100, 255, 0.16);
+        }
+
+        .post-analytics-mini {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-top: 10px;
+          color: var(--text-dimmed);
+          font-size: 12px;
+          font-weight: 700;
         }
 
         .sentiment-row {

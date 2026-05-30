@@ -126,7 +126,7 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
               {t('sidebar_trending_empty')}
             </div>
           ) : (
-            trends.map((trend) => {
+            trends.map((trend, index) => {
               const totalUses = trend.history.reduce((sum, h) => sum + h.uses, 0);
               const maxUses = Math.max(...trend.history.map(h => h.uses), 1);
               return (
@@ -136,18 +136,21 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
                   onClick={() => navigate(`/hashtag/${trend.name}`)}
                 >
                   <div className="trend-meta">{t('sidebar_trend_meta')}</div>
-                  <div className="trend-name">#{trend.name}</div>
+                  <div className="trend-name-row">
+                    <div className="trend-name">#{trend.name}</div>
+                    <span className="trend-rank">#{index + 1}</span>
+                  </div>
                   <div className="trend-count">
                     <TrendingUp size={12} style={{ marginRight: '4px' }} />
                     {totalUses} {t('sidebar_trend_count')}
                   </div>
-                  <div className="trend-dots">
+                  <div className="trend-bars" aria-hidden="true">
                     {trend.history.slice(-5).map((h, i) => (
                       <span
                         key={i}
-                        className="trend-dot"
+                        className="trend-bar"
                         style={{
-                          opacity: 0.3 + (h.uses / maxUses) * 0.7,
+                          height: `${8 + (h.uses / maxUses) * 22}px`,
                         }}
                       />
                     ))}
@@ -328,11 +331,24 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
           color: var(--text-dimmed);
         }
 
+        .trend-name-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          margin-top: 2px;
+        }
+
         .trend-name {
           font-size: 16px;
           font-weight: 700;
           color: var(--text-main);
-          margin-top: 2px;
+        }
+
+        .trend-rank {
+          color: var(--primary);
+          font-size: 12px;
+          font-weight: 800;
         }
 
         .trend-count {
@@ -343,17 +359,20 @@ const SidebarRight: React.FC<SidebarRightProps> = ({ searchQuery, setSearchQuery
           margin-top: 4px;
         }
 
-        .trend-dots {
+        .trend-bars {
           display: flex;
-          gap: 4px;
-          margin-top: 6px;
+          align-items: flex-end;
+          gap: 3px;
+          height: 32px;
+          margin-top: 8px;
         }
 
-        .trend-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: var(--primary);
+        .trend-bar {
+          width: 100%;
+          max-width: 22px;
+          min-width: 8px;
+          border-radius: 999px 999px 2px 2px;
+          background: linear-gradient(180deg, var(--primary), rgba(99, 100, 255, 0.32));
         }
 
         .trending-empty {
