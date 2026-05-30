@@ -32,11 +32,6 @@ export const getCurrentTenantId = (): string => {
     return tokenTenant;
   }
 
-  const pathParts = window.location.pathname.split('/');
-  if (pathParts.length > 2 && pathParts[1] === 't') {
-    return pathParts[2];
-  }
-
   const hostname = window.location.hostname.toLowerCase();
   if (LOCAL_HOSTS.has(hostname)) {
     return 'default';
