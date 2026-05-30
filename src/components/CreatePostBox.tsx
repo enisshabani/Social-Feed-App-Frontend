@@ -46,7 +46,6 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
-  const [showMediaInput, setShowMediaInput] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [pollActive, setPollActive] = useState(false);
@@ -56,17 +55,18 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const [cropX, setCropX] = useState(50);
   const [cropY, setCropY] = useState(50);
   const [cropZoom, setCropZoom] = useState(1);
-  const [cropBox, setCropBox] = useState({ x: 12, y: 12, size: 76 });
+  const [cropBox, setCropBox] = useState({ x: 12, y: 12, width: 76, height: 76 });
   const [isDraggingCrop, setIsDraggingCrop] = useState(false);
   const cropStageRef = useRef<HTMLDivElement>(null);
   const cropDragRef = useRef({
     pointerId: 0,
-    mode: 'move' as 'move' | 'resize',
+    mode: 'move' as string,
     startClientX: 0,
     startClientY: 0,
     startX: 12,
     startY: 12,
-    startSize: 76,
+    startWidth: 76,
+    startHeight: 76,
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -101,18 +101,18 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
   const resetCrop = () => {
-    setCropBox({ x: 12, y: 12, size: 76 });
+    setCropBox({ x: 12, y: 12, width: 76, height: 76 });
     setCropX(50);
     setCropY(50);
     setCropZoom(1);
   };
 
-  const updateCropFromBox = (box: { x: number; y: number; size: number }) => {
-    setCropX(clamp(box.x + (box.size / 2), 0, 100));
-    setCropY(clamp(box.y + (box.size / 2), 0, 100));
+  const updateCropFromBox = (box: { x: number; y: number; width: number; height: number }) => {
+    setCropX(clamp(box.x + (box.width / 2), 0, 100));
+    setCropY(clamp(box.y + (box.height / 2), 0, 100));
   };
 
-  const beginCropDrag = (mode: 'move' | 'resize', e: React.PointerEvent<HTMLElement>) => {
+  const beginCropDrag = (mode: string, e: React.PointerEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -123,7 +123,8 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
       startClientY: e.clientY,
       startX: cropBox.x,
       startY: cropBox.y,
-      startSize: cropBox.size,
+      startWidth: cropBox.width,
+      startHeight: cropBox.height,
     };
     setIsDraggingCrop(true);
   };
@@ -135,23 +136,42 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     const deltaX = ((e.clientX - cropDragRef.current.startClientX) / rect.width) * 100;
     const deltaY = ((e.clientY - cropDragRef.current.startClientY) / rect.height) * 100;
 
-    if (cropDragRef.current.mode === 'resize') {
-      const nextSize = clamp(
-        cropDragRef.current.startSize + Math.max(deltaX, deltaY),
-        28,
-        Math.min(100 - cropDragRef.current.startX, 100 - cropDragRef.current.startY)
-      );
-      const nextBox = { x: cropDragRef.current.startX, y: cropDragRef.current.startY, size: nextSize };
+    const { mode, startX, startY, startWidth, startHeight } = cropDragRef.current;
+
+    if (mode === 'move') {
+      const nextBox = {
+        ...cropBox,
+        x: clamp(startX + deltaX, 0, 100 - cropBox.width),
+        y: clamp(startY + deltaY, 0, 100 - cropBox.height),
+      };
       setCropBox(nextBox);
       updateCropFromBox(nextBox);
       return;
     }
 
-    const nextBox = {
-      ...cropBox,
-      x: clamp(cropDragRef.current.startX + deltaX, 0, 100 - cropBox.size),
-      y: clamp(cropDragRef.current.startY + deltaY, 0, 100 - cropBox.size),
-    };
+    let nextX = startX;
+    let nextY = startY;
+    let nextW = startWidth;
+    let nextH = startHeight;
+
+    if (mode.includes('e')) {
+      nextW = clamp(startWidth + deltaX, 10, 100 - startX);
+    }
+    if (mode.includes('s')) {
+      nextH = clamp(startHeight + deltaY, 10, 100 - startY);
+    }
+    if (mode.includes('w')) {
+      const newX = clamp(startX + deltaX, 0, startX + startWidth - 10);
+      nextW = startWidth + (startX - newX);
+      nextX = newX;
+    }
+    if (mode.includes('n')) {
+      const newY = clamp(startY + deltaY, 0, startY + startHeight - 10);
+      nextH = startHeight + (startY - newY);
+      nextY = newY;
+    }
+
+    const nextBox = { x: nextX, y: nextY, width: nextW, height: nextH };
     setCropBox(nextBox);
     updateCropFromBox(nextBox);
   };
@@ -165,7 +185,6 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     setContent('');
     setMediaUrl('');
     setMediaType('image');
-    setShowMediaInput(false);
     setWarningText('');
     setCwActive(false);
     setPollActive(false);
@@ -192,7 +211,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
       ? `CW: ${warningText.trim()}\n\n---\n\n${baseContent}`
       : baseContent;
     const mediaMeta = mediaType === 'image'
-      ? { cropX, cropY, cropZoom: Number((cropZoom * (100 / cropBox.size)).toFixed(2)), cropSize: cropBox.size }
+      ? { cropX, cropY, cropZoom: Number((cropZoom * (100 / Math.min(cropBox.width, cropBox.height))).toFixed(2)), cropWidth: cropBox.width, cropHeight: cropBox.height }
       : undefined;
     const media: MediaInput[] = hasMedia ? [{ url: normalizedMediaUrl, media_type: mediaType, meta: mediaMeta }] : [];
     const poll = hasValidPoll ? { question: pollQuestion.trim(), options: cleanPollOptions.slice(0, 4) } : undefined;
@@ -239,7 +258,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         setMediaUrl(uploaded.url);
         setMediaType(uploaded.media_type);
       }
-      setShowMediaInput(true);
+
     } catch {
       setErrorMessage(t('create_post_alert_upload_error'));
     } finally {
@@ -325,41 +344,21 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
               />
             </div>
 
-            {showMediaInput && (
+            {(hasMedia || uploadingMedia) && (
               <div className="compose-media-panel simple-compose-panel">
-                <div className="compose-panel-header">
-                  <div className="compose-media-type" role="group" aria-label="Media type">
-                    <button type="button" className={`compose-media-type-btn ${mediaType === 'image' ? 'active' : ''}`} onClick={() => setMediaType('image')}>
-                      <Image size={15} />
-                      {t('create_post_media_image')}
-                    </button>
-                    <button type="button" className={`compose-media-type-btn ${mediaType === 'video' ? 'active' : ''}`} onClick={() => setMediaType('video')}>
-                      <Video size={15} />
-                      {t('create_post_media_video')}
-                    </button>
-                  </div>
+                <div className="compose-panel-header" style={{ justifyContent: 'space-between' }}>
+                  <span className="text-sm font-semibold">{uploadingMedia ? t('create_post_uploading') + '...' : 'Media Preview'}</span>
                   <button
                     type="button"
                     className="compose-media-close"
                     title="Remove media"
                     onClick={() => {
                       setMediaUrl('');
-                      setShowMediaInput(false);
                     }}
                   >
                     <X size={16} />
                   </button>
                 </div>
-                <input
-                  type="text"
-                  value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
-                  className="compose-media-url"
-                  placeholder={mediaType === 'image' ? 'Paste image URL or upload' : 'Paste video URL or upload'}
-                />
-                <button type="button" className="compose-media-upload-btn" onClick={() => fileInputRef.current?.click()} disabled={uploadingMedia}>
-                  {uploadingMedia ? t('create_post_uploading') : t('create_post_media_upload')}
-                </button>
                 {normalizedMediaUrl && isValidMediaUrl(normalizedMediaUrl) && (
                   <div
                     ref={cropStageRef}
@@ -386,15 +385,51 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                           style={{
                             left: `${cropBox.x}%`,
                             top: `${cropBox.y}%`,
-                            width: `${cropBox.size}%`,
-                            height: `${cropBox.size}%`,
+                            width: `${cropBox.width}%`,
+                            height: `${cropBox.height}%`,
                           }}
                           onPointerDown={(e) => beginCropDrag('move', e)}
                         >
                           <span className="compose-crop-grid" />
                           <span
                             className="compose-crop-resize"
-                            onPointerDown={(e) => beginCropDrag('resize', e)}
+                            style={{ cursor: 'nw-resize', top: -8, left: -8, right: 'auto', bottom: 'auto' }}
+                            onPointerDown={(e) => beginCropDrag('nw', e)}
+                          />
+                          <span
+                            className="compose-crop-resize"
+                            style={{ cursor: 'n-resize', top: -8, left: '50%', transform: 'translateX(-50%)', right: 'auto', bottom: 'auto' }}
+                            onPointerDown={(e) => beginCropDrag('n', e)}
+                          />
+                          <span
+                            className="compose-crop-resize"
+                            style={{ cursor: 'ne-resize', top: -8, right: -8, left: 'auto', bottom: 'auto' }}
+                            onPointerDown={(e) => beginCropDrag('ne', e)}
+                          />
+                          <span
+                            className="compose-crop-resize"
+                            style={{ cursor: 'e-resize', top: '50%', right: -8, transform: 'translateY(-50%)', left: 'auto', bottom: 'auto' }}
+                            onPointerDown={(e) => beginCropDrag('e', e)}
+                          />
+                          <span
+                            className="compose-crop-resize"
+                            style={{ cursor: 'se-resize', bottom: -8, right: -8, left: 'auto', top: 'auto' }}
+                            onPointerDown={(e) => beginCropDrag('se', e)}
+                          />
+                          <span
+                            className="compose-crop-resize"
+                            style={{ cursor: 's-resize', bottom: -8, left: '50%', transform: 'translateX(-50%)', right: 'auto', top: 'auto' }}
+                            onPointerDown={(e) => beginCropDrag('s', e)}
+                          />
+                          <span
+                            className="compose-crop-resize"
+                            style={{ cursor: 'sw-resize', bottom: -8, left: -8, right: 'auto', top: 'auto' }}
+                            onPointerDown={(e) => beginCropDrag('sw', e)}
+                          />
+                          <span
+                            className="compose-crop-resize"
+                            style={{ cursor: 'w-resize', top: '50%', left: -8, transform: 'translateY(-50%)', right: 'auto', bottom: 'auto' }}
+                            onPointerDown={(e) => beginCropDrag('w', e)}
                           />
                         </div>
                         <div className="compose-crop-hint">Move or resize crop</div>
@@ -461,7 +496,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         <div className="mastodon-toolbar">
           <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileSelected} style={{ display: 'none' }} />
           <div className="mastodon-toolbar-left">
-            <button type="button" className={`btn-mastodon-tool ${showMediaInput ? 'active' : ''}`} title="Photo or video" onClick={() => setShowMediaInput((value) => !value)}>
+            <button type="button" className={`btn-mastodon-tool ${hasMedia ? 'active' : ''}`} title="Photo or video" onClick={() => fileInputRef.current?.click()} disabled={uploadingMedia}>
               <Image size={18} />
             </button>
             <button type="button" className={`btn-mastodon-tool ${pollActive ? 'active' : ''}`} title="Poll" onClick={() => setPollActive((value) => !value)}>
