@@ -46,7 +46,6 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
-  const [showMediaInput, setShowMediaInput] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [pollActive, setPollActive] = useState(false);
@@ -165,7 +164,6 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     setContent('');
     setMediaUrl('');
     setMediaType('image');
-    setShowMediaInput(false);
     setWarningText('');
     setCwActive(false);
     setPollActive(false);
@@ -239,7 +237,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         setMediaUrl(uploaded.url);
         setMediaType(uploaded.media_type);
       }
-      setShowMediaInput(true);
+
     } catch {
       setErrorMessage(t('create_post_alert_upload_error'));
     } finally {
@@ -325,41 +323,21 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
               />
             </div>
 
-            {showMediaInput && (
+            {(hasMedia || uploadingMedia) && (
               <div className="compose-media-panel simple-compose-panel">
-                <div className="compose-panel-header">
-                  <div className="compose-media-type" role="group" aria-label="Media type">
-                    <button type="button" className={`compose-media-type-btn ${mediaType === 'image' ? 'active' : ''}`} onClick={() => setMediaType('image')}>
-                      <Image size={15} />
-                      {t('create_post_media_image')}
-                    </button>
-                    <button type="button" className={`compose-media-type-btn ${mediaType === 'video' ? 'active' : ''}`} onClick={() => setMediaType('video')}>
-                      <Video size={15} />
-                      {t('create_post_media_video')}
-                    </button>
-                  </div>
+                <div className="compose-panel-header" style={{ justifyContent: 'space-between' }}>
+                  <span className="text-sm font-semibold">{uploadingMedia ? t('create_post_uploading') + '...' : 'Media Preview'}</span>
                   <button
                     type="button"
                     className="compose-media-close"
                     title="Remove media"
                     onClick={() => {
                       setMediaUrl('');
-                      setShowMediaInput(false);
                     }}
                   >
                     <X size={16} />
                   </button>
                 </div>
-                <input
-                  type="text"
-                  value={mediaUrl}
-                  onChange={(e) => setMediaUrl(e.target.value)}
-                  className="compose-media-url"
-                  placeholder={mediaType === 'image' ? 'Paste image URL or upload' : 'Paste video URL or upload'}
-                />
-                <button type="button" className="compose-media-upload-btn" onClick={() => fileInputRef.current?.click()} disabled={uploadingMedia}>
-                  {uploadingMedia ? t('create_post_uploading') : t('create_post_media_upload')}
-                </button>
                 {normalizedMediaUrl && isValidMediaUrl(normalizedMediaUrl) && (
                   <div
                     ref={cropStageRef}
@@ -461,7 +439,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
         <div className="mastodon-toolbar">
           <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileSelected} style={{ display: 'none' }} />
           <div className="mastodon-toolbar-left">
-            <button type="button" className={`btn-mastodon-tool ${showMediaInput ? 'active' : ''}`} title="Photo or video" onClick={() => setShowMediaInput((value) => !value)}>
+            <button type="button" className={`btn-mastodon-tool ${hasMedia ? 'active' : ''}`} title="Photo or video" onClick={() => fileInputRef.current?.click()} disabled={uploadingMedia}>
               <Image size={18} />
             </button>
             <button type="button" className={`btn-mastodon-tool ${pollActive ? 'active' : ''}`} title="Poll" onClick={() => setPollActive((value) => !value)}>
