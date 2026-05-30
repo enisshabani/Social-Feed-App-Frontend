@@ -25,17 +25,28 @@ const getPublicBackendRoot = () => {
 };
 
 export const resolveAssetUrl = (value?: string | null) => {
-  if (!value) return '';
-  if (value.startsWith('data:')) return value;
+  return resolveAssetUrlCandidates(value)[0] || '';
+};
+
+export const resolveAssetUrlCandidates = (value?: string | null) => {
+  if (!value) return [];
+  if (value.startsWith('data:')) return [value];
+
+  const candidates: string[] = [];
+  const addCandidate = (candidate?: string) => {
+    if (candidate && !candidates.includes(candidate)) {
+      candidates.push(candidate);
+    }
+  };
 
   // Case 1: Relative URLs like /uploads/...
   if (value.startsWith('/')) {
     const publicRoot = getPublicBackendRoot();
     if (publicRoot) {
-      return `${publicRoot}${value}`;
+      addCandidate(`${publicRoot}${value}`);
     }
-    // Fallback to local server proxy
-    return value;
+    addCandidate(value);
+    return candidates;
   }
 
   try {
@@ -48,22 +59,26 @@ export const resolveAssetUrl = (value?: string | null) => {
       
       // If deployed on a real domain, localhost URLs are broken to other users
       if (isBrowser && !LOCAL_HOSTS.has(pageHost)) {
-        return ''; // Mark as broken
+        return []; // Mark as broken
       }
 
       // If we are developing locally, resolve them correctly
       const publicRoot = getPublicBackendRoot();
       if (publicRoot) {
-        return `${publicRoot}${parsed.pathname}${parsed.search}${parsed.hash}`;
+        addCandidate(`${publicRoot}${parsed.pathname}${parsed.search}${parsed.hash}`);
       }
-      return value;
+      addCandidate(value);
+      addCandidate(`${parsed.pathname}${parsed.search}${parsed.hash}`);
+      return candidates;
     }
 
     // Case 3: Public HTTPS URLs (Cloudinary, S3, Firebase, etc.)
-    return value;
+    addCandidate(value);
+    return candidates;
   } catch {
     // If not a valid URL, just return it as fallback
-    return value;
+    addCandidate(value);
+    return candidates;
   }
 };
 

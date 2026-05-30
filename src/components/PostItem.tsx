@@ -7,7 +7,8 @@ import type { MatchContext } from '../services/search.service';
 import ActionBar from './ActionBar';
 import SentimentBadge from './SentimentBadge';
 import { getLoggedInUser } from './SidebarLeft';
-import { resolveAssetUrl } from '../utils/assets';
+import { resolveAssetUrl, resolveAssetUrlCandidates } from '../utils/assets';
+import { imageFileToDataUrl } from '../utils/mediaFiles';
 import SafeAvatar from './SafeAvatar';
 
 interface PostItemProps {
@@ -55,6 +56,7 @@ const PostItem: React.FC<PostItemProps> = ({
   const [votingPoll, setVotingPoll] = useState(false);
   const [openMedia, setOpenMedia] = useState<any | null>(null);
   const [brokenMediaKeys, setBrokenMediaKeys] = useState<Set<string>>(new Set());
+  const [mediaCandidateIndex, setMediaCandidateIndex] = useState<Record<string, number>>({});
 
   // Content Warning Expanded state
   const [cwExpanded, setCwExpanded] = useState(false);
@@ -71,6 +73,7 @@ const PostItem: React.FC<PostItemProps> = ({
     setSelectedPollOption(null);
     setOpenMedia(null);
     setBrokenMediaKeys(new Set());
+    setMediaCandidateIndex({});
   }, [post.content, post.media, post.reply_count, post.poll]);
 
   useEffect(() => {
@@ -270,8 +273,12 @@ const PostItem: React.FC<PostItemProps> = ({
 
     setUploadingEditMedia(true);
     try {
-      const uploaded = await PostService.uploadPostMedia(file);
-      setEditMedia([{ ...uploaded, meta: { cropX: 50, cropY: 50 } }]);
+      if (file.type.startsWith('image/')) {
+        setEditMedia([{ url: await imageFileToDataUrl(file), media_type: 'image', meta: { cropX: 50, cropY: 50 } }]);
+      } else {
+        const uploaded = await PostService.uploadPostMedia(file);
+        setEditMedia([{ ...uploaded, meta: { cropX: 50, cropY: 50 } }]);
+      }
     } catch {
       alert('Gabim gjate ngarkimit te imazhit.');
     } finally {
@@ -299,6 +306,15 @@ const PostItem: React.FC<PostItemProps> = ({
   const mediaKey = (media: any, index: number) => String(media.id || media.url || index);
   const markMediaBroken = (media: any, index: number) => {
     setBrokenMediaKeys((prev) => new Set(prev).add(mediaKey(media, index)));
+  };
+  const handleMediaError = (media: any, index: number, candidates: string[]) => {
+    const key = mediaKey(media, index);
+    const currentIndex = mediaCandidateIndex[key] || 0;
+    if (currentIndex < candidates.length - 1) {
+      setMediaCandidateIndex((prev) => ({ ...prev, [key]: currentIndex + 1 }));
+      return;
+    }
+    markMediaBroken(media, index);
   };
 
   const handlePostOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -548,11 +564,15 @@ const PostItem: React.FC<PostItemProps> = ({
             )}
           </div>
 
-          {post.media?.length > 0 && (
-            <div className={`post-media-grid media-count-${Math.min(post.media.length, 4)}`}>
+          {post.media?.some((media: any, index: number) => !brokenMediaKeys.has(mediaKey(media, index))) && (
+            <div className={`post-media-grid media-count-${Math.min(post.media.filter((media: any, index: number) => !brokenMediaKeys.has(mediaKey(media, index))).length, 4)}`}>
               {post.media.slice(0, 4).map((media: any, index: number) => {
                 const key = mediaKey(media, index);
-                const isBroken = brokenMediaKeys.has(key) || !resolveAssetUrl(media.url);
+                if (brokenMediaKeys.has(key)) return null;
+                const candidates = resolveAssetUrlCandidates(media.url);
+                const candidateIndex = mediaCandidateIndex[key] || 0;
+                const resolvedMediaUrl = candidates[candidateIndex] || '';
+                const isBroken = brokenMediaKeys.has(key) || !resolvedMediaUrl;
 
                 return (
                   <button
@@ -568,21 +588,19 @@ const PostItem: React.FC<PostItemProps> = ({
                     disabled={isBroken}
                     title={isBroken ? 'Media unavailable' : 'Open media'}
                   >
-                    {isBroken ? (
-                      <span>Media unavailable</span>
-                    ) : media.media_type === 'video' ? (
+                    {isBroken ? null : media.media_type === 'video' ? (
                       <video
-                        src={resolveAssetUrl(media.url)}
+                        src={resolvedMediaUrl}
                         controls
                         onClick={(e) => e.stopPropagation()}
-                        onError={() => markMediaBroken(media, index)}
+                        onError={() => handleMediaError(media, index, candidates)}
                       />
                     ) : (
                       <img
-                        src={resolveAssetUrl(media.url)}
+                        src={resolvedMediaUrl}
                         alt={media.meta?.alt || ''}
                         loading="lazy"
-                        onError={() => markMediaBroken(media, index)}
+                        onError={() => handleMediaError(media, index, candidates)}
                         style={{
                           objectPosition: `${getMediaCrop(media).x}% ${getMediaCrop(media).y}%`,
                           transform: `scale(${getMediaCrop(media).zoom})`,

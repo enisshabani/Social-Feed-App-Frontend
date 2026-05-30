@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { User } from 'lucide-react';
-import { resolveAssetUrl } from '../utils/assets';
+import { resolveAssetUrlCandidates } from '../utils/assets';
 
 interface SafeAvatarProps {
   src?: string | null;
@@ -26,12 +26,15 @@ const SafeAvatar: React.FC<SafeAvatarProps> = ({
   onClick,
 }) => {
   const [failed, setFailed] = useState(false);
+  const [candidateIndex, setCandidateIndex] = useState(0);
 
   useEffect(() => {
     setFailed(false);
+    setCandidateIndex(0);
   }, [src]);
 
-  const resolvedSrc = src && !failed ? resolveAssetUrl(src) : '';
+  const candidates = src && !failed ? resolveAssetUrlCandidates(src) : [];
+  const resolvedSrc = candidates[candidateIndex] || '';
   const fallback = fallbackText?.trim()?.charAt(0).toUpperCase();
 
   return (
@@ -49,7 +52,13 @@ const SafeAvatar: React.FC<SafeAvatarProps> = ({
           src={resolvedSrc}
           alt={alt}
           style={{ width: '100%', height: '100%', objectFit: 'cover', ...imgStyle }}
-          onError={() => setFailed(true)}
+          onError={() => {
+            if (candidateIndex < candidates.length - 1) {
+              setCandidateIndex((index) => index + 1);
+            } else {
+              setFailed(true);
+            }
+          }}
         />
       ) : (
         fallback || <User size={20} />

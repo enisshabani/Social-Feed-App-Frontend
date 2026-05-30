@@ -18,6 +18,7 @@ import AiAssistButton from './AiAssistButton';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { resolveAssetUrl } from '../utils/assets';
+import { imageFileToDataUrl } from '../utils/mediaFiles';
 import SafeAvatar from './SafeAvatar';
 
 interface CreatePostBoxProps {
@@ -146,9 +147,14 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     setUploadingMedia(true);
     setErrorMessage('');
     try {
-      const uploaded = await PostService.uploadPostMedia(file);
-      setMediaUrl(uploaded.url);
-      setMediaType(uploaded.media_type);
+      if (file.type.startsWith('image/')) {
+        setMediaUrl(await imageFileToDataUrl(file));
+        setMediaType('image');
+      } else {
+        const uploaded = await PostService.uploadPostMedia(file);
+        setMediaUrl(uploaded.url);
+        setMediaType(uploaded.media_type);
+      }
       setShowMediaInput(true);
     } catch {
       setErrorMessage(t('create_post_alert_upload_error'));
