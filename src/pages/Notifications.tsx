@@ -9,6 +9,7 @@ import type { FollowResponse } from '../modules/follows/types';
 import notificationsApi from '../modules/notifications/api/notificationsApi';
 import type { NotificationPreference } from '../modules/notifications/types';
 import SafeAvatar from '../components/SafeAvatar';
+import { useLanguage } from '../context/LanguageContext';
 import '../styles/globals.css';
 
 const getRelativeTime = (dateString: string): string => {
@@ -24,17 +25,6 @@ const getRelativeTime = (dateString: string): string => {
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays < 30) return `${diffDays}d`;
   return date.toLocaleDateString();
-};
-
-const getTypeLabel = (type: string): string => {
-  switch (type) {
-    case 'FOLLOW': return 'filloi t\'ju ndjekë';
-    case 'LIKE': return 'i pëlqeu postimin tuaj';
-    case 'REPOST': return 'ripostoi postimin tuaj';
-    case 'MENTION': return 'ju përmendi në një postim';
-    case 'COMMENT': return 'komentoi postimin tuaj';
-    default: return 'ndërveproi me ju';
-  }
 };
 
 const typeColors: Record<string, string> = {
@@ -60,8 +50,20 @@ const TypeIcon: React.FC<{ type: string }> = ({ type }) => {
 const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boolean }> = ({ notif, highlightUnread }) => {
   const navigate = useNavigate();
   const { markAsReadById, deleteNotificationById } = useNotifications();
+  const { t } = useLanguage();
   const [followState, setFollowState] = useState<'loading' | 'following' | 'not_following'>('loading');
   const [followLoading, setFollowLoading] = useState(false);
+
+  const getTypeLabel = (type: string): string => {
+    switch (type) {
+      case 'FOLLOW': return t('notif_follow_action');
+      case 'LIKE': return t('notif_like_action');
+      case 'REPOST': return t('notif_repost_action');
+      case 'MENTION': return t('notif_mention_action');
+      case 'COMMENT': return t('notif_comment_action');
+      default: return t('notif_default_action');
+    }
+  };
 
   useEffect(() => {
     if (notif.type === 'FOLLOW' && notif.actor_id) {
@@ -144,7 +146,7 @@ const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boo
           onClick={handleFollowBack}
           disabled={followLoading}
         >
-          {followState === 'following' ? 'Duke ndjekur' : 'Ndiqe'}
+          {followState === 'following' ? t('notif_following') : t('notif_follow_back')}
         </button>
       )}
 
@@ -152,7 +154,7 @@ const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boo
       <button
         className="notif-delete-btn"
         onClick={(e) => { e.stopPropagation(); deleteNotificationById(notif.id); }}
-        title="Fshi"
+        title={t('notif_delete_title')}
       >
         <Trash2 size={14} />
       </button>
@@ -162,6 +164,7 @@ const NotificationRow: React.FC<{ notif: INotificationItem, highlightUnread: boo
 
 const FollowBackReminderRow: React.FC<{ follow: FollowResponse }> = ({ follow }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const targetUser = follow.followee;
   const targetName = targetUser?.display_name || targetUser?.username || `User ${follow.followee_id}`;
   const targetHandle = targetUser?.username ? `@${targetUser.username}` : '';
@@ -192,11 +195,11 @@ const FollowBackReminderRow: React.FC<{ follow: FollowResponse }> = ({ follow })
         <div className="notif-text">
           <span className="notif-actor-name">{targetName}</span>
           {' '}
-          <span className="notif-action">ende nuk ta ka kthyer follow-in</span>
+          <span className="notif-action">{t('notif_follow_back_pending')}</span>
           {targetHandle && <span className="notif-handle"> · {targetHandle}</span>}
         </div>
         <div className="notif-meta">
-          <span className="notif-time">Reminder deri sa te ndjek mbrapsht</span>
+          <span className="notif-time">{t('notif_follow_back_reminder')}</span>
         </div>
       </div>
     </div>
@@ -209,6 +212,7 @@ type ActivePreferenceKey = 'filter_not_following' | 'filter_not_followed_by' | '
 
 const Notifications: React.FC = () => {
   const { notifications, isLoading, fetchNotifications, markAllAsReadBulk, clearAllNotifications, unreadCount } = useNotifications();
+  const { t } = useLanguage();
   const [currentFeedTab, setCurrentFeedTab] = useState<'home' | 'explore' | 'bookmarks'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('all');
@@ -271,18 +275,18 @@ const Notifications: React.FC = () => {
   }> = [
     {
       key: 'filter_not_following',
-      title: "Njerëzit që nuk i ndjek",
-      description: 'Derisa t’i pranosh vetë.',
+      title: t('notif_rule_not_following_title'),
+      description: t('notif_rule_not_following_desc'),
     },
     {
       key: 'filter_not_followed_by',
-      title: 'Njerëzit që nuk të ndjekin',
-      description: 'Përfshin llogaritë që nuk janë ndjekësit e tu.',
+      title: t('notif_rule_not_followed_by_title'),
+      description: t('notif_rule_not_followed_by_desc'),
     },
     {
       key: 'filter_new_accounts',
-      title: 'Llogaritë e reja',
-      description: 'Të krijuara së fundmi.',
+      title: t('notif_rule_new_accounts_title'),
+      description: t('notif_rule_new_accounts_desc'),
     },
   ];
 
@@ -300,22 +304,22 @@ const Notifications: React.FC = () => {
           <div className="feed-header-top">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Bell size={20} style={{ color: 'var(--primary)' }} />
-              <h2 className="feed-title">Njoftimet</h2>
+              <h2 className="feed-title">{t('notif_title')}</h2>
             </div>
             {unreadCount > 0 && (
               <button
                 className="notif-mark-all-btn"
                 onClick={() => markAllAsReadBulk()}
-                title="Shëno të gjitha si të lexuara"
+                title={t('notif_mark_all_title')}
               >
                 <Check size={16} />
-                <span>Shëno të gjitha</span>
+                <span>{t('notif_mark_all')}</span>
               </button>
             )}
             <button 
               className="notif-settings-btn"
               onClick={() => setIsSettingsOpen(true)}
-              title="Cilësimet e njoftimeve"
+              title={t('notif_settings_title')}
             >
               <Settings size={20} />
             </button>
@@ -328,13 +332,13 @@ const Notifications: React.FC = () => {
                 className={`notif-tab ${activeTab === 'all' ? 'active' : ''}`}
                 onClick={() => setActiveTab('all')}
               >
-                Të gjitha
+                {t('notif_tab_all')}
               </button>
               <button
                 className={`notif-tab ${activeTab === 'mentions' ? 'active' : ''}`}
                 onClick={() => setActiveTab('mentions')}
               >
-                Përmendjet
+                {t('notif_tab_mentions')}
               </button>
             </div>
           )}
@@ -357,9 +361,9 @@ const Notifications: React.FC = () => {
           ) : filteredNotifications.length === 0 && visibleFollowBackReminders.length === 0 ? (
             <div className="notif-empty">
               <Bell size={40} style={{ color: 'var(--text-dimmed)', marginBottom: '12px' }} />
-              <p style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '18px' }}>Asnjë njoftim</p>
+              <p style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '18px' }}>{t('notif_empty_title')}</p>
               <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '6px' }}>
-                {activeTab === 'mentions' ? 'Asnjë përmendëse ende.' : 'Do t\'ju njoftojmë kur të ndodhë diçka.'}
+                {activeTab === 'mentions' ? t('notif_empty_mentions') : t('notif_empty_all')}
               </p>
             </div>
           ) : (
@@ -379,7 +383,7 @@ const Notifications: React.FC = () => {
         <div className="notif-settings-modal-overlay" onClick={() => setIsSettingsOpen(false)}>
           <div className="notif-settings-modal" onClick={e => e.stopPropagation()}>
             <div className="notif-settings-header">
-              <h3>Cilësimet e njoftimeve</h3>
+              <h3>{t('notif_settings_title')}</h3>
               <button className="close-btn" onClick={() => setIsSettingsOpen(false)}>
                 <X size={20} />
               </button>
@@ -391,10 +395,10 @@ const Notifications: React.FC = () => {
                 disabled={notifications.length === 0}
               >
                 <Trash2 size={16} />
-                <span>Fshi te gjitha njoftimet</span>
+                <span>{t('notif_clear_all')}</span>
               </button>
               <div className="settings-section">
-                <h4>Menaxho njoftimet nga...</h4>
+                <h4>{t('notif_manage_from')}</h4>
                 {manageNotificationRules.map(rule => (
                   <div className="notification-rule-row" key={rule.key}>
                     <div className="rule-copy">
@@ -406,38 +410,38 @@ const Notifications: React.FC = () => {
                       value={preferences[rule.key] ? 'ignore' : 'accept'}
                       onChange={(event) => handleRuleActionChange(rule.key, event.target.value as NotificationRuleAction)}
                     >
-                      <option value="accept">Accept</option>
-                      <option value="ignore">Ignore</option>
+                      <option value="accept">{t('notif_accept')}</option>
+                      <option value="ignore">{t('notif_ignore')}</option>
                     </select>
                   </div>
                 ))}
 
                 <div className="notification-rule-row muted">
                   <div className="rule-copy">
-                    <span>Permendjet private te padeshiruara</span>
-                    <small>Do lidhet kur te kete njoftime private ne backend.</small>
+                    <span>{t('notif_rule_private_mentions_title')}</span>
+                    <small>{t('notif_rule_private_mentions_desc')}</small>
                   </div>
                   <select className="rule-select" value="accept" disabled>
-                    <option value="accept">Accept</option>
-                    <option value="ignore">Ignore</option>
+                    <option value="accept">{t('notif_accept')}</option>
+                    <option value="ignore">{t('notif_ignore')}</option>
                   </select>
                 </div>
 
                 <div className="notification-rule-row muted">
                   <div className="rule-copy">
-                    <span>Llogarite e moderuara</span>
-                    <small>Do lidhet kur backend te ruaje status moderimi per user-at.</small>
+                    <span>{t('notif_rule_moderated_accounts_title')}</span>
+                    <small>{t('notif_rule_moderated_accounts_desc')}</small>
                   </div>
                   <select className="rule-select" value="accept" disabled>
-                    <option value="accept">Accept</option>
-                    <option value="ignore">Ignore</option>
+                    <option value="accept">{t('notif_accept')}</option>
+                    <option value="ignore">{t('notif_ignore')}</option>
                   </select>
                 </div>
                 
                 <label className="settings-toggle">
                   <div className="toggle-info">
-                    <span>Njerëzit që nuk të ndjekin</span>
-                    <small>Filtro njoftimet nga llogaritë që nuk janë ndjekësit e tu.</small>
+                    <span>{t('notif_rule_not_followed_by_title')}</span>
+                    <small>{t('notif_rule_not_followed_by_desc')}</small>
                   </div>
                   <input 
                     type="checkbox" 
@@ -449,8 +453,8 @@ const Notifications: React.FC = () => {
 
                 <label className="settings-toggle">
                   <div className="toggle-info">
-                    <span>Njerëzit që nuk i ndjek</span>
-                    <small>Filtro njoftimet nga llogaritë që nuk i ndjek.</small>
+                    <span>{t('notif_rule_not_following_title')}</span>
+                    <small>{t('notif_rule_not_following_desc')}</small>
                   </div>
                   <input 
                     type="checkbox" 
@@ -462,8 +466,8 @@ const Notifications: React.FC = () => {
 
                 <label className="settings-toggle">
                   <div className="toggle-info">
-                    <span>Llogaritë e reja</span>
-                    <small>Filtro njoftimet nga llogaritë e krijuara nesër/së fundmi.</small>
+                    <span>{t('notif_rule_new_accounts_title')}</span>
+                    <small>{t('notif_rule_new_accounts_desc')}</small>
                   </div>
                   <input 
                     type="checkbox" 
@@ -475,11 +479,11 @@ const Notifications: React.FC = () => {
               </div>
 
               <div className="settings-section">
-                <h4>Njoftimet e palexuara</h4>
+                <h4>{t('notif_unread_title')}</h4>
                 <label className="settings-toggle">
                   <div className="toggle-info">
-                    <span>Thekso njoftimet e palexuara</span>
-                    <small>Trego një pikë për të dalluar njoftimet e palexuara.</small>
+                    <span>{t('notif_highlight_unread')}</span>
+                    <small>{t('notif_highlight_unread_desc')}</small>
                   </div>
                   <input 
                     type="checkbox" 
@@ -491,10 +495,10 @@ const Notifications: React.FC = () => {
               </div>
 
               <div className="settings-section">
-                <h4>Shiriti i shpejtë i filtrave</h4>
+                <h4>{t('notif_quick_filters')}</h4>
                 <label className="settings-toggle">
                   <div className="toggle-info">
-                    <span>Shfaq të gjitha kategoritë</span>
+                    <span>{t('notif_show_all_categories')}</span>
                   </div>
                   <input 
                     type="checkbox" 
