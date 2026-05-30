@@ -5,8 +5,20 @@ const getBaseUrl = () => {
   const normalizeApiRoot = (url: string) =>
     url.replace(/\/+$/, '').replace(/\/api\/v1$/i, '');
 
-  if (import.meta.env?.VITE_API_URL) {
-    return normalizeApiRoot(import.meta.env.VITE_API_URL);
+  const apiUrl = import.meta.env?.VITE_API_URL;
+  if (apiUrl) {
+    const isBrowser = typeof window !== 'undefined';
+    const pageHost = isBrowser ? window.location.hostname : '';
+    const isLocalPage = ['localhost', '127.0.0.1', '0.0.0.0'].includes(pageHost);
+    try {
+      const apiHost = new URL(apiUrl).hostname;
+      if (!isLocalPage && ['localhost', '127.0.0.1', '0.0.0.0'].includes(apiHost)) {
+        return '';
+      }
+    } catch {
+      // Relative API URLs are fine.
+    }
+    return normalizeApiRoot(apiUrl);
   }
   return '';
 };

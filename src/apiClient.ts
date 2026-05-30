@@ -5,13 +5,28 @@ const getBaseUrl = () => {
   const normalizeApiRoot = (url: string) =>
     `${url.replace(/\/+$/, '').replace(/\/api\/v1$/i, '')}/api/v1`;
 
+  const shouldIgnoreLocalhostApi = (url: string) => {
+    if (typeof window === 'undefined') return false;
+    const pageHost = window.location.hostname;
+    const isLocalPage = ['localhost', '127.0.0.1', '0.0.0.0'].includes(pageHost);
+    try {
+      const apiHost = new URL(url).hostname;
+      return !isLocalPage && ['localhost', '127.0.0.1', '0.0.0.0'].includes(apiHost);
+    } catch {
+      return false;
+    }
+  };
+
   if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) {
+    if (shouldIgnoreLocalhostApi(process.env.REACT_APP_API_URL)) return '/api/v1';
     return normalizeApiRoot(process.env.REACT_APP_API_URL);
   }
   if (import.meta && import.meta.env && import.meta.env.VITE_API_URL) {
+    if (shouldIgnoreLocalhostApi(import.meta.env.VITE_API_URL)) return '/api/v1';
     return normalizeApiRoot(import.meta.env.VITE_API_URL);
   }
   if (import.meta && import.meta.env && import.meta.env.REACT_APP_API_URL) {
+    if (shouldIgnoreLocalhostApi(import.meta.env.REACT_APP_API_URL)) return '/api/v1';
     return normalizeApiRoot(import.meta.env.REACT_APP_API_URL);
   }
   return '/api/v1';

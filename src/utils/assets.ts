@@ -26,30 +26,45 @@ const getPublicBackendRoot = () => {
 
 export const resolveAssetUrl = (value?: string | null) => {
   if (!value) return '';
+  if (value.startsWith('data:')) return value;
 
-  if (!value.startsWith('/')) {
-    try {
-      const parsed = new URL(value);
-      if (LOCAL_HOSTS.has(parsed.hostname)) {
-        const publicRoot = getPublicBackendRoot();
-        if (publicRoot) {
-          return `${publicRoot}${parsed.pathname}${parsed.search}${parsed.hash}`;
-        }
-
-        const isBrowser = typeof window !== 'undefined';
-        const pageHost = isBrowser ? window.location.hostname : '';
-        return LOCAL_HOSTS.has(pageHost) ? value : '';
-      }
-      return value;
-    } catch {
-      return value;
+  // Case 1: Relative URLs like /uploads/...
+  if (value.startsWith('/')) {
+    const publicRoot = getPublicBackendRoot();
+    if (publicRoot) {
+      return `${publicRoot}${value}`;
     }
+    // Fallback to local server proxy
+    return value;
   }
 
-  const publicRoot = getPublicBackendRoot();
-  if (!publicRoot) return value;
+  try {
+    const parsed = new URL(value);
+    
+    // Case 2: Old localhost or 127.0.0.1 absolute URLs
+    if (LOCAL_HOSTS.has(parsed.hostname)) {
+      const isBrowser = typeof window !== 'undefined';
+      const pageHost = isBrowser ? window.location.hostname : '';
+      
+      // If deployed on a real domain, localhost URLs are broken to other users
+      if (isBrowser && !LOCAL_HOSTS.has(pageHost)) {
+        return ''; // Mark as broken
+      }
 
-  return `${publicRoot}${value}`;
+      // If we are developing locally, resolve them correctly
+      const publicRoot = getPublicBackendRoot();
+      if (publicRoot) {
+        return `${publicRoot}${parsed.pathname}${parsed.search}${parsed.hash}`;
+      }
+      return value;
+    }
+
+    // Case 3: Public HTTPS URLs (Cloudinary, S3, Firebase, etc.)
+    return value;
+  } catch {
+    // If not a valid URL, just return it as fallback
+    return value;
+  }
 };
 
 export const isLikelyBrokenLocalAssetUrl = (value?: string | null) => {
