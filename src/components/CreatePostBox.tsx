@@ -53,6 +53,21 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
   const [pollQuestion, setPollQuestion] = useState('');
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [cropX, setCropX] = useState(50);
+  const [cropY, setCropY] = useState(50);
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropBox, setCropBox] = useState({ x: 12, y: 12, size: 76 });
+  const [isDraggingCrop, setIsDraggingCrop] = useState(false);
+  const cropStageRef = useRef<HTMLDivElement>(null);
+  const cropDragRef = useRef({
+    pointerId: 0,
+    mode: 'move' as 'move' | 'resize',
+    startClientX: 0,
+    startClientY: 0,
+    startX: 12,
+    startY: 12,
+    startSize: 76,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -83,6 +98,69 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     }
   };
 
+  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+  const resetCrop = () => {
+    setCropBox({ x: 12, y: 12, size: 76 });
+    setCropX(50);
+    setCropY(50);
+    setCropZoom(1);
+  };
+
+  const updateCropFromBox = (box: { x: number; y: number; size: number }) => {
+    setCropX(clamp(box.x + (box.size / 2), 0, 100));
+    setCropY(clamp(box.y + (box.size / 2), 0, 100));
+  };
+
+  const beginCropDrag = (mode: 'move' | 'resize', e: React.PointerEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    cropDragRef.current = {
+      pointerId: e.pointerId,
+      mode,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      startX: cropBox.x,
+      startY: cropBox.y,
+      startSize: cropBox.size,
+    };
+    setIsDraggingCrop(true);
+  };
+
+  const moveCropDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingCrop || e.pointerId !== cropDragRef.current.pointerId) return;
+    const rect = cropStageRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const deltaX = ((e.clientX - cropDragRef.current.startClientX) / rect.width) * 100;
+    const deltaY = ((e.clientY - cropDragRef.current.startClientY) / rect.height) * 100;
+
+    if (cropDragRef.current.mode === 'resize') {
+      const nextSize = clamp(
+        cropDragRef.current.startSize + Math.max(deltaX, deltaY),
+        28,
+        Math.min(100 - cropDragRef.current.startX, 100 - cropDragRef.current.startY)
+      );
+      const nextBox = { x: cropDragRef.current.startX, y: cropDragRef.current.startY, size: nextSize };
+      setCropBox(nextBox);
+      updateCropFromBox(nextBox);
+      return;
+    }
+
+    const nextBox = {
+      ...cropBox,
+      x: clamp(cropDragRef.current.startX + deltaX, 0, 100 - cropBox.size),
+      y: clamp(cropDragRef.current.startY + deltaY, 0, 100 - cropBox.size),
+    };
+    setCropBox(nextBox);
+    updateCropFromBox(nextBox);
+  };
+
+  const endCropDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerId !== cropDragRef.current.pointerId) return;
+    setIsDraggingCrop(false);
+  };
+
   const resetComposer = () => {
     setContent('');
     setMediaUrl('');
@@ -94,6 +172,8 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     setPollQuestion('');
     setPollOptions(['', '']);
     setEmojiOpen(false);
+    resetCrop();
+    setIsDraggingCrop(false);
   };
 
   const handlePostSubmit = async (e: React.FormEvent) => {
@@ -111,7 +191,10 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
     const finalContent = cwActive && warningText.trim()
       ? `CW: ${warningText.trim()}\n\n---\n\n${baseContent}`
       : baseContent;
-    const media: MediaInput[] = hasMedia ? [{ url: normalizedMediaUrl, media_type: mediaType }] : [];
+    const mediaMeta = mediaType === 'image'
+      ? { cropX, cropY, cropZoom: Number((cropZoom * (100 / cropBox.size)).toFixed(2)), cropSize: cropBox.size }
+      : undefined;
+    const media: MediaInput[] = hasMedia ? [{ url: normalizedMediaUrl, media_type: mediaType, meta: mediaMeta }] : [];
     const poll = hasValidPoll ? { question: pollQuestion.trim(), options: cleanPollOptions.slice(0, 4) } : undefined;
 
     try {
@@ -150,6 +233,7 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
       if (file.type.startsWith('image/')) {
         setMediaUrl(await imageFileToDataUrl(file));
         setMediaType('image');
+        resetCrop();
       } else {
         const uploaded = await PostService.uploadPostMedia(file);
         setMediaUrl(uploaded.url);
@@ -277,12 +361,56 @@ const CreatePostBox: React.FC<CreatePostBoxProps> = ({
                   {uploadingMedia ? t('create_post_uploading') : t('create_post_media_upload')}
                 </button>
                 {normalizedMediaUrl && isValidMediaUrl(normalizedMediaUrl) && (
-                  <div className="compose-media-preview">
+                  <div
+                    ref={cropStageRef}
+                    className={`compose-media-preview ${mediaType === 'image' ? 'is-croppable' : ''} ${isDraggingCrop ? 'is-dragging' : ''}`}
+                    onPointerMove={moveCropDrag}
+                    onPointerUp={endCropDrag}
+                    onPointerCancel={endCropDrag}
+                  >
                     {mediaType === 'video' ? (
                       <video src={resolveAssetUrl(normalizedMediaUrl)} controls />
                     ) : (
-                      <img src={resolveAssetUrl(normalizedMediaUrl)} alt="Media preview" />
+                      <>
+                        <img
+                          src={resolveAssetUrl(normalizedMediaUrl)}
+                          alt="Media preview"
+                          draggable={false}
+                          style={{
+                            transform: `scale(${cropZoom})`,
+                          }}
+                        />
+                        <div className="compose-crop-scrim" />
+                        <div
+                          className="compose-crop-box"
+                          style={{
+                            left: `${cropBox.x}%`,
+                            top: `${cropBox.y}%`,
+                            width: `${cropBox.size}%`,
+                            height: `${cropBox.size}%`,
+                          }}
+                          onPointerDown={(e) => beginCropDrag('move', e)}
+                        >
+                          <span className="compose-crop-grid" />
+                          <span
+                            className="compose-crop-resize"
+                            onPointerDown={(e) => beginCropDrag('resize', e)}
+                          />
+                        </div>
+                        <div className="compose-crop-hint">Move or resize crop</div>
+                      </>
                     )}
+                  </div>
+                )}
+                {normalizedMediaUrl && isValidMediaUrl(normalizedMediaUrl) && mediaType === 'image' && (
+                  <div className="compose-crop-controls">
+                    <label>
+                      <span>Zoom</span>
+                      <input type="range" min="0.5" max="3" step="0.05" value={cropZoom} onChange={(e) => setCropZoom(Number(e.target.value))} />
+                    </label>
+                    <button type="button" onClick={resetCrop}>
+                      Reset
+                    </button>
                   </div>
                 )}
               </div>
