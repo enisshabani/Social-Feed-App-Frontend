@@ -1,11 +1,11 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PostService } from '../services/post.service';
 import MainLayout from '../components/MainLayout';
 
 import PostItem from '../components/PostItem';
 import CreatePostBox from '../components/CreatePostBox';
-import { Sparkles, Bookmark, Search, RefreshCw, Hash, AlertCircle } from 'lucide-react';
+import { Sparkles, Bookmark, Search, RefreshCw, Hash, AlertCircle, X } from 'lucide-react';
 import { getFollowing } from '../modules/follows/api/followsApi';
 import { getLoggedInUser } from '../components/SidebarLeft';
 import { useLanguage } from '../context/LanguageContext';
@@ -21,6 +21,9 @@ const Feed: React.FC = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
   const [hasMore, setHasMore] = useState(false);
+  const [newPostsCount, setNewPostsCount] = useState(0);
+  const [selectedPost, setSelectedPost] = useState<any | null>(null);
+  const [feedMode, setFeedMode] = useState<'latest' | 'popular' | 'media' | 'polls'>('latest');
 
   // Search & Hashtag Filtering States
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,6 +37,7 @@ const Feed: React.FC = () => {
 
   // Focus reference for text composing
   const feedTopRef = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Sync tab to URL
   const handleTabChange = (tab: 'home' | 'explore' | 'bookmarks') => {
@@ -49,6 +53,7 @@ const Feed: React.FC = () => {
 
   useEffect(() => {
     fetchPosts(0, false);
+    setNewPostsCount(0);
   }, [currentTab, selectedTag, refreshKey]);
 
   useEffect(() => {
@@ -75,6 +80,21 @@ const Feed: React.FC = () => {
       window.removeEventListener('postCreated', handleGlobalPostCreated);
     };
   }, [refreshKey, currentUser?.id]);
+
+  useEffect(() => {
+    if (!hasMore || loading || loadingMore || searchQuery) return;
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) {
+        fetchPosts(posts.length, true);
+      }
+    }, { rootMargin: '360px 0px' });
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadingMore, posts.length, searchQuery]);
 
   const fetchPosts = async (skip = 0, append = false) => {
     if (append) {
@@ -121,12 +141,36 @@ const Feed: React.FC = () => {
     feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      fetchPosts(posts.length, true);
+  const handleRefreshCheck = async () => {
+    if (loading) return;
+
+    try {
+      const res = selectedTag
+        ? await PostService.getPostsByTag(selectedTag, 0, pageSize)
+        : currentTab === 'bookmarks'
+          ? { items: await PostService.getBookmarks(0, pageSize), has_more: hasMore }
+          : await PostService.getHomeFeed(0, pageSize);
+      const items = res.items || [];
+      const currentTopId = posts[0]?.id;
+      const currentTopIndex = items.findIndex((item: any) => item.id === currentTopId);
+
+      if (currentTopId && currentTopIndex > 0) {
+        setNewPostsCount(currentTopIndex);
+      } else {
+        setPosts(items);
+        setHasMore(Boolean(res.has_more));
+        setNewPostsCount(0);
+      }
+    } catch {
+      setRefreshKey((prev) => prev + 1);
     }
   };
 
+  const showNewPosts = () => {
+    setNewPostsCount(0);
+    setRefreshKey((prev) => prev + 1);
+    feedTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const handleDismissTag = () => {
     setSelectedTag(null);
@@ -141,14 +185,17 @@ const Feed: React.FC = () => {
     }
   };
 
-  // Real-time client-side search filter
-  const filteredPosts = posts.filter((post) => {
+  // Real-time client-side search/filter/sort.
+  const filteredPosts = useMemo(() => posts.filter((post) => {
     // Local subtab filtering for "TÃ« ndjekur"
     if (!selectedTag && currentTab === 'home' && homeSubTab === 'following') {
       const isSelf = currentUser && String(post.author_id) === String(currentUser.id);
       const isFollowed = followingIds.has(Number(post.author_id));
       if (!isSelf && !isFollowed) return false;
     }
+
+    if (feedMode === 'media' && !(post.media?.length > 0)) return false;
+    if (feedMode === 'polls' && !post.poll) return false;
 
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
@@ -157,7 +204,22 @@ const Feed: React.FC = () => {
     const authorMatch = post.author?.username?.toLowerCase().includes(query) ||
                         post.author?.display_name?.toLowerCase().includes(query);
     return contentMatch || authorMatch;
-  });
+  }).sort((a, b) => {
+    if (feedMode === 'popular') {
+      const scoreA = (a.like_count || 0) + (a.reply_count || 0) + (a.repost_count || 0);
+      const scoreB = (b.like_count || 0) + (b.reply_count || 0) + (b.repost_count || 0);
+      return scoreB - scoreA || new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    }
+
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  }), [posts, selectedTag, currentTab, homeSubTab, currentUser, followingIds, searchQuery, feedMode]);
+
+  const feedModes: { key: typeof feedMode; label: string }[] = [
+    { key: 'latest', label: 'Latest' },
+    { key: 'popular', label: 'Popular' },
+    { key: 'media', label: 'Media' },
+    { key: 'polls', label: 'Polls' },
+  ];
 
   return (
     <MainLayout
@@ -180,7 +242,7 @@ const Feed: React.FC = () => {
           </h2>
           <button 
             className="btn-icon refresh-feed-btn" 
-            onClick={() => setRefreshKey(prev => prev + 1)}
+            onClick={handleRefreshCheck}
             disabled={loading}
             title={t('feed_refresh')}
           >
@@ -220,6 +282,12 @@ const Feed: React.FC = () => {
         </div>
       )}
 
+      {newPostsCount > 0 && (
+        <button type="button" className="new-posts-banner" onClick={showNewPosts}>
+          Show {newPostsCount} new {newPostsCount === 1 ? 'post' : 'posts'}
+        </button>
+      )}
+
       {/* Main Feed Content Area */}
       <div className="feed-content-scroller">
         {!selectedTag && currentTab === 'home' && (
@@ -230,6 +298,18 @@ const Feed: React.FC = () => {
 
         <div className="feed-section-summary">
           <span>{filteredPosts.length} {t('search_meta_posts')}</span>
+          <div className="feed-mode-row">
+            {feedModes.map((mode) => (
+              <button
+                key={mode.key}
+                type="button"
+                className={`feed-mode-btn ${feedMode === mode.key ? 'active' : ''}`}
+                onClick={() => setFeedMode(mode.key)}
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
           {homeSubTab === 'following' && currentTab === 'home' && (
             <span>{t('feed_summary_following')}</span>
           )}
@@ -296,6 +376,7 @@ const Feed: React.FC = () => {
                 post={post} 
                 onPostUpdated={handlePostCreated} 
                 isBookmarkedInitially={currentTab === 'bookmarks'}
+                onOpenDetails={setSelectedPost}
               />
             ))
           )}
@@ -303,12 +384,33 @@ const Feed: React.FC = () => {
 
         {!loading && filteredPosts.length > 0 && hasMore && !searchQuery && (
           <div className="load-more-row">
-            <button className="btn btn-secondary load-more-btn" onClick={handleLoadMore} disabled={loadingMore}>
-              {loadingMore ? t('feed_loading_more') : t('feed_load_more')}
-            </button>
+            <div ref={loadMoreRef} className="load-more-sentinel">
+              {loadingMore ? t('feed_loading_more') : 'Scroll for more'}
+            </div>
           </div>
         )}
       </div>
+
+      {selectedPost && (
+        <div className="post-detail-overlay" onClick={() => setSelectedPost(null)}>
+          <div className="post-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="post-detail-header">
+              <strong>Post</strong>
+              <button type="button" className="btn-icon" onClick={() => setSelectedPost(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <PostItem
+              post={selectedPost}
+              onPostUpdated={() => {
+                setSelectedPost(null);
+                handlePostCreated();
+              }}
+              isBookmarkedInitially={currentTab === 'bookmarks'}
+            />
+          </div>
+        </div>
+      )}
 
       <style>{`
         .refresh-feed-btn {
@@ -343,6 +445,47 @@ const Feed: React.FC = () => {
           font-size: 13px;
           font-weight: 600;
           background: rgba(25, 27, 34, 0.82);
+        }
+
+        .feed-mode-row {
+          display: inline-flex;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-left: auto;
+        }
+
+        .feed-mode-btn {
+          border: 1px solid var(--border);
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.04);
+          color: var(--text-muted);
+          cursor: pointer;
+          padding: 5px 10px;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .feed-mode-btn.active {
+          color: var(--primary);
+          background: var(--primary-light);
+          border-color: rgba(99, 100, 255, 0.28);
+        }
+
+        .new-posts-banner {
+          position: sticky;
+          top: 80px;
+          z-index: 20;
+          display: block;
+          margin: 12px auto 0;
+          border: 1px solid rgba(99, 100, 255, 0.32);
+          border-radius: 999px;
+          background: var(--primary);
+          color: #fff;
+          cursor: pointer;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 800;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
         }
 
         @keyframes spin {
@@ -434,10 +577,44 @@ const Feed: React.FC = () => {
           padding: 20px;
         }
 
-        .load-more-btn {
-          width: 100%;
-          max-width: 260px;
-          border-radius: 8px;
+        .load-more-sentinel {
+          color: var(--text-dimmed);
+          font-size: 13px;
+          font-weight: 700;
+          min-height: 32px;
+          display: flex;
+          align-items: center;
+        }
+
+        .post-detail-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 250;
+          background: rgba(0, 0, 0, 0.64);
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          padding: 48px 16px;
+          overflow-y: auto;
+        }
+
+        .post-detail-modal {
+          width: min(680px, 100%);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          overflow: hidden;
+          background: var(--bg-app);
+          box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+        }
+
+        .post-detail-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          border-bottom: 1px solid var(--border);
+          background: rgba(25, 27, 34, 0.96);
+          color: var(--text-main);
         }
 
         /* Premium Skeleton styles */
