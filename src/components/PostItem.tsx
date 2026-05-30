@@ -102,7 +102,23 @@ const PostItem: React.FC<PostItemProps> = ({
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
 
-  const renderPlainText = (value: string) => escapeHtml(value).replace(/(?:\r\n|\r|\n)/g, '<br/>');
+  const renderPlainText = (value: string) => {
+    let escaped = escapeHtml(value);
+    
+    // Auto-linkify URLs and render image URLs as actual inline images
+    const urlRegex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])/g;
+    const imageExtRegex = /\.(?:png|jpg|jpeg|gif|webp|jfif|bmp|svg)(?:[?#].*)?$/i;
+    
+    escaped = escaped.replace(urlRegex, (url) => {
+      if (imageExtRegex.test(url)) {
+        return `<img src="${url}" class="rounded-lg max-h-96 object-contain my-2 block mx-auto bg-black/5" alt="Image" loading="lazy" />`;
+      }
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">${url}</a>`;
+    });
+
+    return escaped.replace(/(?:\r\n|\r|\n)/g, '<br/>');
+  };
+
   const getMediaCrop = (media: any) => ({
     x: Number(media?.meta?.cropX ?? 50),
     y: Number(media?.meta?.cropY ?? 50),
